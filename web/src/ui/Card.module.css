@@ -1,0 +1,24 @@
+.card {
+  min-width: 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.raised {
+  box-shadow: var(--shadow);
+}
+
+.none {
+  padding: 0;
+}
+
+/* ระยะในยืดตามความกว้างจอ: ~18 px บนมือถือ ถึง 22 px บนจอกว้าง */
+.md {
+  padding: clamp(16px, 0.75rem + 1vw, 22px);
+}
+
+.lg {
+  padding: clamp(18px, 0.75rem + 1.5vw, 28px);
+}
