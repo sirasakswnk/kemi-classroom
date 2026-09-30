@@ -8,8 +8,18 @@ import {
 } from 'react'
 import { useScrollLock } from '../lib/useScrollLock'
 
-// dialog ที่เปิดอยู่ เรียงจากล่างขึ้นบน — Esc มีผลกับตัวบนสุดเท่านั้น
+// dialog ที่เปิดอยู่ เรียงจากล่างขึ้นบน — Esc/Tab มีผลกับตัวบนสุดเท่านั้น
 const openStack: HTMLDialogElement[] = []
+
+const TABBABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+// องค์ประกอบที่ Tab ไปถึงได้และมองเห็นอยู่
+function tabbables(root: HTMLElement): HTMLElement[] {
+  return [...root.querySelectorAll<HTMLElement>(TABBABLE)].filter(
+    (el) => el.tabIndex >= 0 && el.getClientRects().length > 0,
+  )
+}
 
 export interface DialogBaseProps {
   open: boolean
@@ -62,10 +72,27 @@ export function DialogBase({
       if (dismissibleRef.current) onCloseRef.current()
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || openStack.at(-1) !== dialog) return
-      e.preventDefault()
-      e.stopPropagation()
-      requestClose()
+      if (openStack.at(-1) !== dialog) return
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        requestClose()
+      } else if (e.key === 'Tab') {
+        // วนโฟกัสในกล่อง (WAI-ARIA APG) — <dialog> เองปล่อยให้ Tab หลุดไปแถบเบราว์เซอร์หนึ่งจังหวะ
+        const items = tabbables(dialog)
+        if (items.length === 0) return
+        const first = items[0]
+        const last = items[items.length - 1]
+        const active = document.activeElement
+        const inside = active instanceof Node && dialog.contains(active)
+        if (e.shiftKey && (!inside || active === first)) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && (!inside || active === last)) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     }
     const onCancel = (e: Event) => {
       e.preventDefault()
