@@ -91,7 +91,7 @@ Classroom/                     # root ของ repo
 
 ### 4.1 หลักการเขียน
 
-1. ทุกตารางใน `public` เปิด RLS; ไม่มี policy ให้ `anon`; ใน migration แรกตั้ง `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (แบบทั้งระบบ เพราะ Postgres ให้ `PUBLIC` execute ทุกฟังก์ชันเป็นค่าเริ่มต้น และการ REVOKE เฉพาะ schema ลบสิทธิ์ระดับทั้งระบบไม่ได้) และ `ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated` (ย้อนค่าที่ Supabase ให้ไว้รายschema) แล้ว GRANT รายฟังก์ชันตามข้อ 3 และยังตรวจซ้ำด้วยรายการในส่วน 11
+1. ทุกตารางใน `public` เปิด RLS; ไม่มี policy ให้ `anon`; ใน migration แรกตั้ง `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (แบบทั้งระบบ เพราะ Postgres ให้ `PUBLIC` execute ทุกฟังก์ชันเป็นค่าเริ่มต้น และการ REVOKE เฉพาะ schema ลบสิทธิ์ระดับทั้งระบบไม่ได้) และ `ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated` (ย้อนค่าที่ Supabase ให้ไว้รายschema) แล้ว GRANT รายฟังก์ชันตามข้อ 3 และยังตรวจซ้ำด้วยรายการในส่วน 11; ตาราง/sequence ใหม่ถอนสิทธิ์ทั้งหมดจาก `anon`, `authenticated` (รวมสิทธิ์ย่อยอย่าง TRUNCATE/REFERENCES/TRIGGER ที่ Supabase ยังให้แม้ปิด auto-expose) แล้ว GRANT เฉพาะ SELECT ที่หน้าเว็บอ่านผ่าน RLS; ถอน EXECUTE ของ `public.rls_auto_enable()` จาก `anon`, `authenticated`; ห้าม GRANT USAGE บน schema `private` ให้ `anon`/`authenticated`; ตาราง (ถ้ามี) ใน `private` เปิด RLS เองเพราะ automatic RLS ทำเฉพาะ `public` (ผลตรวจ `kemi-dev` 30 ก.ย. 2026)
 2. หน้าเว็บ **อ่าน** ผ่าน SELECT policy หรือ RPC อ่าน และ **เขียนผ่าน RPC เท่านั้น** (ไม่มี INSERT/UPDATE/DELETE policy)
 3. RPC ที่หน้าเว็บเรียกเป็น `SECURITY DEFINER`, `SET search_path = ''`, อ้างชื่อเต็ม และตรวจสิทธิ์เองจาก `private.current_account()`; GRANT ให้ `authenticated` เท่านั้น; RPC ที่ Edge Function เรียกด้วย service role (เช่น `finalize_attachment`) GRANT ให้ `service_role` เท่านั้น
 4. เวลาเก็บเป็น `timestamptz` (UTC) และตัดสินด้วย `clock_timestamp()` หลังล็อกแถว; คะแนนและโทเคนเป็นจำนวนเต็ม คำนวณหักสายด้วย `(raw * (100 - pct) + 99) / 100`
@@ -124,7 +124,7 @@ grant execute on function public.grade_submission to authenticated;
 
 | # | ไฟล์ **[ข้อเสนอ]** | เนื้อหา | ระยะ |
 | --- | --- | --- | --- |
-| 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; `pgtap` เฉพาะ dev), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
+| 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; **ไม่ติดตั้ง `pgtap` ใน migration** — ไฟล์ทดสอบติดตั้งภายใน transaction แล้ว rollback จึงไม่เหลือบนฐานข้อมูลใด), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
 | 2 | `0002_accounts.sql` | `accounts`, `teachers`, `teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
 | 3 | `0003_roster_classes.sql` | `terms`, `term_control`, `students`, `roster_entries`, `classrooms`, `memberships`; ค้น/ผูกชื่อ (L3), แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
 | 4 | `0004_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
@@ -275,7 +275,7 @@ grant execute on function public.grade_submission to authenticated;
 | ชั้น | เครื่องมือ | ครอบคลุม |
 | --- | --- | --- |
 | หน่วย | Vitest | สูตรคะแนนชุดตัวอย่างเดียวกับฐานข้อมูล (ไฟล์ JSON ร่วม), การแปลงเวลาไทย, ชื่อปิดบางส่วน, ตรวจไฟล์ก่อนอัปโหลด, ชื่อไฟล์ PDF, CSV |
-| ฐานข้อมูล | pgTAP ผ่าน `psql` กับ `kemi-dev` | ตารางสิทธิ์ทุกบทบาท (นักเรียน/ครู/ผู้ดูแลในและนอกโหมด/anon), ทุก RPC ตามกติกา, ตารางรับการส่ง 7 แถว, I1–I5, K1–K6, L2–L6 |
+| ฐานข้อมูล | pgTAP บน Supabase ในเครื่อง (Docker) เป็นหลัก และกับ `kemi-dev` ผ่าน `supabase db query --linked` ทุกไฟล์รูปแบบ `begin; create extension if not exists pgtap …; … rollback;` | ตารางสิทธิ์ทุกบทบาท (นักเรียน/ครู/ผู้ดูแลในและนอกโหมด/anon), ทุก RPC ตามกติกา, ตารางรับการส่ง 7 แถว, I1–I5, K1–K6, L2–L6 |
 | พร้อมกัน | สคริปต์ Node เปิดหลาย connection | ชิงชื่อเดียวกัน, สุ่มสองแท็บ, ตรวจซ้ำพร้อมกัน, ตรวจชนเริ่มเทอม, แก้รางวัลชนส่งแรก |
 | หน้าเว็บ | Playwright (มือถือ 390 px, แท็บเล็ต 820 × 1180 และ 1180 × 820 แบบสัมผัส, คอม 1280 px) | เส้นทางหลักทุกบทบาทบน preview ของ dev |
 | อุปกรณ์จริง | ทดสอบมือ | iPhone Safari (HEIC), Android Chrome, iPad, มือถือรุ่นเก่าหน่วยความจำน้อย, Wi-Fi โรงเรียน |
