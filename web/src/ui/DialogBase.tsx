@@ -1,15 +1,15 @@
 import {
   useEffect,
   useRef,
+  useSyncExternalStore,
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
   type RefObject,
 } from 'react'
 import { useScrollLock } from '../lib/useScrollLock'
-
-// dialog ที่เปิดอยู่ เรียงจากล่างขึ้นบน — Esc/Tab มีผลกับตัวบนสุดเท่านั้น
-const openStack: HTMLDialogElement[] = []
+import { pushDialog, removeDialog, subscribeDialogs, topDialog } from './dialogStack'
+import { ToastViewport } from './Toast'
 
 const TABBABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -51,6 +51,12 @@ export function DialogBase({
   const onCloseRef = useRef(onClose)
   const dismissibleRef = useRef(dismissible)
   const pressedBackdrop = useRef(false)
+  // กล่องนี้อยู่บนสุดหรือไม่ — toast แสดงในกล่องบนสุดเพื่อไม่ถูกพื้นหลังของกล่องบัง
+  const isTop = useSyncExternalStore(
+    subscribeDialogs,
+    () => ref.current !== null && topDialog() === ref.current,
+    () => false,
+  )
 
   useEffect(() => {
     onCloseRef.current = onClose
@@ -66,13 +72,13 @@ export function DialogBase({
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
     if (!dialog.open) dialog.showModal()
     initialFocusRef?.current?.focus()
-    openStack.push(dialog)
+    pushDialog(dialog)
 
     const requestClose = () => {
       if (dismissibleRef.current) onCloseRef.current()
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (openStack.at(-1) !== dialog) return
+      if (topDialog() !== dialog) return
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
@@ -111,7 +117,7 @@ export function DialogBase({
       document.removeEventListener('keydown', onKeyDown, true)
       dialog.removeEventListener('cancel', onCancel)
       dialog.removeEventListener('close', onNativeClose)
-      openStack.splice(openStack.indexOf(dialog), 1)
+      removeDialog(dialog)
       if (dialog.open) dialog.close()
       // คืนโฟกัสจุดเดิม (UX 13)
       if (opener?.isConnected) opener.focus()
@@ -140,6 +146,7 @@ export function DialogBase({
       }}
     >
       {open && children}
+      {open && <ToastViewport active={isTop} />}
     </dialog>
   )
 }

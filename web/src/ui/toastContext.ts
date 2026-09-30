@@ -4,8 +4,16 @@ import { createContext, type ReactNode } from 'react'
 // ข้อผิดพลาดต้องแสดงใกล้จุดที่เกิด (Field error หรือข้อความในหน้า) ตาม UX 13 และ 7.1
 export type ToastTone = 'success' | 'info'
 
+export interface ToastItem {
+  id: number
+  message: ReactNode
+  tone: ToastTone
+}
+
 export interface ShowToast {
   (message: ReactNode, options?: { tone?: ToastTone }): void
 }
 
 export const ToastContext = createContext<ShowToast | null>(null)
+
+export const ToastItemsContext = createContext<ToastItem[]>([])

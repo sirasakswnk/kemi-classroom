@@ -272,6 +272,9 @@ export default function DevGallery() {
         <Field label="กำหนดส่งใหม่">
           <Input type="date" defaultValue="2026-10-07" />
         </Field>
+        <Button variant="ghost" size="sm" onClick={() => toast('แจ้งจากในกล่อง', { tone: 'info' })}>
+          แสดง Toast ในกล่อง
+        </Button>
       </Modal>
     </div>
   )
