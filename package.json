@@ -5,5 +5,13 @@
   "type": "module",
   "devDependencies": {
     "supabase": "^2.118.0"
+  },
+  "scripts": {
+    "db:start": "supabase db start",
+    "db:reset": "supabase db reset --local",
+    "db:test": "supabase test db --local",
+    "db:test:dev": "supabase test db --linked",
+    "db:push": "supabase db push",
+    "db:advisors": "supabase db advisors --linked --type security"
   }
 }

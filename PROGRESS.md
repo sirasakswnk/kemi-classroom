@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 1 (มีโครง `web/` แล้ว)
-- งานถัดไป: P1-06c → P1-06d → P1-07 ระหว่างรอยืนยันดีไซน์ (งานระยะ 1 ทำบน branch `phase-1`)
+- งานถัดไป: P1-06d → P1-07 ระหว่างรอยืนยันดีไซน์ · **ก่อน P1-07 ต้องตกลงกับผู้ใช้:** RLS policy ที่เรียกฟังก์ชันใน `private` ต้องให้ `authenticated` มี USAGE บน `private` ซึ่งขัดกฎห้าม USAGE → เสนอให้ฟังก์ชันช่วยที่ policy ใช้อยู่ใน `public` (SECURITY DEFINER, GRANT `authenticated`) (งานระยะ 1 ทำบน branch `phase-1`)
 - **P1-03 และ P1-04 (สี ฟอนต์ คอมโพเนนต์) รอผู้ใช้ยืนยันดีไซน์หน้าจอใหม่ก่อน** (ผู้ใช้กำลังออกแบบ) ระหว่างรอให้ทำ P1-05, P1-06, P1-07 ไปก่อนได้ — ถามผู้ใช้ก่อนเริ่ม P1-03 ทุกครั้งจนกว่าจะยืนยัน
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
@@ -33,7 +33,8 @@
     - automatic RLS = event trigger `ensure_rls` → `public.rls_auto_enable()` (SECURITY DEFINER, เจ้าของ postgres) เปิด RLS ให้ตารางใหม่ **เฉพาะ schema `public`** → ตารางใน `private` ต้อง `enable row level security` เอง; ฟังก์ชันนี้ anon/authenticated execute ได้ (เรียกตรงไม่ได้เพราะคืน event_trigger) → เสนอ REVOKE ใน 0001
     - default privileges ของ `postgres` ใน `public`: ตารางใหม่ให้ anon/authenticated/service_role แค่ `Dxtm` (TRUNCATE/REFERENCES/TRIGGER/MAINTAIN ไม่มี SELECT/เขียน) → 0001 ควร REVOKE ALL จาก anon/authenticated ด้วย; ฟังก์ชันยังได้ EXECUTE ให้ `PUBLIC` จากค่าระดับระบบ → ต้อง REVOKE ระดับระบบตาม BUILD_PLAN 4.1
     - ส่วนขยาย: `pgcrypto` ติดตั้งแล้วใน `extensions`; `pgtap` 1.3.3, `pg_cron` 1.6.4, `pg_net` 0.20.4 มีให้เปิดแต่ยังไม่ติดตั้ง; ยังไม่มี schema `private`
-  - [ ] P1-06c migration `0001_base` + pgTAP คู่กัน + กำหนดวิธีรันทดสอบ แล้ว push ไป `kemi-dev` และรันทดสอบผ่าน
+  - [x] P1-06c migration `0001_base` + pgTAP คู่กัน + กำหนดวิธีรันทดสอบ แล้ว push ไป `kemi-dev` และรันทดสอบผ่าน → 30 ก.ย. 2026: ตารางกลางทั้ง 5 อยู่ใน `private` (เปิด RLS ไม่มี policy), default privileges `for role postgres` ครอบ tables/sequences/functions ทั้ง public/private + ถอน EXECUTE จาก PUBLIC ระดับระบบ, ถอน EXECUTE `rls_auto_enable()`, `ping()` ให้ `service_role` เท่านั้น; pgTAP 33 ข้อผ่านทั้งในเครื่อง (ข้าม 2 ข้อที่พึ่ง automatic RLS) และบน `kemi-dev` (ครบ) — ลองใส่สิทธิ์ผิด 3 แบบ เทสต์จับได้ครบ; pgtap ไม่ค้างบน dev; Security Advisor เหลือแค่ INFO “RLS enabled no policy” ของตาราง private (ตั้งใจ)
+    - ค่าที่เลือกเอง: `operation_receipts` PK = (account_id, request_key) กันใช้ request_key ของคนอื่น, `jobs` unique (kind, dedupe_key), ยังไม่มีเพดานจำนวนครั้งลองใหม่ (เพิ่มตอนทำ job runner)
   - [ ] P1-06d job pgTAP ใน `ci.yml` (เฉพาะ `main`) + ชื่อ GitHub Secrets ที่ผู้ใช้ต้องใส่
 - [ ] P1-07 **[effort สูง]** migration `0002_accounts` + `ensure_account()` + ทดสอบ (allowlist, ไม่เชื่อ user_metadata, anon ถูกปฏิเสธ) · (ต้องมี: kemi-dev)
 - [ ] P1-08 หน้าเว็บ: Supabase client, ล็อกอิน Google, callback, แยกหน้าตามบทบาท, หน้า A01 · (ต้องมี: Google OAuth + kemi-dev)

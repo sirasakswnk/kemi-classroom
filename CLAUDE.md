@@ -69,9 +69,12 @@
   - หน้าเว็บ: `npm --prefix web run dev | build | preview | test | lint | typecheck | format | format:check` (ติดตั้งครั้งแรก `npm --prefix web ci`)
   - เครื่องมือเว็บ: Vite 8, React 19, TypeScript 6 (strict), ESLint 10 (flat config), Prettier (ไม่มี `;`, single quote, กว้าง 100), Vitest 5 (environment `node` ถ้าต้องใช้ DOM ต้องขอเพิ่ม dependency)
   - Supabase CLI อยู่ใน `package.json` ที่ root เรียกด้วย `npx supabase …` (link กับ `kemi-dev` แล้ว)
-  - ฐานข้อมูล dev: `npx supabase db push` · สร้าง type: `npx supabase gen types typescript --linked`
+  - npm script ที่ root: `npm run db:start | db:reset | db:test | db:test:dev | db:push | db:advisors` (Postgres ในเครื่องต้องเปิด Docker Desktop ก่อน)
+  - ฐานข้อมูล dev: `npm run db:push` · สร้าง type: `npx supabase gen types typescript --linked`
   - รัน SQL กับ dev (ไม่มี `psql` ในเครื่อง): `npx supabase db query --linked -f <ไฟล์>.sql --output-format json` — ผ่าน Management API ในนาม `postgres`; ผลยาวให้รวมเป็นแถวเดียวด้วย `string_agg`/`concat_ws` · ตรวจ advisor: `npx supabase db advisors --linked`
-  - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/` (วิธีรันกำหนดในงาน P1-06)
+  - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/*.test.sql` คู่กับ migration ทุกไฟล์ — ขั้นตอน: `db:reset` → `db:test` (ในเครื่อง) ผ่านแล้วค่อย `db:push` → `db:test:dev`
+    - รูปแบบไฟล์: `begin; set local role postgres; create extension if not exists pgtap with schema extensions; set local search_path = extensions, public; select plan(N); … select * from finish(); rollback;` (บน cloud CLI ต่อด้วย role ชั่วคราวที่ไม่สืบทอดสิทธิ์ postgres จึงต้อง `set local role postgres`; CLI ลบ pgtap ทิ้งเองหลังรัน)
+    - เทสต์ที่พึ่งของเฉพาะ cloud (เช่น `public.rls_auto_enable()`) ใช้ `skip()` เมื่อไม่มีในเครื่อง
 
 ## 7. เกณฑ์ “งานเสร็จ”
 

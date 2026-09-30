@@ -1,6 +1,8 @@
 -- ทดสอบ 0001_base: schema private, default privileges, ตารางกลาง, ping()
 -- รูปแบบทุกไฟล์: begin → ติดตั้ง pgtap ใน transaction → ทดสอบ → rollback (ไม่เหลือร่องรอยบนฐานข้อมูล)
 begin;
+-- บน cloud CLI ต่อด้วย role ชั่วคราวที่ไม่สืบทอดสิทธิ์ของ postgres จึงสลับเป็น postgres ก่อน
+set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
 
@@ -168,7 +170,6 @@ select ok(
 -- ---------------------------------------------------------------------------
 -- default privileges: วัตถุที่ postgres สร้างใหม่ต้องไม่ให้สิทธิ์ anon/authenticated/PUBLIC เลย
 -- ---------------------------------------------------------------------------
-set local role postgres;
 create table public.p106_probe_t (id int);
 create table private.p106_probe_t (id int);
 create sequence public.p106_probe_s;
