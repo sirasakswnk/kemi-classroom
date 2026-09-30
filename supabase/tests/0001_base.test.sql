@@ -157,9 +157,12 @@ select throws_ok(
   $$ insert into private.maintenance_locks (name, expires_at) values ('backup', clock_timestamp() - interval '1 minute') $$,
   '23514', null, 'maintenance_locks ต้องหมดอายุหลังเวลาตั้งธง'
 );
-with r as (
+with acc as (
+  insert into public.accounts (provider, provider_subject) values ('google', 'p106-probe')
+  returning id
+), r as (
   insert into private.operation_receipts (account_id, request_key, operation, result)
-  values (gen_random_uuid(), gen_random_uuid(), 'probe', '{}'::jsonb)
+  select acc.id, gen_random_uuid(), 'probe', '{}'::jsonb from acc
   returning expires_at - created_at as ttl
 )
 select ok(
