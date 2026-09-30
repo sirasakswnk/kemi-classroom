@@ -65,8 +65,9 @@
 - เครื่องผู้ใช้เป็น Windows: สคริปต์ที่รันบนเครื่องเขียนเป็น Node (`.mjs`) หรือ npm script; สคริปต์ที่รันบน GitHub Actions ใช้ bash ได้
 - ข้อความภาษาไทยบนหน้าจอรวมไว้ที่ `web/src/copy/th.ts` ยึดถ้อยคำจาก UX_DESIGN/แบบ v2
 - git: งานของแต่ละระยะอยู่บน branch `phase-N` แล้ว merge เข้า `main` เมื่อผ่านตรวจรับของระยะและผู้ใช้ตกลง
-- คำสั่ง (ปรับให้ตรงเมื่อสร้างจริงในงาน P1-02 / P1-06):
-  - หน้าเว็บ: `npm --prefix web run dev | build | test | lint | typecheck`
+- คำสั่ง (ส่วนฐานข้อมูลปรับให้ตรงเมื่อสร้างจริงในงาน P1-06):
+  - หน้าเว็บ: `npm --prefix web run dev | build | preview | test | lint | typecheck | format | format:check` (ติดตั้งครั้งแรก `npm --prefix web ci`)
+  - เครื่องมือเว็บ: Vite 8, React 19, TypeScript 6 (strict), ESLint 10 (flat config), Prettier (ไม่มี `;`, single quote, กว้าง 100), Vitest 5 (environment `node` ถ้าต้องใช้ DOM ต้องขอเพิ่ม dependency)
   - ฐานข้อมูล dev: `supabase db push` (หลัง `supabase link` กับ `kemi-dev`) · สร้าง type: `supabase gen types typescript`
   - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/` (วิธีรันกำหนดในงาน P1-06)
 

@@ -6,8 +6,8 @@
 
 ## สถานะล่าสุด
 
-- ระยะปัจจุบัน: 0–1 (มี git repo แล้ว ยังไม่เริ่มเขียนโค้ด)
-- งานถัดไป: P1-02 (งานระยะ 1 ต่อจากนี้ทำบน branch `phase-1`)
+- ระยะปัจจุบัน: 1 (มีโครง `web/` แล้ว)
+- งานถัดไป: P1-05 (CI) → P1-06 → P1-07 ระหว่างรอยืนยันดีไซน์ (งานระยะ 1 ทำบน branch `phase-1`)
 - **P1-03 และ P1-04 (สี ฟอนต์ คอมโพเนนต์) รอผู้ใช้ยืนยันดีไซน์หน้าจอใหม่ก่อน** (ผู้ใช้กำลังออกแบบ) ระหว่างรอให้ทำ P1-05, P1-06, P1-07 ไปก่อนได้ — ถามผู้ใช้ก่อนเริ่ม P1-03 ทุกครั้งจนกว่าจะยืนยัน
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
@@ -23,7 +23,7 @@
 ## ระยะ 1 — โครงระบบและล็อกอิน
 
 - [x] P1-01 `git init`, `.gitignore` (node_modules, dist, `.env*`, `.work/`, `*.xlsx`, `*.csv`, dump/backup, `supabase/.temp`), README สั้น, commit เอกสารเดิม → 30 ก.ย. 2026: repo บน `main` (Node 24.20.0, Git 2.51); เพิ่ม `.gitattributes` บังคับ LF; `.gitignore` กันเพิ่ม `*.xls`, `*.pem`, `*.key` (ยกเว้น `.env.example`); ยังไม่มี remote
-- [ ] P1-02 scaffold `web/` (Vite + React + TS strict, ESLint, Prettier, Vitest, npm scripts) แล้วปรับคำสั่งใน CLAUDE.md ส่วน 6
+- [x] P1-02 scaffold `web/` (Vite + React + TS strict, ESLint, Prettier, Vitest, npm scripts) แล้วปรับคำสั่งใน CLAUDE.md ส่วน 6 → 30 ก.ย. 2026: create-vite `react-ts` (Vite 8.3, React 19.3, TS 6.0) template ใหม่ใช้ oxlint จึงเปลี่ยนเป็น ESLint 10 ตามแผน; `build.target` es2021+safari15 ([ข้อเสนอ]); ยังไม่ลง Router/Supabase/TanStack Query (ลงตอนใช้) และไม่ลง jsdom/testing-library — ทดสอบ React ด้วย `react-dom/server`; lint/typecheck/test/build/format:check ผ่าน
 - [ ] P1-03 `tokens.css` + ฟอนต์ Anuphan/Mitr + คอมโพเนนต์ Button, Card, Chip, Field จากแบบ v2
 - [ ] P1-04 คอมโพเนนต์ Sheet, Modal, Toast, Stepper + หน้าแสดงคอมโพเนนต์ (เฉพาะโหมดพัฒนา)
 - [ ] P1-05 `.github/workflows/ci.yml` (lint, typecheck, test, build)
