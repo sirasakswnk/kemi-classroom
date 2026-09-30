@@ -7,16 +7,16 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 0–1 (มี git repo แล้ว ยังไม่เริ่มเขียนโค้ด)
-- งานถัดไป: P0-01 → P1-02 (งานระยะ 1 ต่อจากนี้ทำบน branch `phase-1`)
+- งานถัดไป: P1-02 (งานระยะ 1 ต่อจากนี้ทำบน branch `phase-1`)
 - **P1-03 และ P1-04 (สี ฟอนต์ คอมโพเนนต์) รอผู้ใช้ยืนยันดีไซน์หน้าจอใหม่ก่อน** (ผู้ใช้กำลังออกแบบ) ระหว่างรอให้ทำ P1-05, P1-06, P1-07 ไปก่อนได้ — ถามผู้ใช้ก่อนเริ่ม P1-03 ทุกครั้งจนกว่าจะยืนยัน
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
-- รอผู้ใช้: บัญชี Google ของผู้ดูแลและอีเมลครู · Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md`
+- รอผู้ใช้: บัญชี Google ของผู้ดูแลและอีเมลครู · Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
 - ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค/endpoint — · GitHub repo — · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
 
 ## ระยะ 0 — เตรียมบริการ (ผู้ใช้เปิดบัญชีเอง Claude ช่วยเตรียม)
 
-- [ ] P0-01 สคริปต์ `ops/b2-latency.mjs` วัดเวลาเชื่อมต่อไปยัง endpoint S3 ของทุกภูมิภาค B2 ให้ผู้ใช้รันที่ Wi-Fi โรงเรียนและเน็ตมือถือ
+- [x] P0-01 สคริปต์ `ops/b2-latency.mjs` วัดเวลาเชื่อมต่อไปยัง endpoint S3 ของทุกภูมิภาค B2 ให้ผู้ใช้รันที่ Wi-Fi โรงเรียนและเน็ตมือถือ → 30 ก.ย. 2026: Node built-in ล้วน วัด TCP/TLS/ตอบแรก (HEAD) มัธยฐานหลายรอบ + บรรทัด “สรุป” ให้คัดลอก; ภูมิภาคที่สมัครได้ us-west-004, us-east-005, eu-central-003, ca-east-006 (+ us-west-001/002 เก่าไว้เทียบ); ทดสอบที่เน็ตบ้านผู้พัฒนา 3 รอบ: EU Central 747, CA East 759, US East 1039, US West 1701 ms — ค่าแกว่งมาก ต้องวัดหลายครั้ง
 - [x] P0-02 เช็กลิสต์สมัคร `ops/SIGNUP_CHECKLIST.md` ตาม BUILD_PLAN ส่วน 7 + รายการตรวจ 8 ข้อของ SYSTEM_SPEC ส่วน 12 (ผู้ใช้ทำตาม) → 30 ก.ย. 2026: เขียนจาก Claude app ก่อนสร้าง git; ผู้ใช้กำลังทำตาม
 - [ ] P0-03 บันทึกผลตรวจตอนสมัครและค่าที่ไม่ใช่ความลับลง “สถานะล่าสุด” และ SYSTEM_SPEC ส่วน 12 · (ต้องมี: ผลจากผู้ใช้)
 
