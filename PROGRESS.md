@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 1 (มีโครง `web/` แล้ว)
-- งานถัดไป: P1-03 → P1-04 → P1-08 (งานระยะ 1 ทำบน branch `phase-1`) · ค้างตรวจ: push ที่แก้แค่เว็บครั้งถัดไป ดูว่า job `db` ถูกข้ามจริงบน GitHub · P1-08: ใส่ teacher + allowlist ของ kemi-dev ด้วย SQL **ถามผู้ใช้ก่อน** (ห้ามมีอีเมลจริงในไฟล์ที่ commit)
+- งานถัดไป: P1-04 → P1-08 (งานระยะ 1 ทำบน branch `phase-1`) · P2-01a ทำได้ก่อน/พร้อม P2-01 · P1-08: ใส่ teacher + allowlist ของ kemi-dev ด้วย SQL **ถามผู้ใช้ก่อน** (ห้ามมีอีเมลจริงในไฟล์ที่ commit)
 - **ข้อสรุปฟังก์ชันช่วยของ RLS (ผู้ใช้ตัดสิน 30 ก.ย.):** อยู่ใน `private` ไม่ย้ายไป `public` (ไม่งั้นกลายเป็น `/rest/v1/rpc/…` ที่นักเรียนเรียกเองได้) — SECURITY DEFINER + GRANT EXECUTE ให้ `authenticated` รายฟังก์ชัน, **ไม่ GRANT USAGE บน `private`** (policy ต้องการแค่ EXECUTE; เรียกตรงถูกปฏิเสธ “permission denied for schema private”), ใน policy เขียน `(select private.current_account())`; P1-07 ต้องมี pgTAP บน `kemi-dev` (PG17) ยืนยันว่า policy ทำงานโดยไม่มี USAGE และ `authenticated` เรียกฟังก์ชันช่วยตรง ๆ ไม่ได้ (TECHNICAL_DESIGN 3.1 ข้อ 5, BUILD_PLAN 4.1 ข้อ 3)
 - **ดีไซน์ (ผู้ใช้ตัดสิน 30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`) ตามเดิม — P1-03/P1-04 ไม่ต้องรอแล้ว
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
@@ -25,7 +25,7 @@
 
 - [x] P1-01 `git init`, `.gitignore` (node_modules, dist, `.env*`, `.work/`, `*.xlsx`, `*.csv`, dump/backup, `supabase/.temp`), README สั้น, commit เอกสารเดิม → 30 ก.ย. 2026: repo บน `main` (Node 24.20.0, Git 2.51); เพิ่ม `.gitattributes` บังคับ LF; `.gitignore` กันเพิ่ม `*.xls`, `*.pem`, `*.key` (ยกเว้น `.env.example`); ยังไม่มี remote
 - [x] P1-02 scaffold `web/` (Vite + React + TS strict, ESLint, Prettier, Vitest, npm scripts) แล้วปรับคำสั่งใน CLAUDE.md ส่วน 6 → 30 ก.ย. 2026: create-vite `react-ts` (Vite 8.3, React 19.3, TS 6.0) template ใหม่ใช้ oxlint จึงเปลี่ยนเป็น ESLint 10 ตามแผน; `build.target` es2021+safari15 ([ข้อเสนอ]); ยังไม่ลง Router/Supabase/TanStack Query (ลงตอนใช้) และไม่ลง jsdom/testing-library — ทดสอบ React ด้วย `react-dom/server`; lint/typecheck/test/build/format:check ผ่าน
-- [ ] P1-03 `tokens.css` + ฟอนต์ Anuphan/Mitr + คอมโพเนนต์ Button, Card, Chip, Field จากแบบ v2
+- [x] P1-03 `tokens.css` + ฟอนต์ Anuphan/Mitr + คอมโพเนนต์ Button, Card, Chip, Field จากแบบ v2 → 30 ก.ย. 2026: `styles/tokens.css` (สีตาม UX 13 + มุม/ระยะ/เงา [ข้อเสนอ]) + `styles/base.css`; ฟอนต์ `@fontsource` (Anuphan 400/500/600, Mitr 500) รวมใน build ไม่เรียก Google Fonts; `ui/` Button (primary/soft/ghost/gold/danger, sm, block, icon), Card (padding ยืดตามจอ), Chip (7 โทน + ไอคอน), Field + Input/Textarea (ผูก label/hint/error/aria อัตโนมัติ) ด้วย CSS Modules + `lucide-react`; hover อยู่ใน `(hover: hover)`, ปุ่มเล็ก 44 px เมื่อ `pointer: coarse`; ตัวอักษรหน่วย rem, เนื้อหา/ช่องกรอก 16 px (แบบ v2 ใช้ 15 px — ใช้ 16 ตาม UX 13 และกัน iOS ซูม); หน้า DevGallery เฉพาะโหมดพัฒนา (ไม่อยู่ใน build) — Vitest 8 ข้อ, lint/typecheck/format/build ผ่าน; Playwright (ติดตั้งใน scratchpad ไม่อยู่ใน repo) ที่ 390/820/1180/1280: console ไม่มี error/warning, ไม่มีคำขอออกนอกเว็บ, ไม่ล้นแนวนอน, ฟอนต์โหลดครบ, 1/2/3 คอลัมน์ตามจอ
 - [ ] P1-04 คอมโพเนนต์ Sheet, Modal, Toast, Stepper + หน้าแสดงคอมโพเนนต์ (เฉพาะโหมดพัฒนา)
 - [x] P1-05 `.github/workflows/ci.yml` (lint, typecheck, test, build) → 30 ก.ย. 2026: job `web` (Node 24, checkout/setup-node v7, cache npm) รัน `npm ci` → lint → format:check → typecheck → test → build; ข้ามเมื่อแก้แค่ `*.md`/`exports/` และยกเลิกรอบเก่าเมื่อ push ซ้ำ (ประหยัดนาที); ตรวจ YAML + รันลำดับเดียวกันบนเครื่องผ่าน — CI รอบแรกบน GitHub (`phase-1` @ f321803) ผ่านใน 36 วินาที (checkout 404 ครั้งแรกหลัง push ใหม่แล้ว retry ผ่านเอง); job pgTAP บน `main` เพิ่มใน P1-06
 - [x] P1-06 **[effort สูง]** `supabase init` + migration `0001_base` + วิธีรัน pgTAP + ทดสอบพื้นฐาน · (ต้องมี: Supabase `kemi-dev`) · ตอนสร้างโปรเจกต์ผู้ใช้ตั้ง **ปิด Automatically expose new tables** และ **เปิด automatic RLS** ตามคำแนะนำ (ผู้ใช้ยืนยันแล้ว 30 ก.ย.) — ยังตรวจด้วย SQL ก่อน (event trigger และ default privileges) และเพราะตารางใหม่ไม่ได้สิทธิ์อัตโนมัติ migration ต้อง GRANT ให้ `authenticated` เองทุกตาราง/ฟังก์ชันที่หน้าเว็บใช้
@@ -45,6 +45,8 @@
 ## ระยะ 2 — บัญชี รายชื่อ ห้อง
 
 - [ ] P2-01 migration `0003` ส่วนแรก: terms, term_control, students, roster_entries + RPC นำเข้า + ทดสอบ
+  - โน้ต: policy ฝั่งครูใน 0003 ต้องใช้ฟังก์ชันช่วยใน `private` ที่ **คืน boolean** (เช่น `private.is_teacher_or_admin()`) แบบ SECURITY DEFINER + GRANT EXECUTE ให้ authenticated — `require_teacher()` ใช้ใน policy ไม่ได้เพราะ raise error
+  - [ ] P2-01a **[effort สูง]** (ทำหลัง P1-03 หรือพร้อม P2-01) pgTAP เทียบรายชื่อฟังก์ชันที่ `authenticated`/`anon` execute ได้ใน public/private กับรายการที่ตั้งใจไว้ ล้มเมื่อมีตัวเกิน (TECHNICAL_BUILD_PLAN §11)
 - [ ] P2-02 T05 นำเข้า Excel (ตัวอย่างก่อนบันทึก ตรวจซ้ำ ศูนย์นำหน้า) · (ต้องมี: ไฟล์ Excel ตัวอย่าง)
 - [ ] P2-03 **[effort สูง]** `search_roster` + `claim_identity` (L3, rate limit) + ทดสอบชิงชื่อพร้อมกัน
 - [ ] P2-04 A02 ป๊อปอัปเลือกชื่อ
