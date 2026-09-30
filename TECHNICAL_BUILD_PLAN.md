@@ -93,7 +93,7 @@ Classroom/                     # root ของ repo
 
 1. ทุกตารางใน `public` เปิด RLS; ไม่มี policy ให้ `anon`; ใน migration แรกตั้ง `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (แบบทั้งระบบ เพราะ Postgres ให้ `PUBLIC` execute ทุกฟังก์ชันเป็นค่าเริ่มต้น และการ REVOKE เฉพาะ schema ลบสิทธิ์ระดับทั้งระบบไม่ได้) และ `ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated` (ย้อนค่าที่ Supabase ให้ไว้รายschema) แล้ว GRANT รายฟังก์ชันตามข้อ 3 และยังตรวจซ้ำด้วยรายการในส่วน 11; ตาราง/sequence ใหม่ถอนสิทธิ์ทั้งหมดจาก `anon`, `authenticated` (รวมสิทธิ์ย่อยอย่าง TRUNCATE/REFERENCES/TRIGGER ที่ Supabase ยังให้แม้ปิด auto-expose) แล้ว GRANT เฉพาะ SELECT ที่หน้าเว็บอ่านผ่าน RLS; ถอน EXECUTE ของ `public.rls_auto_enable()` จาก `anon`, `authenticated`; ห้าม GRANT USAGE บน schema `private` ให้ `anon`/`authenticated`; ตาราง (ถ้ามี) ใน `private` เปิด RLS เองเพราะ automatic RLS ทำเฉพาะ `public` (ผลตรวจ `kemi-dev` 30 ก.ย. 2026)
 2. หน้าเว็บ **อ่าน** ผ่าน SELECT policy หรือ RPC อ่าน และ **เขียนผ่าน RPC เท่านั้น** (ไม่มี INSERT/UPDATE/DELETE policy)
-3. RPC ที่หน้าเว็บเรียกเป็น `SECURITY DEFINER`, `SET search_path = ''`, อ้างชื่อเต็ม และตรวจสิทธิ์เองจาก `private.current_account()`; GRANT ให้ `authenticated` เท่านั้น; RPC ที่ Edge Function เรียกด้วย service role (เช่น `finalize_attachment`) GRANT ให้ `service_role` เท่านั้น
+3. RPC ที่หน้าเว็บเรียกเป็น `SECURITY DEFINER`, `SET search_path = ''`, อ้างชื่อเต็ม และตรวจสิทธิ์เองจาก `private.current_account()`; GRANT ให้ `authenticated` เท่านั้น; ฟังก์ชันช่วยใน `private` ที่ RLS policy เรียกเป็น `SECURITY DEFINER` + GRANT EXECUTE ให้ `authenticated` รายฟังก์ชัน โดยไม่ GRANT USAGE บน `private` (policy ต้องการแค่ EXECUTE — TECHNICAL_DESIGN 3.1 ข้อ 5) และใน policy เขียนเป็น `(select private.current_account())` ให้คำนวณครั้งเดียวต่อคำสั่ง ไม่ใช่ทุกแถว; pgTAP ต้องมีข้อยืนยันว่า `authenticated` เรียกฟังก์ชันช่วยตรงๆ ไม่ได้; RPC ที่ Edge Function เรียกด้วย service role (เช่น `finalize_attachment`) GRANT ให้ `service_role` เท่านั้น
 4. เวลาเก็บเป็น `timestamptz` (UTC) และตัดสินด้วย `clock_timestamp()` หลังล็อกแถว; คะแนนและโทเคนเป็นจำนวนเต็ม คำนวณหักสายด้วย `(raw * (100 - pct) + 99) / 100`
 5. ลำดับล็อก: `term_control` → `assignments` → `submissions` → `wallets`; ห้ามเรียกบริการภายนอกระหว่างถือล็อก
 6. คำสั่งที่เสี่ยงกดซ้ำรับ `p_request_key uuid` และบันทึกใน `operation_receipts` (อายุ 24 ชม.) คำขอซ้ำคืนผลเดิม
@@ -240,8 +240,8 @@ grant execute on function public.grade_submission to authenticated;
 
 | workflow | เมื่อไร | ทำอะไร |
 | --- | --- | --- |
-| `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; branch `main` รัน pgTAP กับ `kemi-dev` |
-| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; prod รันหลังผ่าน dev แล้วเท่านั้น |
+| `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; เมื่อแก้ `supabase/**` รัน pgTAP กับฐานข้อมูลชั่วคราวใน runner (Supabase CLI เปิด Postgres ใน Docker แล้วใส่ migration ของ commit นั้น) — ไม่ใช้ secret และไม่แตะ `kemi-dev` |
+| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น |
 | `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง | สำรองตาม TECHNICAL_DESIGN ส่วน 12 |
 | `restore-test.yml` | กดรันเอง เลือกจุดกู้คืนและชุดไฟล์ | กู้เข้า Supabase ชั่วคราวใน runner + ไฟล์ใน `kemi-dev-files` แล้วตรวจ ลบทิ้ง และบันทึกผลลง prod |
 
@@ -275,7 +275,7 @@ grant execute on function public.grade_submission to authenticated;
 | ชั้น | เครื่องมือ | ครอบคลุม |
 | --- | --- | --- |
 | หน่วย | Vitest | สูตรคะแนนชุดตัวอย่างเดียวกับฐานข้อมูล (ไฟล์ JSON ร่วม), การแปลงเวลาไทย, ชื่อปิดบางส่วน, ตรวจไฟล์ก่อนอัปโหลด, ชื่อไฟล์ PDF, CSV |
-| ฐานข้อมูล | pgTAP บน Supabase ในเครื่อง (Docker) เป็นหลัก และกับ `kemi-dev` ผ่าน `supabase db query --linked` ทุกไฟล์รูปแบบ `begin; create extension if not exists pgtap …; … rollback;` | ตารางสิทธิ์ทุกบทบาท (นักเรียน/ครู/ผู้ดูแลในและนอกโหมด/anon), ทุก RPC ตามกติกา, ตารางรับการส่ง 7 แถว, I1–I5, K1–K6, L2–L6 |
+| ฐานข้อมูล | pgTAP บน Supabase ในเครื่อง (Docker) เป็นหลัก และกับ `kemi-dev` ผ่าน `supabase db query --linked` ทุกไฟล์รูปแบบ `begin; create extension if not exists pgtap …; … rollback;`; CI รันชุดเดียวกันในฐานข้อมูลชั่วคราวใน runner (ส่วน 8) | ตารางสิทธิ์ทุกบทบาท (นักเรียน/ครู/ผู้ดูแลในและนอกโหมด/anon), ทุก RPC ตามกติกา, ตารางรับการส่ง 7 แถว, I1–I5, K1–K6, L2–L6 |
 | พร้อมกัน | สคริปต์ Node เปิดหลาย connection | ชิงชื่อเดียวกัน, สุ่มสองแท็บ, ตรวจซ้ำพร้อมกัน, ตรวจชนเริ่มเทอม, แก้รางวัลชนส่งแรก |
 | หน้าเว็บ | Playwright (มือถือ 390 px, แท็บเล็ต 820 × 1180 และ 1180 × 820 แบบสัมผัส, คอม 1280 px) | เส้นทางหลักทุกบทบาทบน preview ของ dev |
 | อุปกรณ์จริง | ทดสอบมือ | iPhone Safari (HEIC), Android Chrome, iPad, มือถือรุ่นเก่าหน่วยความจำน้อย, Wi-Fi โรงเรียน |
