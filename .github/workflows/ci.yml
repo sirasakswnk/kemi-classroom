@@ -1,0 +1,37 @@
+# ตรวจหน้าเว็บทุก push/PR — TECHNICAL_BUILD_PLAN ส่วน 8
+# job pgTAP กับ kemi-dev (เฉพาะ branch main) เพิ่มในงาน P1-06
+name: ci
+
+on:
+  push:
+    paths-ignore: ['**.md', 'exports/**']
+  pull_request:
+    paths-ignore: ['**.md', 'exports/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

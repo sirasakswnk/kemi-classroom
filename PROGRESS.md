@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 1 (มีโครง `web/` แล้ว)
-- งานถัดไป: P1-05 (CI) → P1-06 → P1-07 ระหว่างรอยืนยันดีไซน์ (งานระยะ 1 ทำบน branch `phase-1`)
+- งานถัดไป: P1-06 → P1-07 ระหว่างรอยืนยันดีไซน์ (งานระยะ 1 ทำบน branch `phase-1`)
 - **P1-03 และ P1-04 (สี ฟอนต์ คอมโพเนนต์) รอผู้ใช้ยืนยันดีไซน์หน้าจอใหม่ก่อน** (ผู้ใช้กำลังออกแบบ) ระหว่างรอให้ทำ P1-05, P1-06, P1-07 ไปก่อนได้ — ถามผู้ใช้ก่อนเริ่ม P1-03 ทุกครั้งจนกว่าจะยืนยัน
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
@@ -26,7 +26,7 @@
 - [x] P1-02 scaffold `web/` (Vite + React + TS strict, ESLint, Prettier, Vitest, npm scripts) แล้วปรับคำสั่งใน CLAUDE.md ส่วน 6 → 30 ก.ย. 2026: create-vite `react-ts` (Vite 8.3, React 19.3, TS 6.0) template ใหม่ใช้ oxlint จึงเปลี่ยนเป็น ESLint 10 ตามแผน; `build.target` es2021+safari15 ([ข้อเสนอ]); ยังไม่ลง Router/Supabase/TanStack Query (ลงตอนใช้) และไม่ลง jsdom/testing-library — ทดสอบ React ด้วย `react-dom/server`; lint/typecheck/test/build/format:check ผ่าน
 - [ ] P1-03 `tokens.css` + ฟอนต์ Anuphan/Mitr + คอมโพเนนต์ Button, Card, Chip, Field จากแบบ v2
 - [ ] P1-04 คอมโพเนนต์ Sheet, Modal, Toast, Stepper + หน้าแสดงคอมโพเนนต์ (เฉพาะโหมดพัฒนา)
-- [ ] P1-05 `.github/workflows/ci.yml` (lint, typecheck, test, build)
+- [x] P1-05 `.github/workflows/ci.yml` (lint, typecheck, test, build) → 30 ก.ย. 2026: job `web` (Node 24, checkout/setup-node v7, cache npm) รัน `npm ci` → lint → format:check → typecheck → test → build; ข้ามเมื่อแก้แค่ `*.md`/`exports/` และยกเลิกรอบเก่าเมื่อ push ซ้ำ (ประหยัดนาที); ตรวจ YAML + รันลำดับเดียวกันบนเครื่องผ่าน — **ยังไม่ได้รันบน GitHub จริง (ยังไม่มี remote)**; job pgTAP บน `main` เพิ่มใน P1-06
 - [ ] P1-06 **[effort สูง]** `supabase init` + migration `0001_base` + วิธีรัน pgTAP + ทดสอบพื้นฐาน · (ต้องมี: Supabase `kemi-dev`) · ตอนสร้างโปรเจกต์ผู้ใช้ตั้ง **ปิด Automatically expose new tables** และ **เปิด automatic RLS** ตามคำแนะนำ (ผู้ใช้ยืนยันแล้ว 30 ก.ย.) — ยังตรวจด้วย SQL ก่อน (event trigger และ default privileges) และเพราะตารางใหม่ไม่ได้สิทธิ์อัตโนมัติ migration ต้อง GRANT ให้ `authenticated` เองทุกตาราง/ฟังก์ชันที่หน้าเว็บใช้
 - [ ] P1-07 **[effort สูง]** migration `0002_accounts` + `ensure_account()` + ทดสอบ (allowlist, ไม่เชื่อ user_metadata, anon ถูกปฏิเสธ) · (ต้องมี: kemi-dev)
 - [ ] P1-08 หน้าเว็บ: Supabase client, ล็อกอิน Google, callback, แยกหน้าตามบทบาท, หน้า A01 · (ต้องมี: Google OAuth + kemi-dev)
