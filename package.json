@@ -12,6 +12,7 @@
     "db:test": "supabase test db --local",
     "db:test:dev": "supabase test db --linked",
     "db:push": "supabase db push",
-    "db:advisors": "supabase db advisors --linked --type security"
+    "db:advisors": "supabase db advisors --linked --type security",
+    "db:types": "supabase gen types typescript --linked --schema public > web/src/lib/database.types.ts"
   }
 }

@@ -1,0 +1,117 @@
+import { createClient } from '@supabase/supabase-js'
+import { th } from '../copy/th'
+import type { Database } from './database.types'
+
+// ---------------------------------------------------------------------------
+// Supabase client — ใช้ publishable key เท่านั้น (ห้าม service role ในเว็บ: CLAUDE.md ส่วน 5)
+// PKCE: Google ส่งกลับมาที่ /auth/callback?code=… แล้วหน้า callback แลก code เป็น session เอง
+// (detectSessionInUrl: false เพื่อไม่ให้ client แลกซ้ำตอนเริ่มทำงาน)
+// ---------------------------------------------------------------------------
+const url = import.meta.env.VITE_SUPABASE_URL
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+if (!url || !key) {
+  throw new Error('ไม่พบ VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY — ดู web/.env.example')
+}
+
+export const supabase = createClient<Database>(url, key, {
+  auth: {
+    flowType: 'pkce',
+    detectSessionInUrl: false,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+})
+
+// ---------------------------------------------------------------------------
+// แปลงรหัสข้อผิดพลาดจากเซิร์ฟเวอร์เป็นข้อความไทย — UX_DESIGN 7.1
+// RPC แจ้งข้อผิดพลาดตามกติกาด้วย ERRCODE P0001 และ MESSAGE = รหัส (TECHNICAL_BUILD_PLAN 4.1 ข้อ 7)
+// ---------------------------------------------------------------------------
+export const ERROR_CODES = [
+  'not_authenticated',
+  'provider_not_allowed',
+  'account_conflict',
+  'account_required',
+  'forbidden',
+  'admin_mode_required',
+  'rate_limited',
+  'storage_full',
+  'term_ended',
+  'score_locked',
+  'reason_required',
+  'stale_revision',
+] as const
+
+export type ErrorCode = (typeof ERROR_CODES)[number]
+
+/** สิ่งที่หน้าเว็บต้องทำต่อ (คอลัมน์ขวาของ UX 7.1) */
+export type ErrorAction =
+  | 'relogin' // พากลับ A01 แล้วกลับหน้าเดิมหลังล็อกอิน (ไม่แสดงเป็นข้อผิดพลาด)
+  | 'sign_out' // ออกจากระบบให้
+  | 'switch_account' // แสดงอีเมลที่ล็อกอินอยู่ + ลิงก์ “เปลี่ยนบัญชี”
+  | 'ensure_and_retry' // เรียก ensure_account() แล้วลองคำสั่งเดิมอีก 1 ครั้ง (ไม่แสดง)
+  | 'go_home_reload_role' // ปุ่มกลับหน้าแรก + โหลดบทบาทใหม่
+  | 'enter_admin_mode' // ปุ่มเข้าโหมดผู้ดูแล
+  | 'retry_later'
+  | 'storage_full_notice' // กล่องข้อความ J10.3
+  | 'reload' // โหลดหน้าใหม่ให้ตรงสถานะ
+  | 'field' // แสดงใต้ช่องที่เกี่ยวข้อง
+  | 'focus_field' // แสดงใต้ช่องแล้วย้ายโฟกัสไปที่ช่อง
+  | 'reload_latest' // ปุ่ม “โหลดข้อมูลล่าสุด” โดยเก็บสิ่งที่พิมพ์ไว้
+  | 'fallback' // ข้อความสำรอง + รหัสอ้างอิงตัวเล็ก
+
+export interface AppError {
+  code: ErrorCode | 'unknown'
+  /** ข้อความไทยที่แสดง (สำหรับ relogin คือข้อความบน A01; ensure_and_retry คือข้อความสำรองถ้าลองซ้ำแล้วยังไม่ได้) */
+  message: string
+  action: ErrorAction
+  /** รหัสอ้างอิงตัวเล็ก เฉพาะข้อความสำรอง */
+  ref: string | null
+}
+
+const ACTIONS: Record<ErrorCode, ErrorAction> = {
+  not_authenticated: 'relogin',
+  provider_not_allowed: 'sign_out',
+  account_conflict: 'switch_account',
+  account_required: 'ensure_and_retry',
+  forbidden: 'go_home_reload_role',
+  admin_mode_required: 'enter_admin_mode',
+  rate_limited: 'retry_later',
+  storage_full: 'storage_full_notice',
+  term_ended: 'reload',
+  score_locked: 'field',
+  reason_required: 'focus_field',
+  stale_revision: 'reload_latest',
+}
+
+const isErrorCode = (value: unknown): value is ErrorCode =>
+  typeof value === 'string' && (ERROR_CODES as readonly string[]).includes(value)
+
+const field = (error: unknown, name: string): unknown =>
+  typeof error === 'object' && error !== null ? (error as Record<string, unknown>)[name] : undefined
+
+// รหัสอ้างอิงสั้น ๆ สำหรับแจ้งครู/ผู้ดูแล — ไม่ใส่ข้อความยาวหรือข้อมูลส่วนตัว
+function referenceOf(error: unknown): string {
+  const code = field(error, 'code')
+  if (typeof code === 'string' && code) {
+    const message = field(error, 'message')
+    return code === 'P0001' && typeof message === 'string' ? `P0001:${message.slice(0, 40)}` : code
+  }
+  if (error instanceof TypeError) return 'network'
+  const name = field(error, 'name')
+  return typeof name === 'string' && name ? name : 'unknown'
+}
+
+export function toAppError(error: unknown): AppError {
+  const message = field(error, 'message')
+  if (field(error, 'code') === 'P0001' && isErrorCode(message)) {
+    const code = message
+    const text = code === 'account_required' ? th.errors.fallback : th.errors[code]
+    return { code, message: text, action: ACTIONS[code], ref: null }
+  }
+  return {
+    code: 'unknown',
+    message: th.errors.fallback,
+    action: 'fallback',
+    ref: referenceOf(error),
+  }
+}
