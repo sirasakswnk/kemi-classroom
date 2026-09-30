@@ -7,8 +7,9 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 1 (มีโครง `web/` แล้ว)
-- งานถัดไป: P1-06d → P1-07 ระหว่างรอยืนยันดีไซน์ · **ก่อน P1-07 ต้องตกลงกับผู้ใช้:** RLS policy ที่เรียกฟังก์ชันใน `private` ต้องให้ `authenticated` มี USAGE บน `private` ซึ่งขัดกฎห้าม USAGE → เสนอให้ฟังก์ชันช่วยที่ policy ใช้อยู่ใน `public` (SECURITY DEFINER, GRANT `authenticated`) (งานระยะ 1 ทำบน branch `phase-1`)
-- **P1-03 และ P1-04 (สี ฟอนต์ คอมโพเนนต์) รอผู้ใช้ยืนยันดีไซน์หน้าจอใหม่ก่อน** (ผู้ใช้กำลังออกแบบ) ระหว่างรอให้ทำ P1-05, P1-06, P1-07 ไปก่อนได้ — ถามผู้ใช้ก่อนเริ่ม P1-03 ทุกครั้งจนกว่าจะยืนยัน
+- งานถัดไป: P1-06d → P1-07 (งานระยะ 1 ทำบน branch `phase-1`)
+- **ข้อสรุปฟังก์ชันช่วยของ RLS (ผู้ใช้ตัดสิน 30 ก.ย.):** อยู่ใน `private` ไม่ย้ายไป `public` (ไม่งั้นกลายเป็น `/rest/v1/rpc/…` ที่นักเรียนเรียกเองได้) — SECURITY DEFINER + GRANT EXECUTE ให้ `authenticated` รายฟังก์ชัน, **ไม่ GRANT USAGE บน `private`** (policy ต้องการแค่ EXECUTE; เรียกตรงถูกปฏิเสธ “permission denied for schema private”), ใน policy เขียน `(select private.current_account())`; P1-07 ต้องมี pgTAP บน `kemi-dev` (PG17) ยืนยันว่า policy ทำงานโดยไม่มี USAGE และ `authenticated` เรียกฟังก์ชันช่วยตรง ๆ ไม่ได้ (TECHNICAL_DESIGN 3.1 ข้อ 5, BUILD_PLAN 4.1 ข้อ 3)
+- **ดีไซน์ (ผู้ใช้ตัดสิน 30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`) ตามเดิม — P1-03/P1-04 ไม่ต้องรอแล้ว
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
 - รอผู้ใช้: บัญชี Google ของผู้ดูแลและอีเมลครู · Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
