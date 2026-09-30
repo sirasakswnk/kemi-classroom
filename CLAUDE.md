@@ -68,7 +68,9 @@
 - คำสั่ง (ส่วนฐานข้อมูลปรับให้ตรงเมื่อสร้างจริงในงาน P1-06):
   - หน้าเว็บ: `npm --prefix web run dev | build | preview | test | lint | typecheck | format | format:check` (ติดตั้งครั้งแรก `npm --prefix web ci`)
   - เครื่องมือเว็บ: Vite 8, React 19, TypeScript 6 (strict), ESLint 10 (flat config), Prettier (ไม่มี `;`, single quote, กว้าง 100), Vitest 5 (environment `node` ถ้าต้องใช้ DOM ต้องขอเพิ่ม dependency)
-  - ฐานข้อมูล dev: `supabase db push` (หลัง `supabase link` กับ `kemi-dev`) · สร้าง type: `supabase gen types typescript`
+  - Supabase CLI อยู่ใน `package.json` ที่ root เรียกด้วย `npx supabase …` (link กับ `kemi-dev` แล้ว)
+  - ฐานข้อมูล dev: `npx supabase db push` · สร้าง type: `npx supabase gen types typescript --linked`
+  - รัน SQL กับ dev (ไม่มี `psql` ในเครื่อง): `npx supabase db query --linked -f <ไฟล์>.sql --output-format json` — ผ่าน Management API ในนาม `postgres`; ผลยาวให้รวมเป็นแถวเดียวด้วย `string_agg`/`concat_ws` · ตรวจ advisor: `npx supabase db advisors --linked`
   - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/` (วิธีรันกำหนดในงาน P1-06)
 
 ## 7. เกณฑ์ “งานเสร็จ”
