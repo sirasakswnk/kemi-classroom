@@ -1,0 +1,9 @@
+{
+  "name": "kemi-classroom",
+  "private": true,
+  "description": "เครื่องมือระดับ repo (Supabase CLI) — หน้าเว็บอยู่ใน web/",
+  "type": "module",
+  "devDependencies": {
+    "supabase": "^2.118.0"
+  }
+}

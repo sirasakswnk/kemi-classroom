@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 1 (มีโครง `web/` แล้ว)
-- งานถัดไป: P1-06 → P1-07 ระหว่างรอยืนยันดีไซน์ (งานระยะ 1 ทำบน branch `phase-1`)
+- งานถัดไป: P1-06b (รอผู้ใช้ login + link) → P1-06c → P1-06d → P1-07 ระหว่างรอยืนยันดีไซน์ (งานระยะ 1 ทำบน branch `phase-1`)
 - **P1-03 และ P1-04 (สี ฟอนต์ คอมโพเนนต์) รอผู้ใช้ยืนยันดีไซน์หน้าจอใหม่ก่อน** (ผู้ใช้กำลังออกแบบ) ระหว่างรอให้ทำ P1-05, P1-06, P1-07 ไปก่อนได้ — ถามผู้ใช้ก่อนเริ่ม P1-03 ทุกครั้งจนกว่าจะยืนยัน
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
@@ -28,6 +28,10 @@
 - [ ] P1-04 คอมโพเนนต์ Sheet, Modal, Toast, Stepper + หน้าแสดงคอมโพเนนต์ (เฉพาะโหมดพัฒนา)
 - [x] P1-05 `.github/workflows/ci.yml` (lint, typecheck, test, build) → 30 ก.ย. 2026: job `web` (Node 24, checkout/setup-node v7, cache npm) รัน `npm ci` → lint → format:check → typecheck → test → build; ข้ามเมื่อแก้แค่ `*.md`/`exports/` และยกเลิกรอบเก่าเมื่อ push ซ้ำ (ประหยัดนาที); ตรวจ YAML + รันลำดับเดียวกันบนเครื่องผ่าน — CI รอบแรกบน GitHub (`phase-1` @ f321803) ผ่านใน 36 วินาที (checkout 404 ครั้งแรกหลัง push ใหม่แล้ว retry ผ่านเอง); job pgTAP บน `main` เพิ่มใน P1-06
 - [ ] P1-06 **[effort สูง]** `supabase init` + migration `0001_base` + วิธีรัน pgTAP + ทดสอบพื้นฐาน · (ต้องมี: Supabase `kemi-dev`) · ตอนสร้างโปรเจกต์ผู้ใช้ตั้ง **ปิด Automatically expose new tables** และ **เปิด automatic RLS** ตามคำแนะนำ (ผู้ใช้ยืนยันแล้ว 30 ก.ย.) — ยังตรวจด้วย SQL ก่อน (event trigger และ default privileges) และเพราะตารางใหม่ไม่ได้สิทธิ์อัตโนมัติ migration ต้อง GRANT ให้ `authenticated` เองทุกตาราง/ฟังก์ชันที่หน้าเว็บใช้
+  - [x] P1-06a Supabase CLI + `supabase init` → 30 ก.ย. 2026: CLI 2.118.0 เป็น devDependency ใน `package.json` ที่ root (แยกจาก `web/` เพื่อไม่ให้ CI/Pages โหลด CLI) เรียกด้วย `npx supabase …`; `config.toml` ตั้ง `project_id = "kemi-classroom"`, Postgres 17
+  - [ ] P1-06b ผู้ใช้ `npx supabase login` + `npx supabase link --project-ref igchlnmxbghsigyziomk` แล้วตรวจ `kemi-dev` ด้วย SQL (event trigger ของ automatic RLS, default privileges, ส่วนขยายที่มี) จดผล
+  - [ ] P1-06c migration `0001_base` + pgTAP คู่กัน + กำหนดวิธีรันทดสอบ แล้ว push ไป `kemi-dev` และรันทดสอบผ่าน
+  - [ ] P1-06d job pgTAP ใน `ci.yml` (เฉพาะ `main`) + ชื่อ GitHub Secrets ที่ผู้ใช้ต้องใส่
 - [ ] P1-07 **[effort สูง]** migration `0002_accounts` + `ensure_account()` + ทดสอบ (allowlist, ไม่เชื่อ user_metadata, anon ถูกปฏิเสธ) · (ต้องมี: kemi-dev)
 - [ ] P1-08 หน้าเว็บ: Supabase client, ล็อกอิน Google, callback, แยกหน้าตามบทบาท, หน้า A01 · (ต้องมี: Google OAuth + kemi-dev)
 - [ ] P1-09 Cloudflare Pages + `_headers` (CSP) + ตัวแปร build แล้วตรวจรับระยะ 1 (จุดสาธิต 1: ทดสอบบัญชีโรงเรียน) · (ต้องมี: ชื่อเว็บ, GitHub remote)
