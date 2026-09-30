@@ -1,0 +1,38 @@
+# dependencies / build
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.vite/
+
+# secrets — never commit (CLAUDE.md ส่วน 5)
+.env*
+!.env.example
+*.pem
+*.key
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
+# real student data / exports — never commit
+*.xlsx
+*.xls
+*.csv
+*.dump
+*.sql.gz
+*.backup
+backup/
+backups/
+dumps/
+
+# working notes (not reference material)
+.work/
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
