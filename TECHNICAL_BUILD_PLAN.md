@@ -97,7 +97,7 @@ Classroom/                     # root ของ repo
 4. เวลาเก็บเป็น `timestamptz` (UTC) และตัดสินด้วย `clock_timestamp()` หลังล็อกแถว; คะแนนและโทเคนเป็นจำนวนเต็ม คำนวณหักสายด้วย `(raw * (100 - pct) + 99) / 100`
 5. ลำดับล็อก: `term_control` → `assignments` → `submissions` → `wallets`; ห้ามเรียกบริการภายนอกระหว่างถือล็อก
 6. คำสั่งที่เสี่ยงกดซ้ำรับ `p_request_key uuid` และบันทึกใน `operation_receipts` (อายุ 24 ชม.) คำขอซ้ำคืนผลเดิม
-7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN
+7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN ส่วน 7.1; migration ที่เพิ่มรหัสใหม่ต้องแจ้งให้เพิ่มแถวในตารางนั้นก่อนหน้าเว็บจะใช้ และรหัสที่ไม่มีในตารางแสดงข้อความสำรองของตาราง
 8. ทุก migration มีไฟล์ทดสอบ pgTAP คู่กันก่อน merge
 9. `accounts.auth_user_id` **ไม่ใส่ foreign key ไป `auth.users`** เพราะ dump ไม่รวม schema `auth` และต้องกู้ข้ามโปรเจกต์ได้ ตอนกู้ตั้งค่านี้เป็น NULL แล้ว `ensure_account()` จับคู่ใหม่ด้วย `provider_subject` (TECHNICAL_DESIGN ส่วน 3.1 ข้อ 7)
 
@@ -125,7 +125,7 @@ grant execute on function public.grade_submission to authenticated;
 | # | ไฟล์ **[ข้อเสนอ]** | เนื้อหา | ระยะ |
 | --- | --- | --- | --- |
 | 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; **ไม่ติดตั้ง `pgtap` ใน migration** — ไฟล์ทดสอบติดตั้งภายใน transaction แล้ว rollback จึงไม่เหลือบนฐานข้อมูลใด), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
-| 2 | `0002_accounts.sql` | `accounts`, `teachers`, `teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
+| 2 | `0002_accounts.sql` | `accounts`, `teachers`, `private.teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
 | 3 | `0003_roster_classes.sql` | `terms`, `term_control`, `students`, `roster_entries`, `classrooms`, `memberships`; ค้น/ผูกชื่อ (L3), แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
 | 4 | `0004_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
 | 5 | `0005_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
@@ -282,7 +282,7 @@ grant execute on function public.grade_submission to authenticated;
 | ภาระ | สคริปต์ส่งงาน | 40 คนส่งภายใน 5 นาที และล็อกอินต่อเนื่องทั้งห้อง บน dev |
 
 - จำลองผู้ใช้ใน pgTAP ด้วย `set local role authenticated` + `set local request.jwt.claims` และสร้างแถว `auth.users`/`auth.identities` ของ provider `google` ในข้อมูลทดสอบ
-- Playwright ล็อกอินด้วย Google อัตโนมัติไม่ได้ **[ข้อเสนอ]** บน `kemi-dev` เท่านั้นเปิด Email/Password ให้บัญชีทดสอบ และ `ensure_account()` ยอมรับ provider `email` เฉพาะเมื่อตาราง `private.settings` มี `allow_test_logins = on` (ใช้ตารางแทนค่าตั้งของฐานข้อมูล เพราะ Supabase อาจไม่ให้ `ALTER DATABASE … SET`); งาน `guard` ตรวจค่านี้บน prod ทุกรอบสำรอง และตรวจ Email provider ด้วยมือในรายการส่วน 11
+- Playwright ล็อกอินด้วย Google อัตโนมัติไม่ได้ **[ข้อเสนอ]** บน `kemi-dev` เท่านั้นเปิด Email/Password ให้บัญชีทดสอบ และ `ensure_account()` ยอมรับ provider `email` เฉพาะเมื่อตาราง `private.settings` มี `allow_test_logins = on` และบัญชีแบบนี้เป็นครูได้ด้วย `provider_subject` เท่านั้น ไม่จับคู่ด้วยอีเมล (ใช้ตารางแทนค่าตั้งของฐานข้อมูล เพราะ Supabase อาจไม่ให้ `ALTER DATABASE … SET`); งาน `guard` ตรวจค่านี้บน prod ทุกรอบสำรอง และตรวจ Email provider ด้วยมือในรายการส่วน 11
 - ใช้ชุดสูตรคะแนนเดียวกันทั้ง Vitest และ pgTAP เช่น (7, 50%) → 4, (9, 50%) → 5, (7, 30%) → 5, (7, 20% รายคน) → 6, (7, 0%) → 7, (149, 50%, เต็ม 150) → 75
 
 ## 10. แผนงานรายระยะ
@@ -394,6 +394,7 @@ grant execute on function public.grade_submission to authenticated;
 
 - [ ] ทุกตารางใน `public` เปิด RLS (`select … from pg_tables where schemaname = 'public' and not rowsecurity` ต้องว่าง)
 - [ ] ไม่มีฟังก์ชันที่ `anon` หรือ `PUBLIC` execute ได้; ทุก `SECURITY DEFINER` มี `search_path` ตั้งไว้ (ตรวจ `pg_proc.proconfig`)
+- [ ] ฟังก์ชันที่ `authenticated` execute ได้ตรงกับรายการที่ตั้งใจไว้ทุกตัว (RPC ตามสัญญา API ใน TECHNICAL_DESIGN ส่วน 10 + ฟังก์ชันช่วยที่ policy เรียก) โดยมี pgTAP เทียบรายการนี้และล้มเมื่อมีตัวเกิน; คำเตือน (WARN) ของ Security Advisor ว่า `SECURITY DEFINER` ถูกเรียกได้โดยผู้ใช้ที่ล็อกอิน เป็นเรื่องปกติเฉพาะฟังก์ชันในรายการนี้ ถ้าขึ้นกับตัวอื่นถือเป็นข้อบกพร่อง
 - [ ] ไม่มีการตัดสินสิทธิ์จาก `user_metadata`; ทุก RPC อ่านบทบาทจากฐานข้อมูลสด
 - [ ] ทดสอบข้ามคน: นักเรียน A เปิดงาน คะแนน ความคิดเห็น ไฟล์ ตู้สะสม ของ B ไม่ได้; บัญชีที่ไม่อยู่ใน allowlist เรียกคำสั่งฝั่งครูไม่ได้; ผู้ดูแลนอกโหมดผู้ดูแลแก้ข้อมูลครูไม่ได้
 - [ ] Edge Functions ตรวจ JWT และ CORS เฉพาะโดเมนเรา; `process-jobs` ปฏิเสธคำขอที่ไม่มีรหัสลับ
