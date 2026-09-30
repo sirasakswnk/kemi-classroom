@@ -1,0 +1,49 @@
+/* แบบ v2 .toast */
+.viewport {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--toast-offset, 0px) + 24px + env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: var(--r-md);
+  background: var(--ink);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.90625rem;
+  line-height: 1.45;
+  animation: toastIn 0.3s ease;
+}
+
+.toast svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.success svg {
+  color: #a8e0c0;
+}
+
+.info svg {
+  color: var(--purple-mid);
+}
+
+@keyframes toastIn {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
