@@ -72,6 +72,7 @@ Classroom/                     # root ของ repo
 | ทดสอบกู้คืน | Supabase ชั่วคราวใน runner ของ GitHub Actions (`supabase start`) | `kemi-dev-files` ใต้ key เดิม แล้วลบในรอบเดียวกัน | — | `restore-test` เท่านั้น ทิ้งทั้งหมดเมื่อจบงาน |
 | ใช้จริง (prod) | โปรเจกต์ `kemi-prod` | `kemi-files` | `https://<ชื่อ>.pages.dev` จาก branch `main` | ข้อมูลนักเรียนจริงเท่านั้น |
 
+- **ระยะ 1–6 ยังไม่มี `kemi-prod`:** ตัวแปร Production ของ Pages ชี้ `kemi-dev` ชั่วคราว (ตัดสินใจ 2 ต.ค. 2026) เพื่อให้ `https://<ชื่อ>.pages.dev` ใช้สาธิตได้; หน้าเว็บแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” ทุกหน้า เว้นแต่ build ตั้ง `VITE_DEPLOY_ENV=prod` (ลืมตั้งแล้วแถบยังขึ้น ไม่ใช่หายไปเงียบ ๆ) และห้ามนำเข้ารายชื่อหรือข้อมูลนักเรียนจริงจนกว่าจะสลับไป prod ในระยะ 7 ซึ่งเป็นช่วงเดียวกับที่เผยแพร่ OAuth (P7-06) ก่อนหน้านั้นมีแค่บัญชีใน Test users ที่ล็อกอินได้
 - แผนฟรีของ Supabase มีได้ 2 โปรเจกต์ (prod + dev) จึงไม่กู้ข้อมูลจริงเข้า `kemi-dev` ซึ่งมีลิงก์ preview และบัญชีทดสอบ แต่กู้เข้า Supabase ชั่วคราวในงาน Actions แทน **[ต้องพิสูจน์]**
 - พื้นที่ฟรี 10 GB ของ B2 นับรวมทุก bucket ในบัญชี: ให้ bucket ทดสอบใช้ไฟล์เล็ก ล้างเป็นระยะ และ **ตั้ง `quota_bytes` ของระบบจริงเป็น 10 GB ลบพื้นที่ที่กันไว้ให้ bucket ทดสอบ** (เช่น 9,500,000,000 ไบต์ เมื่อกันไว้ 0.5 GB) เพื่อให้ระบบหยุดรับตาม J10.2 ก่อนเพดานรวมของบัญชี; `restore-test` รอบรายเดือนกู้ไฟล์เป็นตัวอย่างและลบทันที
 - **ภูมิภาค B2 เลือกตอนสมัครบัญชีและเปลี่ยนภายหลังไม่ได้** (ต้องเปิดบัญชีใหม่) และไม่มีเอเชีย: ในระยะ 0 วัดเวลาเชื่อมต่อ (`curl -w '%{time_connect} %{time_appconnect}'`) ไปยัง endpoint S3 ของทุกภูมิภาคตามเอกสาร B2 จาก Wi-Fi โรงเรียนและเน็ตมือถือหลายรอบ แล้วเลือกที่เร็วสุดตาม SYSTEM_SPEC ส่วน 12 ก่อนสมัคร และวัดซ้ำด้วยการอัปโหลดจริงที่จุดสาธิต 2
@@ -80,7 +81,7 @@ Classroom/                     # root ของ repo
 
 | ความลับ | อยู่ที่ |
 | --- | --- |
-| Supabase URL + publishable/anon key | ตัวแปร build ของ Pages (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) — เปิดเผยได้ตามแบบ ความปลอดภัยมาจาก RLS |
+| Supabase URL + publishable key (`sb_publishable_…`) | ตัวแปร build ของ Pages (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) — เปิดเผยได้ตามแบบ ความปลอดภัยมาจาก RLS; ตอน build ใส่ URL นี้ลงใน CSP `connect-src` ให้เอง |
 | Google OAuth client secret (ล็อกอิน) | ตั้งค่า Auth ของ Supabase |
 | B2 key อ่าน/เขียน/ลบ (เฉพาะ bucket) | secret ของ Edge Functions (`B2_KEY_ID`, `B2_APP_KEY`, `B2_BUCKET`, `B2_ENDPOINT`) |
 | รหัสลับที่ `pg_cron` ใช้เรียก `process-jobs` | Supabase Vault + secret ของ Edge Function |
@@ -222,7 +223,7 @@ grant execute on function public.grade_submission to authenticated;
 **Cloudflare Pages**
 
 1. เชื่อม repo: root `web`, build `npm ci && npm run build`, output `dist`, ตั้ง `NODE_VERSION`
-2. ตัวแปร build แยก production/preview (ชี้ Supabase prod/dev)
+2. ตัวแปร build แยก production/preview (ชี้ Supabase prod/dev); ระยะ 1–6 ทั้งสองชี้ `kemi-dev` ตามส่วน 3 และไฟล์ `web/.node-version` กำหนด Node 24
 3. เปิด preview deployments เฉพาะ branch ที่ใช้ทดสอบ
 
 **Google Drive สำรอง + rclone**
@@ -375,11 +376,12 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง)
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io
 - [ ] `restore-test` แบบ `all` ผ่าน รวมจับคู่ `version_id` ใหม่ ไฟล์ทดสอบถูกลบหลังจบ และ D01 แสดงผลรอบล่าสุด; เปิดไฟล์ที่กู้ผ่านหน้าตรวจ/หน้างานนักเรียน/ดาวน์โหลด PDF บน dev ด้วยชุดข้อมูลทดสอบได้
+- [ ] `https://<ชื่อ>.pages.dev` ไม่มีแถบ “ระบบทดสอบ”, CSP `connect-src` ใน header ชี้ `kemi-prod` และ Redirect URLs ของ `kemi-dev` ไม่มีโดเมน production แล้ว
 - [ ] ผ่านทุกข้อในส่วน 11 และรายการ “พร้อมนำร่อง” ของ DEVELOPMENT_PLAN ส่วน 5 (จุดสาธิต 4)
 
 ### ระยะ 8 — นำร่องและเปิดใช้
