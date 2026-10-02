@@ -1,0 +1,21 @@
+.page {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5) var(--space-4) calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+}
+
+.loading {
+  color: var(--ink-2);
+}
+
+.card {
+  width: min(100%, 480px);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.title {
+  font-size: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  color: var(--purple-deep);
+}

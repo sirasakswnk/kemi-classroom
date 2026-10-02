@@ -1,0 +1,50 @@
+/* สีและสัดส่วนตามแนวทาง “Sign in with Google” ธีมสว่าง ทรงแคปซูล
+   (ความสูงเพิ่มจาก 40 เป็น 48 px ให้แตะง่ายบนมือถือ) */
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid #747775;
+  border-radius: 24px;
+  background: #ffffff;
+  color: #1f1f1f;
+  font-family: 'Roboto', var(--f-body);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.logo {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* ชั้นสถานะตามแนวทาง Google: ทับด้วย #303030 */
+@media (hover: hover) {
+  .button:hover:not(:disabled) {
+    background: #f2f2f2;
+  }
+}
+
+.button:active:not(:disabled) {
+  background: #e3e3e3;
+}
+
+.button:disabled {
+  border-color: rgba(31, 31, 31, 0.12);
+  background: rgba(255, 255, 255, 0.38);
+  color: rgba(31, 31, 31, 0.38);
+  cursor: not-allowed;
+}
+
+.button:disabled .logo {
+  opacity: 0.38;
+}

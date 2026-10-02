@@ -72,6 +72,7 @@ Classroom/                     # root ของ repo
 | ทดสอบกู้คืน | Supabase ชั่วคราวใน runner ของ GitHub Actions (`supabase start`) | `kemi-dev-files` ใต้ key เดิม แล้วลบในรอบเดียวกัน | — | `restore-test` เท่านั้น ทิ้งทั้งหมดเมื่อจบงาน |
 | ใช้จริง (prod) | โปรเจกต์ `kemi-prod` | `kemi-files` | `https://<ชื่อ>.pages.dev` จาก branch `main` | ข้อมูลนักเรียนจริงเท่านั้น |
 
+- **ระยะ 1–6 ยังไม่มี `kemi-prod`:** ตัวแปร Production ของ Pages ชี้ `kemi-dev` ชั่วคราว (ตัดสินใจ 2 ต.ค. 2026) เพื่อให้ `https://<ชื่อ>.pages.dev` ใช้สาธิตได้; หน้าเว็บแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” ทุกหน้า เว้นแต่ build ตั้ง `VITE_DEPLOY_ENV=prod` (ลืมตั้งแล้วแถบยังขึ้น ไม่ใช่หายไปเงียบ ๆ) และห้ามนำเข้ารายชื่อหรือข้อมูลนักเรียนจริงจนกว่าจะสลับไป prod ในระยะ 7 ซึ่งเป็นช่วงเดียวกับที่เผยแพร่ OAuth (P7-06) ก่อนหน้านั้นมีแค่บัญชีใน Test users ที่ล็อกอินได้
 - แผนฟรีของ Supabase มีได้ 2 โปรเจกต์ (prod + dev) จึงไม่กู้ข้อมูลจริงเข้า `kemi-dev` ซึ่งมีลิงก์ preview และบัญชีทดสอบ แต่กู้เข้า Supabase ชั่วคราวในงาน Actions แทน **[ต้องพิสูจน์]**
 - พื้นที่ฟรี 10 GB ของ B2 นับรวมทุก bucket ในบัญชี: ให้ bucket ทดสอบใช้ไฟล์เล็ก ล้างเป็นระยะ และ **ตั้ง `quota_bytes` ของระบบจริงเป็น 10 GB ลบพื้นที่ที่กันไว้ให้ bucket ทดสอบ** (เช่น 9,500,000,000 ไบต์ เมื่อกันไว้ 0.5 GB) เพื่อให้ระบบหยุดรับตาม J10.2 ก่อนเพดานรวมของบัญชี; `restore-test` รอบรายเดือนกู้ไฟล์เป็นตัวอย่างและลบทันที
 - **ภูมิภาค B2 เลือกตอนสมัครบัญชีและเปลี่ยนภายหลังไม่ได้** (ต้องเปิดบัญชีใหม่) และไม่มีเอเชีย: ในระยะ 0 วัดเวลาเชื่อมต่อ (`curl -w '%{time_connect} %{time_appconnect}'`) ไปยัง endpoint S3 ของทุกภูมิภาคตามเอกสาร B2 จาก Wi-Fi โรงเรียนและเน็ตมือถือหลายรอบ แล้วเลือกที่เร็วสุดตาม SYSTEM_SPEC ส่วน 12 ก่อนสมัคร และวัดซ้ำด้วยการอัปโหลดจริงที่จุดสาธิต 2
@@ -80,7 +81,7 @@ Classroom/                     # root ของ repo
 
 | ความลับ | อยู่ที่ |
 | --- | --- |
-| Supabase URL + publishable/anon key | ตัวแปร build ของ Pages (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) — เปิดเผยได้ตามแบบ ความปลอดภัยมาจาก RLS |
+| Supabase URL + publishable key (`sb_publishable_…`) | ตัวแปร build ของ Pages (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) — เปิดเผยได้ตามแบบ ความปลอดภัยมาจาก RLS; ตอน build ใส่ URL นี้ลงใน CSP `connect-src` ให้เอง |
 | Google OAuth client secret (ล็อกอิน) | ตั้งค่า Auth ของ Supabase |
 | B2 key อ่าน/เขียน/ลบ (เฉพาะ bucket) | secret ของ Edge Functions (`B2_KEY_ID`, `B2_APP_KEY`, `B2_BUCKET`, `B2_ENDPOINT`) |
 | รหัสลับที่ `pg_cron` ใช้เรียก `process-jobs` | Supabase Vault + secret ของ Edge Function |
@@ -91,13 +92,13 @@ Classroom/                     # root ของ repo
 
 ### 4.1 หลักการเขียน
 
-1. ทุกตารางใน `public` เปิด RLS; ไม่มี policy ให้ `anon`; ใน migration แรกตั้ง `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (แบบทั้งระบบ เพราะ Postgres ให้ `PUBLIC` execute ทุกฟังก์ชันเป็นค่าเริ่มต้น และการ REVOKE เฉพาะ schema ลบสิทธิ์ระดับทั้งระบบไม่ได้) และ `ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated` (ย้อนค่าที่ Supabase ให้ไว้รายschema) แล้ว GRANT รายฟังก์ชันตามข้อ 3 และยังตรวจซ้ำด้วยรายการในส่วน 11
+1. ทุกตารางใน `public` เปิด RLS; ไม่มี policy ให้ `anon`; ใน migration แรกตั้ง `ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (แบบทั้งระบบ เพราะ Postgres ให้ `PUBLIC` execute ทุกฟังก์ชันเป็นค่าเริ่มต้น และการ REVOKE เฉพาะ schema ลบสิทธิ์ระดับทั้งระบบไม่ได้) และ `ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated` (ย้อนค่าที่ Supabase ให้ไว้รายschema) แล้ว GRANT รายฟังก์ชันตามข้อ 3 และยังตรวจซ้ำด้วยรายการในส่วน 11; ตาราง/sequence ใหม่ถอนสิทธิ์ทั้งหมดจาก `anon`, `authenticated` (รวมสิทธิ์ย่อยอย่าง TRUNCATE/REFERENCES/TRIGGER ที่ Supabase ยังให้แม้ปิด auto-expose) แล้ว GRANT เฉพาะ SELECT ที่หน้าเว็บอ่านผ่าน RLS; ถอน EXECUTE ของ `public.rls_auto_enable()` จาก `anon`, `authenticated`; ห้าม GRANT USAGE บน schema `private` ให้ `anon`/`authenticated`; ตาราง (ถ้ามี) ใน `private` เปิด RLS เองเพราะ automatic RLS ทำเฉพาะ `public` (ผลตรวจ `kemi-dev` 30 ก.ย. 2026)
 2. หน้าเว็บ **อ่าน** ผ่าน SELECT policy หรือ RPC อ่าน และ **เขียนผ่าน RPC เท่านั้น** (ไม่มี INSERT/UPDATE/DELETE policy)
-3. RPC ที่หน้าเว็บเรียกเป็น `SECURITY DEFINER`, `SET search_path = ''`, อ้างชื่อเต็ม และตรวจสิทธิ์เองจาก `private.current_account()`; GRANT ให้ `authenticated` เท่านั้น; RPC ที่ Edge Function เรียกด้วย service role (เช่น `finalize_attachment`) GRANT ให้ `service_role` เท่านั้น
+3. RPC ที่หน้าเว็บเรียกเป็น `SECURITY DEFINER`, `SET search_path = ''`, อ้างชื่อเต็ม และตรวจสิทธิ์เองจาก `private.current_account()`; GRANT ให้ `authenticated` เท่านั้น; ฟังก์ชันช่วยใน `private` ที่ RLS policy เรียกเป็น `SECURITY DEFINER` + GRANT EXECUTE ให้ `authenticated` รายฟังก์ชัน โดยไม่ GRANT USAGE บน `private` (policy ต้องการแค่ EXECUTE — TECHNICAL_DESIGN 3.1 ข้อ 5) และใน policy เขียนเป็น `(select private.current_account())` ให้คำนวณครั้งเดียวต่อคำสั่ง ไม่ใช่ทุกแถว; pgTAP ต้องมีข้อยืนยันว่า `authenticated` เรียกฟังก์ชันช่วยตรงๆ ไม่ได้; RPC ที่ Edge Function เรียกด้วย service role (เช่น `finalize_attachment`) GRANT ให้ `service_role` เท่านั้น
 4. เวลาเก็บเป็น `timestamptz` (UTC) และตัดสินด้วย `clock_timestamp()` หลังล็อกแถว; คะแนนและโทเคนเป็นจำนวนเต็ม คำนวณหักสายด้วย `(raw * (100 - pct) + 99) / 100`
 5. ลำดับล็อก: `term_control` → `assignments` → `submissions` → `wallets`; ห้ามเรียกบริการภายนอกระหว่างถือล็อก
 6. คำสั่งที่เสี่ยงกดซ้ำรับ `p_request_key uuid` และบันทึกใน `operation_receipts` (อายุ 24 ชม.) คำขอซ้ำคืนผลเดิม
-7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN
+7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN ส่วน 7.1; migration ที่เพิ่มรหัสใหม่ต้องแจ้งให้เพิ่มแถวในตารางนั้นก่อนหน้าเว็บจะใช้ และรหัสที่ไม่มีในตารางแสดงข้อความสำรองของตาราง
 8. ทุก migration มีไฟล์ทดสอบ pgTAP คู่กันก่อน merge
 9. `accounts.auth_user_id` **ไม่ใส่ foreign key ไป `auth.users`** เพราะ dump ไม่รวม schema `auth` และต้องกู้ข้ามโปรเจกต์ได้ ตอนกู้ตั้งค่านี้เป็น NULL แล้ว `ensure_account()` จับคู่ใหม่ด้วย `provider_subject` (TECHNICAL_DESIGN ส่วน 3.1 ข้อ 7)
 
@@ -124,8 +125,8 @@ grant execute on function public.grade_submission to authenticated;
 
 | # | ไฟล์ **[ข้อเสนอ]** | เนื้อหา | ระยะ |
 | --- | --- | --- | --- |
-| 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; `pgtap` เฉพาะ dev), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
-| 2 | `0002_accounts.sql` | `accounts`, `teachers`, `teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
+| 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; **ไม่ติดตั้ง `pgtap` ใน migration** — ไฟล์ทดสอบติดตั้งภายใน transaction แล้ว rollback จึงไม่เหลือบนฐานข้อมูลใด), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
+| 2 | `0002_accounts.sql` | `accounts`, `teachers`, `private.teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
 | 3 | `0003_roster_classes.sql` | `terms`, `term_control`, `students`, `roster_entries`, `classrooms`, `memberships`; ค้น/ผูกชื่อ (L3), แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
 | 4 | `0004_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
 | 5 | `0005_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
@@ -222,7 +223,7 @@ grant execute on function public.grade_submission to authenticated;
 **Cloudflare Pages**
 
 1. เชื่อม repo: root `web`, build `npm ci && npm run build`, output `dist`, ตั้ง `NODE_VERSION`
-2. ตัวแปร build แยก production/preview (ชี้ Supabase prod/dev)
+2. ตัวแปร build แยก production/preview (ชี้ Supabase prod/dev); ระยะ 1–6 ทั้งสองชี้ `kemi-dev` ตามส่วน 3 และไฟล์ `web/.node-version` กำหนด Node 24
 3. เปิด preview deployments เฉพาะ branch ที่ใช้ทดสอบ
 
 **Google Drive สำรอง + rclone**
@@ -240,8 +241,8 @@ grant execute on function public.grade_submission to authenticated;
 
 | workflow | เมื่อไร | ทำอะไร |
 | --- | --- | --- |
-| `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; branch `main` รัน pgTAP กับ `kemi-dev` |
-| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; prod รันหลังผ่าน dev แล้วเท่านั้น |
+| `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; เมื่อแก้ `supabase/**` รัน pgTAP กับฐานข้อมูลชั่วคราวใน runner (Supabase CLI เปิด Postgres ใน Docker แล้วใส่ migration ของ commit นั้น) — ไม่ใช้ secret และไม่แตะ `kemi-dev` |
+| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น |
 | `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง | สำรองตาม TECHNICAL_DESIGN ส่วน 12 |
 | `restore-test.yml` | กดรันเอง เลือกจุดกู้คืนและชุดไฟล์ | กู้เข้า Supabase ชั่วคราวใน runner + ไฟล์ใน `kemi-dev-files` แล้วตรวจ ลบทิ้ง และบันทึกผลลง prod |
 
@@ -275,14 +276,14 @@ grant execute on function public.grade_submission to authenticated;
 | ชั้น | เครื่องมือ | ครอบคลุม |
 | --- | --- | --- |
 | หน่วย | Vitest | สูตรคะแนนชุดตัวอย่างเดียวกับฐานข้อมูล (ไฟล์ JSON ร่วม), การแปลงเวลาไทย, ชื่อปิดบางส่วน, ตรวจไฟล์ก่อนอัปโหลด, ชื่อไฟล์ PDF, CSV |
-| ฐานข้อมูล | pgTAP ผ่าน `psql` กับ `kemi-dev` | ตารางสิทธิ์ทุกบทบาท (นักเรียน/ครู/ผู้ดูแลในและนอกโหมด/anon), ทุก RPC ตามกติกา, ตารางรับการส่ง 7 แถว, I1–I5, K1–K6, L2–L6 |
+| ฐานข้อมูล | pgTAP บน Supabase ในเครื่อง (Docker) เป็นหลัก และกับ `kemi-dev` ผ่าน `supabase db query --linked` ทุกไฟล์รูปแบบ `begin; create extension if not exists pgtap …; … rollback;`; CI รันชุดเดียวกันในฐานข้อมูลชั่วคราวใน runner (ส่วน 8) | ตารางสิทธิ์ทุกบทบาท (นักเรียน/ครู/ผู้ดูแลในและนอกโหมด/anon), ทุก RPC ตามกติกา, ตารางรับการส่ง 7 แถว, I1–I5, K1–K6, L2–L6 |
 | พร้อมกัน | สคริปต์ Node เปิดหลาย connection | ชิงชื่อเดียวกัน, สุ่มสองแท็บ, ตรวจซ้ำพร้อมกัน, ตรวจชนเริ่มเทอม, แก้รางวัลชนส่งแรก |
 | หน้าเว็บ | Playwright (มือถือ 390 px, แท็บเล็ต 820 × 1180 และ 1180 × 820 แบบสัมผัส, คอม 1280 px) | เส้นทางหลักทุกบทบาทบน preview ของ dev |
 | อุปกรณ์จริง | ทดสอบมือ | iPhone Safari (HEIC), Android Chrome, iPad, มือถือรุ่นเก่าหน่วยความจำน้อย, Wi-Fi โรงเรียน |
 | ภาระ | สคริปต์ส่งงาน | 40 คนส่งภายใน 5 นาที และล็อกอินต่อเนื่องทั้งห้อง บน dev |
 
 - จำลองผู้ใช้ใน pgTAP ด้วย `set local role authenticated` + `set local request.jwt.claims` และสร้างแถว `auth.users`/`auth.identities` ของ provider `google` ในข้อมูลทดสอบ
-- Playwright ล็อกอินด้วย Google อัตโนมัติไม่ได้ **[ข้อเสนอ]** บน `kemi-dev` เท่านั้นเปิด Email/Password ให้บัญชีทดสอบ และ `ensure_account()` ยอมรับ provider `email` เฉพาะเมื่อตาราง `private.settings` มี `allow_test_logins = on` (ใช้ตารางแทนค่าตั้งของฐานข้อมูล เพราะ Supabase อาจไม่ให้ `ALTER DATABASE … SET`); งาน `guard` ตรวจค่านี้บน prod ทุกรอบสำรอง และตรวจ Email provider ด้วยมือในรายการส่วน 11
+- Playwright ล็อกอินด้วย Google อัตโนมัติไม่ได้ **[ข้อเสนอ]** บน `kemi-dev` เท่านั้นเปิด Email/Password ให้บัญชีทดสอบ และ `ensure_account()` ยอมรับ provider `email` เฉพาะเมื่อตาราง `private.settings` มี `allow_test_logins = on` และบัญชีแบบนี้เป็นครูได้ด้วย `provider_subject` เท่านั้น ไม่จับคู่ด้วยอีเมล (ใช้ตารางแทนค่าตั้งของฐานข้อมูล เพราะ Supabase อาจไม่ให้ `ALTER DATABASE … SET`); งาน `guard` ตรวจค่านี้บน prod ทุกรอบสำรอง และตรวจ Email provider ด้วยมือในรายการส่วน 11
 - ใช้ชุดสูตรคะแนนเดียวกันทั้ง Vitest และ pgTAP เช่น (7, 50%) → 4, (9, 50%) → 5, (7, 30%) → 5, (7, 20% รายคน) → 6, (7, 0%) → 7, (149, 50%, เต็ม 150) → 75
 
 ## 10. แผนงานรายระยะ
@@ -375,11 +376,12 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง)
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io
 - [ ] `restore-test` แบบ `all` ผ่าน รวมจับคู่ `version_id` ใหม่ ไฟล์ทดสอบถูกลบหลังจบ และ D01 แสดงผลรอบล่าสุด; เปิดไฟล์ที่กู้ผ่านหน้าตรวจ/หน้างานนักเรียน/ดาวน์โหลด PDF บน dev ด้วยชุดข้อมูลทดสอบได้
+- [ ] `https://<ชื่อ>.pages.dev` ไม่มีแถบ “ระบบทดสอบ”, CSP `connect-src` ใน header ชี้ `kemi-prod` และ Redirect URLs ของ `kemi-dev` ไม่มีโดเมน production แล้ว
 - [ ] ผ่านทุกข้อในส่วน 11 และรายการ “พร้อมนำร่อง” ของ DEVELOPMENT_PLAN ส่วน 5 (จุดสาธิต 4)
 
 ### ระยะ 8 — นำร่องและเปิดใช้
@@ -394,6 +396,7 @@ grant execute on function public.grade_submission to authenticated;
 
 - [ ] ทุกตารางใน `public` เปิด RLS (`select … from pg_tables where schemaname = 'public' and not rowsecurity` ต้องว่าง)
 - [ ] ไม่มีฟังก์ชันที่ `anon` หรือ `PUBLIC` execute ได้; ทุก `SECURITY DEFINER` มี `search_path` ตั้งไว้ (ตรวจ `pg_proc.proconfig`)
+- [ ] ฟังก์ชันที่ `authenticated` execute ได้ตรงกับรายการที่ตั้งใจไว้ทุกตัว (RPC ตามสัญญา API ใน TECHNICAL_DESIGN ส่วน 10 + ฟังก์ชันช่วยที่ policy เรียก) โดยมี pgTAP เทียบรายการนี้และล้มเมื่อมีตัวเกิน; คำเตือน (WARN) ของ Security Advisor ว่า `SECURITY DEFINER` ถูกเรียกได้โดยผู้ใช้ที่ล็อกอิน เป็นเรื่องปกติเฉพาะฟังก์ชันในรายการนี้ ถ้าขึ้นกับตัวอื่นถือเป็นข้อบกพร่อง
 - [ ] ไม่มีการตัดสินสิทธิ์จาก `user_metadata`; ทุก RPC อ่านบทบาทจากฐานข้อมูลสด
 - [ ] ทดสอบข้ามคน: นักเรียน A เปิดงาน คะแนน ความคิดเห็น ไฟล์ ตู้สะสม ของ B ไม่ได้; บัญชีที่ไม่อยู่ใน allowlist เรียกคำสั่งฝั่งครูไม่ได้; ผู้ดูแลนอกโหมดผู้ดูแลแก้ข้อมูลครูไม่ได้
 - [ ] Edge Functions ตรวจ JWT และ CORS เฉพาะโดเมนเรา; `process-jobs` ปฏิเสธคำขอที่ไม่มีรหัสลับ

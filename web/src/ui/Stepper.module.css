@@ -1,0 +1,50 @@
+/* แบบ v2 .stepper — ปุ่มขยายเป็น 44 px ตามเป้าแตะขั้นต่ำ */
+.stepper {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--field-bg);
+}
+
+.btn {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--purple-deep);
+  cursor: pointer;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn:focus-visible {
+  outline-offset: -3px;
+}
+
+.btn[aria-disabled='true'] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .btn:not([aria-disabled='true']):hover {
+    background: var(--purple-tint);
+  }
+}
+
+.value {
+  min-width: 40px;
+  padding-inline: 4px;
+  text-align: center;
+  font-family: var(--f-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+}

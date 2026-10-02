@@ -1,0 +1,82 @@
+/* ห้องเคมี — design tokens จากแบบ v2 (exports/chemistry-design-v2.html) และ UX_DESIGN ส่วน 13
+   ธีมเดียวโดยตั้งใจ: พื้นครีมเป็นเอกลักษณ์ของแบรนด์ */
+:root {
+  color-scheme: light;
+
+  /* พื้นและเส้น */
+  --bg: #f6efe3;
+  --bg-2: #eee3d0;
+  --paper: #fffbf4;
+  --paper-2: #fbf4e8;
+  --field-bg: #fffdf9;
+  --line: #e7dcca;
+  --line-2: #dccde9;
+
+  /* ข้อความ (ink-3 ใช้บนพื้นครีมหรือการ์ดเท่านั้น) */
+  --ink: #2e2440;
+  --ink-2: #655a78;
+  --ink-3: #736887;
+  --on-accent: #fff9f0;
+
+  /* ม่วง */
+  --purple: #6b3fa0;
+  --purple-deep: #4b2a76;
+  --purple-soft: #efe5f8;
+  --purple-soft-hover: #e6d8f4;
+  --purple-mid: #b99bdd;
+  --purple-tint: #f7f1fc;
+  --purple-disabled: #cdbde0;
+
+  /* ทองโทเคน: ใช้กับโทเคน ปุ่มสุ่ม และรางวัลเท่านั้น */
+  --gold: #a8721a;
+  --gold-bright: #e9b949;
+  --gold-soft: #fcf0d4;
+  --gold-ink: #7a5310;
+  --gold-btn-top: #f4cf6e;
+  --gold-btn-bottom: #e0a93a;
+  --gold-btn-ink: #3d2605;
+
+  /* สถานะ: มาพร้อมคำและไอคอนเสมอ */
+  --green: #2f6b4f;
+  --green-soft: #e3f0e6;
+  --amber: #8a5a12;
+  --amber-soft: #faebcf;
+  --red: #a33a4c;
+  --red-deep: #8a2e3f;
+  --red-soft: #f8e0e3;
+
+  /* หน้าสุ่มเครื่องราง */
+  --night-1: #1e1331;
+  --night-2: #34205a;
+  --night-3: #553489;
+
+  /* เงาโทนม่วง */
+  --shadow-sm: 0 1px 2px rgba(75, 42, 118, 0.07);
+  --shadow: 0 1px 2px rgba(75, 42, 118, 0.05), 0 12px 30px -16px rgba(75, 42, 118, 0.28);
+  --shadow-lg: 0 2px 6px rgba(75, 42, 118, 0.06), 0 30px 60px -28px rgba(75, 42, 118, 0.38);
+  --shadow-primary: 0 8px 18px -10px rgba(107, 63, 160, 0.8);
+  --shadow-gold: 0 10px 24px -10px rgba(233, 185, 73, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  /* มุม ([ข้อเสนอ] UX 13: การ์ดหลัก 22, ช่องกรอก/ปุ่ม 14) */
+  --r-xl: 28px;
+  --r-lg: 22px;
+  --r: 16px;
+  --r-md: 14px;
+  --r-sm: 12px;
+  --r-pill: 999px;
+
+  /* ระยะ (ฐาน 8 px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* เป้าแตะขั้นต่ำ (UX 13) */
+  --tap-min: 44px;
+
+  /* ฟอนต์ (โฮสต์เองผ่าน @fontsource) */
+  --f-display: 'Mitr', 'Anuphan', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif;
+  --f-body: 'Anuphan', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif;
+}

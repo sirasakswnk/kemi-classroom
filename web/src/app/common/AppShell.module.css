@@ -1,0 +1,35 @@
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* หน้าต่าง ๆ ใช้ flex: 1 เพื่อเต็มความสูงที่เหลือจากแถบ */
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: calc(4px + env(safe-area-inset-top, 0px)) 12px 4px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.78125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.banner svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}

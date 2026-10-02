@@ -1,0 +1,224 @@
+/* Sheet และ Modal บน <dialog> — แบบ v2 .sheet / .t-modal */
+
+.sheet,
+.modal {
+  /* ล้างค่าเริ่มต้นของ <dialog> */
+  padding: 0;
+  border: 0;
+  max-width: none;
+  max-height: none;
+  color: var(--ink);
+  background: var(--paper);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* ::backdrop บางเบราว์เซอร์ไม่สืบทอดตัวแปร CSS จึงใส่ค่าตรง */
+.sheet::backdrop {
+  background: rgba(46, 36, 64, 0.5);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.modal::backdrop {
+  background: rgba(46, 36, 64, 0.45);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--bg-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.close svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background: var(--purple-soft);
+  }
+}
+
+/* ---------- Sheet ---------- */
+
+.sheet {
+  position: fixed;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92dvh;
+  margin: auto auto 0;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: 0 -20px 40px -20px rgba(46, 36, 64, 0.4);
+  animation: sheetUp 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.sheet[open] {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 10px;
+  padding: 10px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+}
+
+.sheet.start {
+  justify-items: stretch;
+  text-align: start;
+}
+
+.handle {
+  justify-self: center;
+  width: 44px;
+  height: 5px;
+  margin-bottom: 4px;
+  border-radius: 5px;
+  background: var(--line);
+}
+
+.sheetTitle {
+  padding-inline: 48px;
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.start .sheetTitle {
+  padding-inline: 0 48px;
+}
+
+.sheetDesc {
+  max-width: 40ch;
+  font-size: 0.97rem;
+  line-height: 1.7;
+}
+
+.start .sheetDesc {
+  max-width: none;
+  color: var(--ink-2);
+}
+
+.sheetBody {
+  width: 100%;
+  display: grid;
+  gap: var(--space-3);
+  margin-top: 4px;
+}
+
+/* แท็บเล็ตขึ้นไป: แผ่นลอยกลางจอ ไม่ติดขอบล่าง */
+@media (min-width: 768px) {
+  .sheet {
+    margin: auto;
+    max-height: calc(100dvh - 48px);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sheet[open] {
+    padding-bottom: 22px;
+  }
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(48px);
+    opacity: 0;
+  }
+}
+
+/* ---------- Modal ---------- */
+
+.modal {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  animation: pop 0.3s cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+
+.modal[open] {
+  display: grid;
+}
+
+.modalHead {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 20px 64px 12px 20px;
+}
+
+.modalHeadText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.modalHeadText h2 {
+  font-size: 1.25rem;
+  line-height: 1.35;
+  color: var(--purple-deep);
+}
+
+.modalHeadText p {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.modalIcon {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
+.modalIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modalBody {
+  display: grid;
+  gap: 14px;
+  padding: 4px 20px 16px;
+}
+
+.modalFoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--line);
+}
+
+/* จอแคบ: ปุ่มท้ายกล่องแบ่งความกว้างเท่ากัน */
+@media (max-width: 480px) {
+  .modalFoot > * {
+    flex: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+}

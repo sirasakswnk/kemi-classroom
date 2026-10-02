@@ -1,0 +1,100 @@
+import { TriangleAlert } from 'lucide-react'
+import { createContext, useContext, useId, type ComponentProps, type ReactNode } from 'react'
+import { th } from '../copy/th'
+import { cx } from '../lib/cx'
+import styles from './Field.module.css'
+
+interface FieldContextValue {
+  id: string
+  describedBy: string | undefined
+  invalid: boolean
+}
+
+const FieldContext = createContext<FieldContextValue | null>(null)
+
+export interface FieldProps {
+  label: ReactNode
+  /** คำอธิบายใต้ช่อง */
+  hint?: ReactNode
+  /** ข้อความผิดพลาดอยู่ใกล้ช่อง มีไอคอนและคำ ไม่พึ่งสีอย่างเดียว (UX 13) */
+  error?: ReactNode
+  /** ต่อท้ายชื่อช่องว่า “· ไม่บังคับ” */
+  optional?: boolean
+  /** id ของช่องกรอก (ไม่ใส่ = สร้างให้) */
+  id?: string
+  className?: string
+  children: ReactNode
+}
+
+// ห่อ label + ช่องกรอก + คำอธิบาย + ข้อผิดพลาด แล้วผูก id/aria ให้ Input/Textarea ด้านในอัตโนมัติ
+export function Field({
+  label,
+  hint,
+  error,
+  optional = false,
+  id,
+  className,
+  children,
+}: FieldProps) {
+  const autoId = useId()
+  const controlId = id ?? `${autoId}control`
+  const hintId = hint ? `${autoId}hint` : undefined
+  const errorId = error ? `${autoId}error` : undefined
+
+  return (
+    <div className={cx(styles.field, className)}>
+      <label className={styles.label} htmlFor={controlId}>
+        {label}
+        {optional && <span className={styles.optional}> · {th.field.optional}</span>}
+      </label>
+      <FieldContext
+        value={{
+          id: controlId,
+          describedBy: cx(hintId, errorId) || undefined,
+          invalid: Boolean(error),
+        }}
+      >
+        {children}
+      </FieldContext>
+      {hint && (
+        <p id={hintId} className={styles.hint}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={errorId} className={styles.error}>
+          <TriangleAlert aria-hidden="true" />
+          <span>{error}</span>
+        </p>
+      )}
+    </div>
+  )
+}
+
+function useControlProps(props: {
+  id?: string
+  className?: string
+  'aria-describedby'?: string
+  'aria-invalid'?: ComponentProps<'input'>['aria-invalid']
+}) {
+  const field = useContext(FieldContext)
+  return {
+    id: props.id ?? field?.id,
+    'aria-describedby': cx(field?.describedBy, props['aria-describedby']) || undefined,
+    'aria-invalid': props['aria-invalid'] ?? (field?.invalid ? true : undefined),
+  }
+}
+
+export function Input({ className, ...rest }: ComponentProps<'input'>) {
+  return <input {...rest} {...useControlProps(rest)} className={cx(styles.control, className)} />
+}
+
+export function Textarea({ className, ...rest }: ComponentProps<'textarea'>) {
+  return (
+    <textarea
+      {...rest}
+      {...useControlProps(rest)}
+      className={cx(styles.control, styles.textarea, className)}
+    />
+  )
+}

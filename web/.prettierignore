@@ -1,0 +1,5 @@
+dist
+coverage
+package-lock.json
+# สร้างอัตโนมัติจาก npm run db:types (root)
+src/lib/database.types.ts

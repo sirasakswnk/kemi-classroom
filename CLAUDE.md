@@ -9,6 +9,8 @@
 ผู้ใช้มีโควตาการใช้งานจำกัด งานต้องเดินทีละขั้นเล็ก และหยุดได้ทุกเมื่อโดยไม่เสียงาน
 
 1. **เริ่มทุกรอบ:** อ่านเฉพาะส่วน “สถานะล่าสุด” และระยะปัจจุบันใน `PROGRESS.md` แล้วดู `git status` กับ `git log --oneline -5` ถ้ามี “งานค้าง” ให้ทำต่อจากโน้ตนั้นก่อน
+   - ถ้า `git status` มีการเปลี่ยนแปลงในเอกสาร 5 ฉบับ (`SYSTEM_SPEC.md`, `TECHNICAL_DESIGN.md`, `UX_DESIGN.md`, `TECHNICAL_BUILD_PLAN.md`, `DEVELOPMENT_PLAN.md`) หรือ `exports/` ที่ไม่ได้มาจากงานของ Claude Code (ผู้ใช้แก้ใน Claude app) ให้ commit แยกเป็น `docs: อัปเดตเอกสารจาก Claude app` ก่อนเริ่มงาน
+   - ห้ามแก้ไฟล์กลุ่มนี้เองนอกจากผู้ใช้สั่ง ถ้าเจอว่าต้องแก้ให้บอกผู้ใช้
    ถ้างานที่จะทำติดป้าย **[effort สูง]** ให้เตือนผู้ใช้หนึ่งบรรทัดก่อนเริ่ม ว่าควรตั้ง effort เป็นสูงสำหรับงานนี้ (ถ้าผู้ใช้ยังไม่ได้บอกว่าตั้งแล้ว)
 2. **ทำงานเดียวต่อรอบ:** งานถัดไปที่ยังไม่ติ๊กใน `PROGRESS.md` หรืองานที่ผู้ใช้ระบุ **ห้ามทำงานถัดไปต่อเองโดยไม่ได้รับคำสั่ง**
 3. **ก่อนเขียน:** บอกแผนสั้น 2–4 บรรทัด (ไฟล์ที่จะแตะ วิธีทดสอบ) ถ้างานใหญ่เกินหนึ่งรอบ ให้แตกเป็นงานย่อยใน `PROGRESS.md` แล้วทำแค่ชิ้นแรก
@@ -23,7 +25,7 @@
 - ผลคำสั่งยาวให้ตัด (`| tail -30`, reporter แบบย่อ); รันเฉพาะทดสอบของส่วนที่แก้ รันทั้งชุดตอนปิดระยะ
 - แก้ไฟล์เฉพาะจุด ไม่เขียนทั้งไฟล์ใหม่ถ้าไม่จำเป็น
 - ตอบผู้ใช้สั้น: ทำอะไร ผลทดสอบ งานถัดไป สิ่งที่ต้องการจากผู้ใช้ ไม่เล่าทุกขั้นตอน
-- งานเขียนเอกสารยาวหรือออกแบบหน้าจอใหม่ ผู้ใช้ทำใน Claude app ไม่ใช่ที่นี่ ถ้าเจอว่าเอกสารต้องแก้ ให้บอกผู้ใช้หรือแก้เฉพาะบรรทัดที่จำเป็น
+- งานเขียนเอกสารยาวหรือออกแบบหน้าจอใหม่ ผู้ใช้ทำใน Claude app ไม่ใช่ที่นี่ ถ้าเจอว่าเอกสารต้องแก้ ให้บอกผู้ใช้ (เอกสาร 5 ฉบับและ `exports/` ห้ามแก้เองตามส่วน 1 ข้อ 1)
 
 ## 3. เอกสารอ้างอิง (อ่านเฉพาะส่วนที่งานนั้นใช้)
 
@@ -63,10 +65,16 @@
 - เครื่องผู้ใช้เป็น Windows: สคริปต์ที่รันบนเครื่องเขียนเป็น Node (`.mjs`) หรือ npm script; สคริปต์ที่รันบน GitHub Actions ใช้ bash ได้
 - ข้อความภาษาไทยบนหน้าจอรวมไว้ที่ `web/src/copy/th.ts` ยึดถ้อยคำจาก UX_DESIGN/แบบ v2
 - git: งานของแต่ละระยะอยู่บน branch `phase-N` แล้ว merge เข้า `main` เมื่อผ่านตรวจรับของระยะและผู้ใช้ตกลง
-- คำสั่ง (ปรับให้ตรงเมื่อสร้างจริงในงาน P1-02 / P1-06):
-  - หน้าเว็บ: `npm --prefix web run dev | build | test | lint | typecheck`
-  - ฐานข้อมูล dev: `supabase db push` (หลัง `supabase link` กับ `kemi-dev`) · สร้าง type: `supabase gen types typescript`
-  - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/` (วิธีรันกำหนดในงาน P1-06)
+- คำสั่ง (ส่วนฐานข้อมูลปรับให้ตรงเมื่อสร้างจริงในงาน P1-06):
+  - หน้าเว็บ: `npm --prefix web run dev | build | preview | test | lint | typecheck | format | format:check` (ติดตั้งครั้งแรก `npm --prefix web ci`)
+  - เครื่องมือเว็บ: Vite 8, React 19, TypeScript 6 (strict), ESLint 10 (flat config), Prettier (ไม่มี `;`, single quote, กว้าง 100), Vitest 5 (environment `node` ถ้าต้องใช้ DOM ต้องขอเพิ่ม dependency)
+  - Supabase CLI อยู่ใน `package.json` ที่ root เรียกด้วย `npx supabase …` (link กับ `kemi-dev` แล้ว)
+  - npm script ที่ root: `npm run db:start | db:reset | db:test | db:test:dev | db:push | db:advisors` (Postgres ในเครื่องต้องเปิด Docker Desktop ก่อน)
+  - ฐานข้อมูล dev: `npm run db:push` · สร้าง type: `npx supabase gen types typescript --linked`
+  - รัน SQL กับ dev (ไม่มี `psql` ในเครื่อง): `npx supabase db query --linked -f <ไฟล์>.sql --output-format json` — ผ่าน Management API ในนาม `postgres`; ผลยาวให้รวมเป็นแถวเดียวด้วย `string_agg`/`concat_ws` · ตรวจ advisor: `npx supabase db advisors --linked`
+  - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/*.test.sql` คู่กับ migration ทุกไฟล์ — ขั้นตอน: `db:reset` → `db:test` (ในเครื่อง) ผ่านแล้วค่อย `db:push` → `db:test:dev`
+    - รูปแบบไฟล์: `begin; set local role postgres; create extension if not exists pgtap with schema extensions; set local search_path = extensions, public; select plan(N); … select * from finish(); rollback;` (บน cloud CLI ต่อด้วย role ชั่วคราวที่ไม่สืบทอดสิทธิ์ postgres จึงต้อง `set local role postgres`; CLI ลบ pgtap ทิ้งเองหลังรัน)
+    - เทสต์ที่พึ่งของเฉพาะ cloud (เช่น `public.rls_auto_enable()`) ใช้ `skip()` เมื่อไม่มีในเครื่อง
 
 ## 7. เกณฑ์ “งานเสร็จ”
 

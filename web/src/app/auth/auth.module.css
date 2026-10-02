@@ -1,0 +1,166 @@
+/* A01 — แบบ v2 .login / .login-hero / .how.small / .note */
+.login {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: calc(48px + env(safe-area-inset-top, 0px)) 24px 36px;
+  border-radius: 0 0 32px 32px;
+  background: linear-gradient(160deg, #6b3fa0 0%, #8a5bc2 60%, #a57bd6 100%);
+  color: var(--on-accent);
+  text-align: center;
+}
+
+.hero h1 {
+  position: relative;
+  font-size: clamp(2rem, 1.6rem + 1.6vw, 2.5rem);
+  color: var(--on-accent);
+}
+
+.hero p {
+  position: relative;
+  color: rgba(255, 249, 240, 0.88);
+}
+
+.benzene {
+  position: absolute;
+  top: -40px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+}
+
+.logo {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 8px 16px rgba(30, 19, 49, 0.35));
+}
+
+.body {
+  width: min(100%, 480px);
+  margin-inline: auto;
+  padding: 24px 20px 8px;
+  display: grid;
+  gap: 12px;
+}
+
+.hint {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.how {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.how li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.how b {
+  display: block;
+  font-weight: 600;
+}
+
+.how li span span {
+  display: block;
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.howNum {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.foot {
+  width: min(100%, 520px);
+  margin: auto auto 0;
+  padding: 16px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  font-size: 0.78125rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+/* ข้อความแจ้งใกล้จุดที่เกิด (UX 13, 7.1) */
+.notePurple,
+.noteRed {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.notePurple svg,
+.noteRed svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.notePurple {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.noteRed {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.ref {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+.muted {
+  color: var(--ink-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .actions > * {
+    flex: 1;
+  }
+}
