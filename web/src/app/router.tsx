@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 import { AuthCallback } from './auth/AuthCallback'
 import { LoginPage } from './auth/LoginPage'
 import { RequireRole } from './auth/RequireRole'
+import { AppShell } from './common/AppShell'
 import { FullPageStatus } from './common/FullPageStatus'
 import { RoleHome } from './home/RoleHome'
 
@@ -18,32 +19,38 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
   : []
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
-  { path: '/auth/callback', element: <AuthCallback /> },
   {
-    path: '/',
-    element: (
-      <RequireRole roles={['student']}>
-        <RoleHome role="student" />
-      </RequireRole>
-    ),
+    // ทุกหน้าอยู่ใต้ AppShell เพื่อให้แถบ “ระบบทดสอบ” ขึ้นทุกหน้า
+    element: <AppShell />,
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/auth/callback', element: <AuthCallback /> },
+      {
+        path: '/',
+        element: (
+          <RequireRole roles={['student']}>
+            <RoleHome role="student" />
+          </RequireRole>
+        ),
+      },
+      {
+        path: '/t',
+        element: (
+          <RequireRole roles={['teacher']}>
+            <RoleHome role="teacher" />
+          </RequireRole>
+        ),
+      },
+      {
+        path: '/admin',
+        element: (
+          <RequireRole roles={['admin']}>
+            <RoleHome role="admin" />
+          </RequireRole>
+        ),
+      },
+      ...devRoutes,
+      { path: '*', element: <Navigate to="/" replace /> },
+    ],
   },
-  {
-    path: '/t',
-    element: (
-      <RequireRole roles={['teacher']}>
-        <RoleHome role="teacher" />
-      </RequireRole>
-    ),
-  },
-  {
-    path: '/admin',
-    element: (
-      <RequireRole roles={['admin']}>
-        <RoleHome role="admin" />
-      </RequireRole>
-    ),
-  },
-  ...devRoutes,
-  { path: '*', element: <Navigate to="/" replace /> },
 ])
