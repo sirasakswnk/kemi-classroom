@@ -17,4 +17,15 @@ export default defineConfig([
     ],
     languageOptions: { globals: globals.browser },
   },
+  {
+    // zod ต้องผ่าน src/lib/zod.ts ที่ปิด JIT ไว้ให้เข้ากับ CSP (script-src 'self' ห้าม eval)
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/lib/zod.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'zod', message: 'ใช้ import { z } จาก src/lib/zod แทน' }] },
+      ],
+    },
+  },
 ])

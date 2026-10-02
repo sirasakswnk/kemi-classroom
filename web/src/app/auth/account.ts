@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod'
 
 // ผลของ ensure_account() (supabase/migrations/0002_accounts.sql)
 export const AccountSchema = z.object({
