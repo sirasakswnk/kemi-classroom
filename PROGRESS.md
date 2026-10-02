@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 1 (ล็อกอินและแยกหน้าตามบทบาทใช้ได้บน localhost แล้ว)
-- งานถัดไป: P1-09c ข้อ ①–④ ผ่านแล้ว **รอผู้ใช้ทำข้อ ⑤ (Sheet/Modal บน iPhone/Android จริง) และ ⑥ (บัญชีโรงเรียน)** (ดูใต้ P1-09c) แล้วรายงานผล → ผู้ใช้ตกลง merge `phase-1` เข้า `main` (production deploy ครั้งแรก) → ปิดระยะ 1 · P2-01a ทำได้ก่อน/พร้อม P2-01
+- งานถัดไป: ตรวจรับระยะ 1 ผ่านครบ (อัตโนมัติ + ด้วยมือ ①–⑥) → **รอผู้ใช้ยืนยัน merge `phase-1` เข้า `main`** (production deploy ครั้งแรกที่ `https://kemi-classroom.pages.dev`, ชี้ kemi-dev + แถบระบบทดสอบ) → ตรวจ production หลัง deploy → ติ๊ก P1-09 ปิดระยะ 1 → เปิด branch `phase-2` · P2-01a ทำได้ก่อน/พร้อม P2-01
 - เว็บ: preview `https://phase-1.kemi-classroom.pages.dev` (kemi-dev, มีแถบระบบทดสอบ) · production `https://kemi-classroom.pages.dev` ยังไม่มี deploy ที่สำเร็จ (รอ merge เข้า `main`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -15,7 +15,7 @@
 - **ดีไซน์ (ผู้ใช้ตัดสิน 30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`) ตามเดิม — P1-03/P1-04 ไม่ต้องรอแล้ว
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
-- รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2 · ทดสอบ Sheet/Modal บนเครื่องจริงเมื่อมี preview บน Pages ใน P1-09: **iPhone (Safari)** หน้าหลังไม่เลื่อนตามนิ้ว และปิดแล้วกลับตำแหน่งเดิม · **Android (Chrome)** กดปุ่ม/ท่าทางย้อนกลับขณะเปิดกล่อง A02 แล้วกล่องต้องไม่ปิด (เปิดกลับทันที) และกล่องที่ปิดได้ต้องปิดโดยไม่ออกจากหน้า
+- รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2 · ยืนยัน merge `phase-1` เข้า `main`
 - ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค/endpoint — · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
 
 ## ระยะ 0 — เตรียมบริการ (ผู้ใช้เปิดบัญชีเอง Claude ช่วยเตรียม)
@@ -59,7 +59,8 @@
     - **พบ:** kemi-dev ยังเปิด provider **Email** (ค่าเริ่มต้น) ขัด TECHNICAL_DESIGN 3.1 ข้อ 1 — แอปยังปลอดภัยเพราะ `ensure_account()` ปฏิเสธ provider email (ไม่มี `allow_test_logins`) → **ผู้ใช้ปิดแล้ว 2 ต.ค.** (ข้อ ①)
     - ตรวจ Redirect URLs จากภายนอกไม่ได้ (state ของ OAuth เป็น UUID) → ยืนยันด้วยการล็อกอินจริงของผู้ใช้บน preview (ข้อ ② ผ่าน: ที่อยู่เว็บหลังล็อกอินยังเป็น preview)
     - **ผลตรวจด้วยมือ (ผู้ใช้รายงาน 2 ต.ค. 2026):** ① ปิด Email provider แล้ว ② คอม: เห็นแถบ “ระบบทดสอบ” บนสุด, ล็อกอิน 3 บัญชีไป path ถูกทั้งหมด (ครู `/t`, นักเรียน `/`, admin `/admin`) และอยู่บนโดเมน preview ③ iPhone Safari ล็อกอิน **ผ่าน** ④ Android Chrome ล็อกอิน **ผ่าน**
-    - **ยังรอผู้ใช้:** ⑤ Sheet/Modal บนเครื่องจริง ⑥ จุดสาธิต 1 บัญชีโรงเรียน — รายละเอียดเดิม: ~~① ปิด Email provider ② ล็อกอิน 3 บัญชีบน preview จากคอม ③ iPhone Safari ล็อกอิน ④ Android Chrome ล็อกอิน~~ ⑤ Sheet/Modal บนเครื่องจริง — preview ไม่มีหน้า `/dev/ui` (build จริง) ต้องเปิด dev server แบบ `--host` แล้วเข้าจากมือถือใน Wi-Fi เดียวกัน: iPhone เลื่อนหน้าหลังไม่ได้/กลับตำแหน่งเดิม, Android ปุ่มย้อนกลับกับกล่อง A02 ⑥ จุดสาธิต 1 บัญชีโรงเรียน (เพิ่มใน Test users ก่อน)
+    - **ผลตรวจด้วยมือ ⑤–⑥ (ผู้ใช้รายงาน 2 ต.ค. 2026 “ผ่านหมด”):** ⑤ Sheet/Modal บนเครื่องจริงผ่าน dev server แบบ `--host` (`/dev/ui`): iPhone หน้าหลังไม่เลื่อน/กลับตำแหน่งเดิม, Android ปุ่มย้อนกลับกับกล่อง A02 (ไม่ปิด) และกล่องที่ปิดได้ ⑥ จุดสาธิต 1 บัญชี Google ของโรงเรียนล็อกอินบน preview ได้
+    - **ตรวจรับระยะ 1 ผ่านครบทุกข้อ** — เหลือ: ผู้ใช้ยืนยันให้ merge `phase-1` เข้า `main` (production deploy ครั้งแรก)
 
 ## ระยะ 2 — บัญชี รายชื่อ ห้อง
 
