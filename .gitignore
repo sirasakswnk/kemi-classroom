@@ -17,6 +17,8 @@ supabase/.branches/
 
 # real student data / exports — never commit
 *.xlsx
+# ยกเว้นไฟล์รายชื่อสมมติสำหรับทดสอบ T05 เท่านั้น (exports/sample-roster/README.md)
+!exports/sample-roster/*-FAKE.xlsx
 *.xls
 *.csv
 *.dump
