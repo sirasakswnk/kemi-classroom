@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { Button, Chip, MenuButton, Modal, useToast } from '../../ui'
-import { initialOfTeacher } from '../teacher/initial'
+import { initialOf as initialOfTeacher } from '../../lib/initial'
 import { appErrorOf, membersQuery, removeMember, type Classroom, type Member } from './api'
 import styles from './classrooms.module.css'
 

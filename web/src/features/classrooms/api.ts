@@ -1,37 +1,11 @@
 import { queryOptions } from '@tanstack/react-query'
-import { supabase, toAppError, type AppError } from '../../lib/supabase'
+import { run } from '../../lib/request'
+import { supabase } from '../../lib/supabase'
 import { z } from '../../lib/zod'
 
+export { appErrorOf, RequestError } from '../../lib/request'
+
 // ข้อมูลหน้าครู (T01, T08, T09) — อ่านตารางผ่าน RLS (0005_classrooms, 0006_teachers_read) เขียนผ่าน RPC เท่านั้น
-
-/** ผิดพลาดจาก Supabase ที่แปลงตาม UX 7.1 แล้ว — ใช้กับ TanStack Query (throw ได้) */
-export class RequestError extends Error {
-  readonly appError: AppError
-  constructor(appError: AppError) {
-    super(appError.message)
-    this.appError = appError
-  }
-}
-
-async function run<T>(
-  request: PromiseLike<{ data: unknown; error: unknown }>,
-  schema: z.ZodType<T>,
-): Promise<T> {
-  let result: { data: unknown; error: unknown }
-  try {
-    result = await request
-  } catch (error) {
-    throw new RequestError(toAppError(error))
-  }
-  if (result.error) throw new RequestError(toAppError(result.error))
-  const parsed = schema.safeParse(result.data)
-  if (!parsed.success) throw new RequestError(toAppError({ name: 'InvalidResponse' }))
-  return parsed.data
-}
-
-export function appErrorOf(error: unknown): AppError {
-  return error instanceof RequestError ? error.appError : toAppError(error)
-}
 
 // ---------- ภาคเรียนปัจจุบัน ----------
 const TermSchema = z

@@ -9,11 +9,12 @@ import {
   TriangleAlert,
   Users,
 } from 'lucide-react'
-import { useCallback, useId, useRef, useState, type KeyboardEvent } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { useCallback, useState } from 'react'
+import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
-import { useToast } from '../../ui'
-import { initialOfTeacher } from '../teacher/initial'
+import { Tabs, useToast } from '../../ui'
+import { useTabParam } from '../../lib/useTabParam'
+import { initialOf as initialOfTeacher } from '../../lib/initial'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import {
@@ -31,12 +32,11 @@ import styles from './classrooms.module.css'
 import { MembersPanel } from './MembersPanel'
 
 const TABS = ['general', 'work', 'members'] as const
-type Tab = (typeof TABS)[number]
 
 // T08 ห้องเรียนของครู: แถบบนมีรหัส (กด → T10) ปิด/เปิดการเข้าห้อง คัดลอกลิงก์เชิญ; สามแท็บเดียวกับนักเรียน
 // งานและประกาศมาในระยะ 3 — ตอนนี้แท็บสมาชิกใช้งานได้จริง
 export default function ClassroomPage() {
-  const { id = '' } = useParams()
+  const { classId: id = '' } = useParams()
   const { term, adminMode, classrooms } = useTeacher()
   const classroom = useQuery(classroomQuery(id))
   const teachers = useQuery(teachersQuery)
@@ -109,11 +109,7 @@ function Room({
   adminMode: boolean
 }) {
   const copy = th.classrooms.room
-  const id = useId()
-  const [params, setParams] = useSearchParams()
-  const tabParam = params.get('tab')
-  const tab: Tab = (TABS as readonly string[]).includes(tabParam ?? '') ? (tabParam as Tab) : 'work'
-  const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({})
+  const [tab, selectTab] = useTabParam(TABS, 'work')
   const [fullOpen, setFullOpen] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(null)
   const queryClient = useQueryClient()
@@ -152,36 +148,6 @@ function Room({
     } catch {
       toast(copy.inviteCopyFailed(c.join_code))
     }
-  }
-
-  const selectTab = (next: Tab, focus = false) => {
-    setParams(
-      (p) => {
-        const n = new URLSearchParams(p)
-        n.set('tab', next)
-        return n
-      },
-      { replace: true },
-    )
-    if (focus) tabRefs.current[next]?.focus()
-  }
-
-  // ลูกศรซ้าย/ขวา Home End เลือกแท็บ (WAI-ARIA APG Tabs แบบเลือกทันที)
-  const onTabKey = (e: KeyboardEvent) => {
-    const at = TABS.indexOf(tab)
-    const to =
-      e.key === 'ArrowRight'
-        ? (at + 1) % TABS.length
-        : e.key === 'ArrowLeft'
-          ? (at + TABS.length - 1) % TABS.length
-          : e.key === 'Home'
-            ? 0
-            : e.key === 'End'
-              ? TABS.length - 1
-              : null
-    if (to === null) return
-    e.preventDefault()
-    selectTab(TABS[to], true)
   }
 
   return (
@@ -258,32 +224,11 @@ function Room({
         </p>
       )}
 
-      <div className={styles.tabs} role="tablist" aria-label={copy.tabsLabel} onKeyDown={onTabKey}>
-        {TABS.map((t) => (
-          <button
-            key={t}
-            ref={(el) => {
-              tabRefs.current[t] = el
-            }}
-            type="button"
-            role="tab"
-            id={`${id}tab-${t}`}
-            aria-selected={tab === t}
-            aria-controls={`${id}panel`}
-            tabIndex={tab === t ? 0 : -1}
-            className={styles.tab}
-            onClick={() => selectTab(t)}
-          >
-            {copy.tabs[t]}
-          </button>
-        ))}
-      </div>
-      <div
-        id={`${id}panel`}
-        role="tabpanel"
-        aria-labelledby={`${id}tab-${tab}`}
-        tabIndex={0}
-        className={styles.panel}
+      <Tabs
+        label={copy.tabsLabel}
+        tabs={TABS.map((key) => ({ key, label: copy.tabs[key] }))}
+        selected={tab}
+        onSelect={selectTab}
       >
         {tab === 'members' ? (
           <MembersPanel
@@ -309,7 +254,7 @@ function Room({
             </div>
           </>
         )}
-      </div>
+      </Tabs>
 
       <CodeFullscreen open={fullOpen} onClose={closeFull} name={c.name} code={c.join_code} />
     </>

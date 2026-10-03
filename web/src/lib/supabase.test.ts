@@ -20,6 +20,11 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   already_bound: { message: 'บัญชีนี้เลือกชื่อเรียบร้อยแล้ว', action: 'reload' },
   teacher_required: { message: 'เลือกครูเจ้าของชั้นเรียนก่อน', action: 'field' },
   name_invalid: { message: 'ใส่ชื่อชั้นเรียน ไม่เกิน 80 ตัวอักษร', action: 'focus_field' },
+  not_member: {
+    message: 'คุณไม่ได้อยู่ในชั้นเรียนนี้แล้ว ถ้าคิดว่าผิดพลาดให้แจ้งคุณครู',
+    action: 'go_home_reload_role',
+  },
+  identity_required: { message: 'เลือกชื่อของคุณก่อน แล้วกลับมาเข้าชั้นเรียน', action: 'reload' },
   storage_full: {
     message:
       'ตอนนี้ยังอัปโหลดไฟล์ไม่ได้ · พื้นที่เก็บไฟล์ของระบบเต็มชั่วคราว ไม่ใช่ปัญหาจากเครื่องหรืออินเทอร์เน็ตของคุณ',

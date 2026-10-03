@@ -40,7 +40,7 @@ export default function CreateClassroom() {
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ['classrooms'] })
       toast(th.classrooms.create.created(created.name), { tone: 'success' })
-      navigate(`/t/classes/${created.classroom_id}?tab=members`)
+      navigate(`/t/c/${created.classroom_id}?tab=members`)
     },
     onError: (error) => {
       const appError = appErrorOf(error)

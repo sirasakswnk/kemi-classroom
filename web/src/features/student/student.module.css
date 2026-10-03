@@ -1,0 +1,679 @@
+/* หน้านักเรียน — แบบ v2 .app-top / .page / .greet / .class-card / .join-card / .join-form / .found / .members /
+   .profile-card / .acct; จอแท็บเล็ตตาม UX 13: ตั้งแต่ 600 px คอลัมน์เดียวกว้างสุด 720 px อยู่กลาง ขอบ 32 px,
+   ตั้งแต่ 960 px กว้างสุด 1100 px (หน้าแคบ เช่นหน้าแรก/บัญชี ไม่เกิน 760 px) — ลำดับใน DOM = ลำดับที่เห็น */
+
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- หัวเว็บ ---------- */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 251, 244, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: var(--tap-min);
+  padding: 4px 2px;
+  font-family: var(--f-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--purple-deep);
+  text-decoration: none;
+}
+
+.brand svg {
+  width: 32px;
+  height: 32px;
+}
+
+.avatarBtn {
+  margin-left: auto;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9dcc8;
+  color: #5a4630;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.avatarBtn:focus-visible,
+.classCard:focus-visible,
+.joinCard:focus-visible,
+.rowLink:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+/* ---------- หน้า ---------- */
+.page {
+  width: 100%;
+  display: grid;
+  gap: 22px;
+  align-content: start;
+  padding: 18px 16px 28px;
+}
+
+@media (min-width: 600px) {
+  .page {
+    max-width: 720px;
+    margin-inline: auto;
+    padding: 28px 32px 36px;
+    gap: 26px;
+  }
+
+  .top {
+    padding: 12px 28px;
+  }
+}
+
+@media (min-width: 960px) {
+  .page {
+    max-width: 1100px;
+    padding: 32px 40px 48px;
+  }
+
+  .page[data-width='narrow'] {
+    max-width: 760px;
+  }
+
+  .top {
+    padding: 12px 40px;
+  }
+}
+
+.greet {
+  display: grid;
+  gap: 4px;
+}
+
+.greet h1 {
+  font-size: 1.75rem;
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+@media (min-width: 600px) {
+  .greet h1 {
+    font-size: 2rem;
+  }
+}
+
+.greet p {
+  color: var(--ink-2);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.skel {
+  height: 120px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(90deg, var(--bg-2), #f3eadb, var(--bg-2));
+  opacity: 0.8;
+}
+
+.skel[data-short='true'] {
+  height: 72px;
+}
+
+.ref {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+}
+
+.muted {
+  color: var(--ink-2);
+  font-size: 0.84375rem;
+}
+
+.hint {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap-min);
+  color: var(--purple);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.link {
+  min-height: var(--tap-min);
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--purple);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.note > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.note > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.note[data-tone='red'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.note[data-tone='purple'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.note[data-tone='green'] {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionHead h2 {
+  font-size: 1.125rem;
+}
+
+.sectionHead h3 {
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 1.0625rem;
+}
+
+.sectionHead h2:focus {
+  outline: none;
+}
+
+/* ---------- การ์ดห้อง (S01) ---------- */
+.classList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.classCard {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.teacherLine {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.875rem;
+  color: rgba(255, 249, 240, 0.92);
+}
+
+.bannerAvatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 249, 240, 0.9);
+  color: var(--purple-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.classFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+}
+
+.go {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  color: var(--purple);
+}
+
+.joinCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: var(--r-lg);
+  background: var(--purple-tint);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.joinIcon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--purple);
+}
+
+.joinIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.joinCard b {
+  display: block;
+  font-weight: 600;
+}
+
+.joinCard span span {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+@media (hover: hover) {
+  .joinCard:hover {
+    border-color: var(--purple-mid);
+  }
+}
+
+/* ---------- ฟอร์มเข้าชั้นเรียน ---------- */
+.joinForm {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.lbl {
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.joinRow {
+  display: flex;
+  gap: 8px;
+}
+
+.codeInput {
+  composes: control from '../../ui/Field.module.css';
+  flex: 1;
+  min-width: 0;
+  font-family: var(--f-display);
+  font-size: 1.125rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.codeInput::placeholder {
+  font-family: var(--f-body);
+  font-size: 1rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.searchBtn {
+  composes: btn primary from '../../ui/Button.module.css';
+}
+
+.primaryBlock {
+  composes: btn primary block from '../../ui/Button.module.css';
+}
+
+.softBlock {
+  composes: btn soft block from '../../ui/Button.module.css';
+  text-decoration: none;
+}
+
+.softLink {
+  composes: btn soft sm from '../../ui/Button.module.css';
+  text-decoration: none;
+}
+
+.searchBtn svg,
+.primaryBlock svg {
+  width: 18px;
+  height: 18px;
+}
+
+.found {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+}
+
+.foundBody {
+  display: grid;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+/* ---------- S02 ---------- */
+.hero {
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 36px 20px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: var(--r-lg);
+  background: var(--purple-tint);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.empty > svg {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+  color: var(--purple);
+}
+
+.empty b {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.empty > a,
+.empty > button {
+  margin-top: 8px;
+}
+
+.members {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.mGroup {
+  padding: 14px 18px 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.mRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.mGroup + .mRow {
+  border-top: 0;
+}
+
+.mRow[data-me='true'] {
+  background: var(--purple-tint);
+}
+
+.memGrid {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 600px) {
+  .memGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .memGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.mNo {
+  width: 26px;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mAvatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 600;
+}
+
+/* ---------- S06 ---------- */
+.profile {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.profile h1 {
+  font-size: 1.5rem;
+  color: var(--purple-deep);
+  overflow-wrap: anywhere;
+}
+
+.avatarXl {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9dcc8;
+  color: #5a4630;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rowList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.rowList li + li {
+  border-top: 1px solid var(--line);
+}
+
+.rowLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 16px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.rowLink > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--ink-3);
+}
+
+.rowName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: #6b3fa0;
+}
+
+.dot[data-tone='1'] {
+  background: #8a5bc2;
+}
+
+.dot[data-tone='2'] {
+  background: #b99bdd;
+}
+
+.dot[data-tone='3'] {
+  background: #8c63be;
+}
+
+.dot[data-tone='4'] {
+  background: #7650a8;
+}
+
+.acct {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-2);
+}
+
+.acct > svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--purple);
+}
+
+.acct b {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.acct span span {
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}

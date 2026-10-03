@@ -19,7 +19,7 @@ import { appErrorOf, classroomsQuery, teachersQuery, termQuery } from '../classr
 import { classTone } from '../classrooms/tone'
 import { exitAdminMode, useAdminModeFlag } from './adminMode'
 import { TeacherContext, useTeacher, type TeacherContextValue } from './teacherContext'
-import { initialOfTeacher } from './initial'
+import { initialOf as initialOfTeacher } from '../../lib/initial'
 import styles from './TeacherLayout.module.css'
 
 // โครงหน้าครู (แบบ v2 .desk): เมนูข้างตั้งแต่ 900 px ต่ำกว่านั้นเป็นแถบเลื่อนด้านบน (UX 13) + แถบเตือนโหมดผู้ดูแล (L6)
@@ -95,12 +95,12 @@ export function TeacherLayout() {
           </NavLink>
           <span className={styles.label}>{th.teacher.classes}</span>
           {value.classrooms.map((c, i) => (
-            <NavLink key={c.id} to={`/t/classes/${c.id}`} className={styles.nav}>
+            <NavLink key={c.id} to={`/t/c/${c.id}`} className={styles.nav}>
               <span className={styles.dot} data-tone={classTone(i)} aria-hidden="true" />
               <span className={styles.navText}>{c.name}</span>
             </NavLink>
           ))}
-          <NavLink to="/t/classes/new" className={styles.nav}>
+          <NavLink to="/t/new-class" className={styles.nav}>
             <CirclePlus aria-hidden="true" />
             {th.teacher.newClass}
           </NavLink>

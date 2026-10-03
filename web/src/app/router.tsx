@@ -4,7 +4,11 @@ import { LoginPage } from './auth/LoginPage'
 import { RequireRole } from './auth/RequireRole'
 import { AppShell } from './common/AppShell'
 import { FullPageStatus } from './common/FullPageStatus'
-import { StudentHome } from '../features/identity/StudentHome'
+import JoinPage from '../features/student/JoinPage'
+import MyAccount from '../features/student/MyAccount'
+import StudentClassroom from '../features/student/StudentClassroom'
+import StudentHome from '../features/student/StudentHome'
+import { StudentLayout } from '../features/student/StudentLayout'
 import { RoleHome } from './home/RoleHome'
 
 // เส้นทางระยะ 1 (TECHNICAL_BUILD_PLAN ส่วน 6) — หน้าแรกตามบทบาท: นักเรียน /, ครู /t, ผู้ดูแล /admin
@@ -27,13 +31,20 @@ export const router = createBrowserRouter([
       { path: '/login', element: <LoginPage /> },
       { path: '/auth/callback', element: <AuthCallback /> },
       {
+        // หน้านักเรียน S01 / S02 / S06 และลิงก์เชิญ — ยังไม่ผูกชื่อ → A02 ก่อนทุกหน้า (UX 4)
+        // ยังไม่ล็อกอิน: RequireRole จำปลายทาง (ตัวกรอง path จาก P1-08) แล้วไป A01
         path: '/',
         element: (
-          // ยังไม่ผูกชื่อ → A02 เลือกชื่อ (UX 4)
           <RequireRole roles={['student']}>
-            <StudentHome />
+            <StudentLayout />
           </RequireRole>
         ),
+        children: [
+          { index: true, element: <StudentHome /> },
+          { path: 'c/:classId', element: <StudentClassroom /> },
+          { path: 'me', element: <MyAccount /> },
+          { path: 'join/:code', element: <JoinPage /> },
+        ],
       },
       {
         // หน้าครู T01/T08/T09 (+ T10 ใน T08) — ครู หรือผู้ดูแลในโหมดผู้ดูแล (L6)
@@ -50,13 +61,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
-            path: 'classes/new',
+            path: 'new-class',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).CreateClassroom,
             }),
           },
           {
-            path: 'classes/:id',
+            path: 'c/:classId',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).ClassroomPage,
             }),

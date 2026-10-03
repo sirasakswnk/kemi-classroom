@@ -30,7 +30,7 @@ export default function TeacherOverview() {
             {term?.name} · {th.classrooms.summary(classrooms.length)}
           </p>
         </div>
-        <Link to="/t/classes/new" className={styles.primaryLink}>
+        <Link to="/t/new-class" className={styles.primaryLink}>
           <Plus aria-hidden="true" />
           {th.classrooms.create.title}
         </Link>
@@ -68,7 +68,7 @@ export default function TeacherOverview() {
                     </Chip>
                   )}
                   <Link
-                    to={`/t/classes/${c.id}`}
+                    to={`/t/c/${c.id}`}
                     className={styles.softLink}
                     aria-label={th.classrooms.openRoomAria(c.name)}
                   >

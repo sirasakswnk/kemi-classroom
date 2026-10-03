@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { th } from '../../copy/th'
 import { toAppError } from '../../lib/supabase'
-import { initialOfTeacher } from '../teacher/initial'
+import { initialOf as initialOfTeacher } from '../../lib/initial'
 import { compareMembers, inviteLink, type Member } from './api'
 import { classTone } from './tone'
 

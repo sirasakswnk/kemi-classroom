@@ -437,50 +437,6 @@
   outline-offset: 2px;
 }
 
-.tabs {
-  display: flex;
-  gap: 6px;
-  padding: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.tab {
-  flex: none;
-  min-height: 42px;
-  padding: 8px 16px;
-  border: 1.5px solid var(--line);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink-2);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tab[aria-selected='true'] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: #fff9f0;
-}
-
-@media (pointer: coarse) {
-  .tab {
-    min-height: var(--tap-min);
-  }
-}
-
-.panel {
-  display: grid;
-  gap: 14px;
-  border-radius: var(--r-md);
-}
-
-.panel:focus-visible {
-  outline: 3px solid var(--purple-mid);
-  outline-offset: 4px;
-}
-
 .panelTitle {
   font-size: 1.1875rem;
 }

@@ -42,6 +42,8 @@ export const ERROR_CODES = [
   'already_bound',
   'teacher_required',
   'name_invalid',
+  'not_member',
+  'identity_required',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -88,6 +90,10 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   already_bound: 'reload',
   teacher_required: 'field',
   name_invalid: 'focus_field',
+  // UX 7.1: แสดงข้อความแล้วพากลับหน้าแรก
+  not_member: 'go_home_reload_role',
+  // UX 7.1: เปิด A02 ให้เลือกชื่อก่อน (โหลดข้อมูลนักเรียนใหม่)
+  identity_required: 'reload',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

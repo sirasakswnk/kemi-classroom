@@ -36,6 +36,15 @@ export function rememberNextPath(path: string) {
   }
 }
 
+// อ่านโดยไม่ลบ (เช่น A01 ดูว่ามาจากลิงก์เชิญหรือไม่)
+export function peekNextPath(): string | null {
+  try {
+    return safeNextPath(sessionStorage.getItem(STORAGE_KEY))
+  } catch {
+    return null
+  }
+}
+
 // อ่านแล้วลบทิ้ง ตรวจซ้ำอีกครั้งตอนอ่าน
 export function takeNextPath(): string | null {
   try {

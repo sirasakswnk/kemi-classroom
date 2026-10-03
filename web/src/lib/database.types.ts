@@ -317,6 +317,7 @@ export type Database = {
     }
     Functions: {
       claim_identity: { Args: { p_ref: string }; Returns: Json }
+      classroom_view: { Args: { p_classroom_id: string }; Returns: Json }
       commit_roster_import: {
         Args: {
           p_admin_mode?: boolean
@@ -339,6 +340,7 @@ export type Database = {
       ensure_account: { Args: never; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
+      my_classrooms: { Args: never; Returns: Json }
       ping: { Args: never; Returns: string }
       preview_roster_import: {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
