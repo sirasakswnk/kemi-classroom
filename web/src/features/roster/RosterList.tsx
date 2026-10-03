@@ -49,12 +49,10 @@ export default function RosterList() {
           <h1>{copy.title}</h1>
           <p>{copy.intro}</p>
         </div>
-        {!adminMode && (
-          <Link to="/t/roster/import" className={styles.primaryLink}>
-            <FileSpreadsheet aria-hidden="true" />
-            {copy.importExcel}
-          </Link>
-        )}
+        <Link to="/t/roster/import" className={styles.primaryLink}>
+          <FileSpreadsheet aria-hidden="true" />
+          {copy.importExcel}
+        </Link>
       </div>
 
       {roster.isPending && (
