@@ -316,6 +316,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_add_teacher: {
+        Args: {
+          p_email: string
+          p_new_teacher_name?: string
+          p_teacher_id?: string
+        }
+        Returns: Json
+      }
+      admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
+      admin_teachers: { Args: never; Returns: Json }
       claim_identity: { Args: { p_ref: string }; Returns: Json }
       classroom_view: { Args: { p_classroom_id: string }; Returns: Json }
       commit_roster_import: {

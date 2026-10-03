@@ -9,7 +9,6 @@ import MyAccount from '../features/student/MyAccount'
 import StudentClassroom from '../features/student/StudentClassroom'
 import StudentHome from '../features/student/StudentHome'
 import { StudentLayout } from '../features/student/StudentLayout'
-import { RoleHome } from './home/RoleHome'
 
 // เส้นทางระยะ 1 (TECHNICAL_BUILD_PLAN ส่วน 6) — หน้าแรกตามบทบาท: นักเรียน /, ครู /t, ผู้ดูแล /admin
 const devRoutes: RouteObject[] = import.meta.env.DEV
@@ -61,9 +60,23 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T12 บัญชีของครู
+            path: 'me',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).TeacherAccount,
+            }),
+          },
+          {
             path: 'new-class',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).CreateClassroom,
+            }),
+          },
+          {
+            // T05 นำเข้า Excel — โหลดแยก chunk (SheetJS แยกอีกชั้น)
+            path: 'roster/import',
+            lazy: async () => ({
+              Component: (await import('../features/roster/RosterImportRoute')).default,
             }),
           },
           {
@@ -83,18 +96,8 @@ export const router = createBrowserRouter([
       },
       {
         path: '/admin',
-        element: (
-          <RequireRole roles={['admin']}>
-            <RoleHome role="admin" />
-          </RequireRole>
-        ),
-      },
-      {
-        // T05 นำเข้ารายชื่อจาก Excel [ข้อเสนอ เส้นทาง] — โหลดแยกจาก bundle หลัก
-        path: '/t/roster/import',
-        lazy: async () => ({
-          Component: (await import('../features/roster/RosterImportRoute')).default,
-        }),
+        // D01 ดูแลระบบ (บัญชีครู + เข้าหน้าครูในโหมดผู้ดูแล) — โหลดแยก chunk
+        lazy: async () => ({ Component: (await import('../features/admin/AdminRoute')).default }),
         hydrateFallbackElement: <FullPageStatus />,
       },
       ...devRoutes,

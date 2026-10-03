@@ -43,6 +43,13 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
     message: 'ไม่พบนักเรียนคนนี้ โหลดรายชื่อใหม่แล้วลองอีกครั้ง',
     action: 'reload',
   },
+  email_invalid: { message: 'ใส่อีเมลบัญชี Google ให้ถูกต้อง', action: 'focus_field' },
+  teacher_email_exists: { message: 'อีเมลนี้อยู่ในรายการบัญชีครูแล้ว', action: 'field' },
+  teacher_name_invalid: { message: 'ใส่ชื่อครู ไม่เกิน 60 ตัวอักษร', action: 'focus_field' },
+  last_teacher: {
+    message: 'ต้องมีบัญชีครูอย่างน้อย 1 บัญชี เพิ่มบัญชีใหม่ก่อนแล้วค่อยเอาบัญชีนี้ออก',
+    action: 'field',
+  },
   storage_full: {
     message:
       'ตอนนี้ยังอัปโหลดไฟล์ไม่ได้ · พื้นที่เก็บไฟล์ของระบบเต็มชั่วคราว ไม่ใช่ปัญหาจากเครื่องหรืออินเทอร์เน็ตของคุณ',

@@ -1,9 +1,8 @@
 /* T05 นำเข้า — แบบ v2 .desk-body / .page-head / .imp-grid / .panel / .issue / .gb.mini / .form-foot
    หน้าครูบนคอมเป็นหลัก; ต่ำกว่า 1100 px เรียงเป็นคอลัมน์เดียว (ลำดับใน DOM = ลำดับที่เห็น) */
+/* อยู่ใน TeacherPage (ระยะขอบมาจากโครงหน้าครู) */
 .page {
   width: min(100%, 1240px);
-  margin-inline: auto;
-  padding: var(--space-5) clamp(16px, 2vw, 26px) var(--space-6);
   display: grid;
   gap: 22px;
   align-content: start;

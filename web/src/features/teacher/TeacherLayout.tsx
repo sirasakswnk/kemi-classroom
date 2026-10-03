@@ -3,7 +3,6 @@ import {
   ChevronRight,
   CirclePlus,
   LayoutDashboard,
-  LogOut,
   ShieldCheck,
   TriangleAlert,
   Users,
@@ -150,7 +149,6 @@ export interface Crumb {
 // แถบบนของแต่ละหน้า (แบบ v2 tTop): ตำแหน่ง + ชื่อผู้ใช้ + ออกจากระบบ แล้วตามด้วยเนื้อหาหน้า
 export function TeacherPage({ crumbs, children }: { crumbs: Crumb[]; children: ReactNode }) {
   const { displayName } = useTeacher()
-  const { signOut } = useAuth()
   return (
     <>
       <header className={styles.top}>
@@ -162,15 +160,18 @@ export function TeacherPage({ crumbs, children }: { crumbs: Crumb[]; children: R
             </Fragment>
           ))}
         </nav>
-        <div className={styles.who}>
+        <Link
+          to="/t/me"
+          className={styles.who}
+          aria-label={`${th.teacherAccount.title} · ${displayName}`}
+        >
           <span className={styles.avatar} aria-hidden="true">
             {initialOfTeacher(displayName)}
           </span>
-          <span className={styles.whoName}>{displayName}</span>
-          <Button size="sm" variant="ghost" icon={<LogOut />} onClick={signOut}>
-            {th.common.signOut}
-          </Button>
-        </div>
+          <span className={styles.whoName} aria-hidden="true">
+            {displayName}
+          </span>
+        </Link>
       </header>
       <main className={styles.body}>{children}</main>
     </>

@@ -2,4 +2,5 @@
 export { default as ClassroomPage } from '../classrooms/ClassroomPage'
 export { default as CreateClassroom } from '../classrooms/CreateClassroom'
 export { default as RosterList } from '../roster/RosterList'
+export { default as TeacherAccount } from './TeacherAccount'
 export { default as TeacherOverview } from '../classrooms/TeacherOverview'

@@ -1,10 +1,11 @@
-import { ArrowLeft, ArrowRight, Check, FileSpreadsheet, TriangleAlert, Upload } from 'lucide-react'
+import { ArrowRight, Check, FileSpreadsheet, TriangleAlert, Upload } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import type { Json } from '../../lib/database.types'
 import { supabase, toAppError, type AppError } from '../../lib/supabase'
 import { Button, Card, Chip, Field, Input, Select, Steps, useToast, type StepItem } from '../../ui'
+import { useTeacher } from '../teacher/teacherContext'
 import {
   columnLetter,
   detectLayout,
@@ -35,6 +36,8 @@ const FIELD_TO_INPUT: Record<RosterIssue['field'], keyof RosterDraftRow> = {
 // ไฟล์อ่านในเบราว์เซอร์เท่านั้น ส่งขึ้นเซิร์ฟเวอร์เฉพาะ 5 ช่องต่อคน
 export function RosterImportPage() {
   const toast = useToast()
+  // ผู้ดูแลในโหมดผู้ดูแลนำเข้าแทนครูได้ (L6) — RPC ต้องได้ p_admin_mode
+  const { adminMode } = useTeacher()
   const fileInput = useRef<HTMLInputElement>(null)
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [fileError, setFileError] = useState<FileErrorKind | null>(null)
@@ -104,6 +107,7 @@ export function RosterImportPage() {
         .rpc('preview_roster_import', {
           p_group_name: groupName,
           p_rows: payload as unknown as Json,
+          p_admin_mode: adminMode,
         })
         .then(({ data, error }) => {
           if (!active) return
@@ -120,7 +124,7 @@ export function RosterImportPage() {
       active = false
       clearTimeout(timer)
     }
-  }, [canPreview, done, groupName, payload, previewKey])
+  }, [canPreview, done, groupName, payload, previewKey, adminMode])
 
   const currentPlan = canPreview && plan?.key === previewKey ? plan : null
   const checking = canPreview && !currentPlan
@@ -198,6 +202,7 @@ export function RosterImportPage() {
       p_group_name: groupName,
       p_rows: payload as unknown as Json,
       p_request_key: requestKey.current.uuid,
+      p_admin_mode: adminMode,
     })
     setCommitting(false)
     if (error) return setCommitError(toAppError(error))
@@ -264,10 +269,6 @@ export function RosterImportPage() {
 
   return (
     <div className={styles.page}>
-      <Link to="/t/roster" className={styles.back}>
-        <ArrowLeft aria-hidden="true" />
-        {th.roster.backToTeacher}
-      </Link>
       <header className={styles.head}>
         {termName && <p className={styles.eyebrow}>{th.roster.eyebrow(termName)}</p>}
         <h1>{th.roster.title}</h1>

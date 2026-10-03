@@ -50,6 +50,10 @@ export const ERROR_CODES = [
   'rebind_same_account',
   'account_ambiguous',
   'student_not_found',
+  'email_invalid',
+  'teacher_email_exists',
+  'teacher_name_invalid',
+  'last_teacher',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -107,6 +111,11 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   rebind_same_account: 'field',
   account_ambiguous: 'field',
   student_not_found: 'reload',
+  // D01 บัญชีครู (P2-09)
+  email_invalid: 'focus_field',
+  teacher_email_exists: 'field',
+  teacher_name_invalid: 'focus_field',
+  last_teacher: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

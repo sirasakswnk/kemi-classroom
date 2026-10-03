@@ -1,0 +1,187 @@
+/* T12 — แบบ v2 .acct-grid / .profile-card / .panel / .list-row */
+.head {
+  display: grid;
+  gap: 4px;
+}
+
+.head h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.head p,
+.hint {
+  color: var(--ink-2);
+}
+
+.hint {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.profile {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.profile h2 {
+  font-size: 1.5rem;
+  color: var(--purple-deep);
+  overflow-wrap: anywhere;
+}
+
+.avatar {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.acct {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-2);
+  text-align: start;
+}
+
+.acct > svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--purple);
+}
+
+.acct b {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.acct span span {
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
+}
+
+.panel h2 {
+  font-size: 1.125rem;
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 4px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.row:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.row > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--ink-3);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowText b {
+  display: block;
+  font-weight: 600;
+}
+
+.rowText span {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: #6b3fa0;
+}
+
+.dot[data-tone='1'] {
+  background: #8a5bc2;
+}
+
+.dot[data-tone='2'] {
+  background: #b99bdd;
+}
+
+.dot[data-tone='3'] {
+  background: #8c63be;
+}
+
+.dot[data-tone='4'] {
+  background: #7650a8;
+}
