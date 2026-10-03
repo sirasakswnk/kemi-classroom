@@ -132,6 +132,7 @@ grant execute on function public.grade_submission to authenticated;
 | 5 | `0005_classrooms.sql` (push แล้ว 3 ต.ค. 2026) | `classrooms`, `memberships`; แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ (ไม่จำกัดห้องตามรายชื่อ), ปิด/เปิดการเข้าห้อง, เอานักเรียนออกจากชั้นเรียน `remove_member` (ไม่ลบงาน), จัดการบัญชีครู | 2 |
 | 5a | `0006_teachers_read.sql` (push แล้ว 3 ต.ค. 2026) | ให้ครูและผู้ดูแลอ่านตาราง `teachers` ได้ (ชื่อครูบนแถบบน และให้ผู้ดูแลเลือกครูเจ้าของห้องใน T09) | 2 |
 | 5b | `0007_student_classrooms.sql` (push แล้ว 4 ต.ค. 2026) | RPC `my_classrooms()` และ `classroom_view(uuid)` ให้นักเรียนเห็นชื่อห้อง ชื่อครู จำนวนสมาชิก และชื่อ + เลขที่ของเพื่อนในห้อง โดยไม่เปิด RLS ของตารางให้กว้างขึ้น (ไม่คืนเลขประจำตัว อีเมล หรือห้องตามรายชื่อของคนอื่น) | 2 |
+| 5c | `0008_rebind.sql` (push แล้ว 4 ต.ค. 2026) | `roster_overview`, `rebind_preview`, `rebind_student`, `unbind_student`: แก้การผูก 2 แบบ ลบ `auth.sessions` และ refresh token ของบัญชีเดิมใน transaction เดียว ไม่แตะ membership งาน คะแนน โทเคน | 2 |
 | 6 | `…_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
 | 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
@@ -171,7 +172,7 @@ grant execute on function public.grade_submission to authenticated;
 | S04, S05, C01 | `/draw`, `/collection`, `/notifications` | 5–6 |
 | T01, T09, T08, T10 | `/t`, `/t/new-class`, `/t/c/:classId` (+ แสดงรหัสเต็มจอ) | 2 |
 | T02, T03 | `/t/c/:classId/new`, `/t/w/:postId/edit` (แก้ไข N2), `/t/w/:postId` (สถานะ + การ์ดโจทย์), `/t/w/:postId/s/:studentId` (ตรวจ) | 3–4 |
-| T04, T05 | `/t/c/:classId/grades`, `/t/c/:classId/roster` | 2–4 |
+| T04, T05 | `/t/c/:classId/grades`, `/t/roster` (รายชื่อทุกห้องตามไฟล์ เพราะรายชื่อไม่ได้ผูกกับชั้นเรียน; นำเข้าที่ `/t/roster/import`) | 2–4 |
 | T12 | `/t/me` | 2 |
 | T06, T07, T11 | `/t/charms`, `/t/term`, `/t/notifications` | 5–6 |
 | D01 | `/admin` (+ ปุ่มเข้าหน้าครูในโหมดผู้ดูแล แถบเตือนอยู่ใน layout ครู) | 2, 6–7 |
