@@ -28,7 +28,9 @@ insert into expected_authenticated values
   -- 0003_roster
   ('private.is_teacher_or_admin()'),                                -- ใช้ใน RLS policy
   ('public.preview_roster_import(text,jsonb,boolean)'),
-  ('public.commit_roster_import(text,jsonb,uuid,boolean)');
+  ('public.commit_roster_import(text,jsonb,uuid,boolean)'),
+  ('public.search_roster(text)'),
+  ('public.claim_identity(uuid)');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
