@@ -346,6 +346,14 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
         Returns: Json
       }
+      rebind_preview: {
+        Args: { p_admin_mode?: boolean; p_email: string; p_student_id: string }
+        Returns: Json
+      }
+      rebind_student: {
+        Args: { p_admin_mode?: boolean; p_email: string; p_student_id: string }
+        Returns: Json
+      }
       remove_member: {
         Args: {
           p_admin_mode?: boolean
@@ -354,6 +362,7 @@ export type Database = {
         }
         Returns: Json
       }
+      roster_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
       search_roster: { Args: { p_query: string }; Returns: Json }
       set_join_enabled: {
         Args: {
@@ -361,6 +370,10 @@ export type Database = {
           p_classroom_id: string
           p_enabled: boolean
         }
+        Returns: Json
+      }
+      unbind_student: {
+        Args: { p_admin_mode?: boolean; p_student_id: string }
         Returns: Json
       }
     }

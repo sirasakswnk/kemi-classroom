@@ -104,15 +104,11 @@ export function TeacherLayout() {
             <CirclePlus aria-hidden="true" />
             {th.teacher.newClass}
           </NavLink>
-          {!adminMode && (
-            <>
-              <span className={styles.label}>{th.teacher.manage}</span>
-              <NavLink to="/t/roster/import" className={styles.nav}>
-                <Users aria-hidden="true" />
-                {th.teacher.roster}
-              </NavLink>
-            </>
-          )}
+          <span className={styles.label}>{th.teacher.manage}</span>
+          <NavLink to="/t/roster" className={styles.nav}>
+            <Users aria-hidden="true" />
+            {th.teacher.roster}
+          </NavLink>
           <p className={styles.foot}>
             {value.term?.name}
             <br />

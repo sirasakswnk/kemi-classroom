@@ -25,6 +25,24 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
     action: 'go_home_reload_role',
   },
   identity_required: { message: 'เลือกชื่อของคุณก่อน แล้วกลับมาเข้าชั้นเรียน', action: 'reload' },
+  account_not_found: {
+    message: 'ไม่พบบัญชีนี้ ให้นักเรียนเข้าสู่ระบบด้วยบัญชีนี้ก่อนแล้วลองอีกครั้ง',
+    action: 'field',
+  },
+  account_bound_elsewhere: {
+    message: 'บัญชีนี้เชื่อมกับนักเรียนคนอื่นอยู่ ให้แก้การผูกของคนนั้นก่อน',
+    action: 'field',
+  },
+  account_not_student: {
+    message: 'บัญชีนี้เป็นบัญชีครูหรือผู้ดูแล ผูกกับนักเรียนไม่ได้',
+    action: 'field',
+  },
+  rebind_same_account: { message: 'บัญชีนี้ผูกกับนักเรียนคนนี้อยู่แล้ว', action: 'field' },
+  account_ambiguous: { message: 'พบหลายบัญชีที่ใช้อีเมลนี้ แจ้งผู้ดูแลระบบ', action: 'field' },
+  student_not_found: {
+    message: 'ไม่พบนักเรียนคนนี้ โหลดรายชื่อใหม่แล้วลองอีกครั้ง',
+    action: 'reload',
+  },
   storage_full: {
     message:
       'ตอนนี้ยังอัปโหลดไฟล์ไม่ได้ · พื้นที่เก็บไฟล์ของระบบเต็มชั่วคราว ไม่ใช่ปัญหาจากเครื่องหรืออินเทอร์เน็ตของคุณ',

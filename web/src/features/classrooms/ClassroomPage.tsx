@@ -208,12 +208,10 @@ function Room({
                 </button>
               </>
             )}
-            {!adminMode && (
-              <Link to="/t/roster/import" className={styles.toolBtn} data-solid="true">
-                <Users aria-hidden="true" />
-                {copy.roster}
-              </Link>
-            )}
+            <Link to="/t/roster" className={styles.toolBtn} data-solid="true">
+              <Users aria-hidden="true" />
+              {copy.roster}
+            </Link>
           </div>
         </ClassBanner>
       </section>

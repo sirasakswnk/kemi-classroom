@@ -67,6 +67,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T05 รายชื่อนักเรียน + แก้การผูกบัญชี (นำเข้า Excel อยู่ที่ /t/roster/import)
+            path: 'roster',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).RosterList,
+            }),
+          },
+          {
             path: 'c/:classId',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).ClassroomPage,

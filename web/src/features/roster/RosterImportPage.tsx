@@ -264,7 +264,7 @@ export function RosterImportPage() {
 
   return (
     <div className={styles.page}>
-      <Link to="/t" className={styles.back}>
+      <Link to="/t/roster" className={styles.back}>
         <ArrowLeft aria-hidden="true" />
         {th.roster.backToTeacher}
       </Link>
@@ -534,7 +534,7 @@ export function RosterImportPage() {
                 </span>
               </p>
             )}
-            <Link to="/t" className={styles.cancel}>
+            <Link to="/t/roster" className={styles.cancel}>
               {th.roster.cancel}
             </Link>
             <Button

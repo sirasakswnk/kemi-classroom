@@ -148,14 +148,12 @@ export function MembersPanel({
         </div>
       )}
 
-      {!adminMode && (
-        <p className={styles.note} data-tone="plain">
-          <Info aria-hidden="true" />
-          <span>
-            {copy.notJoinedPrefix} <Link to="/t/roster/import">{copy.roster}</Link>
-          </span>
-        </p>
-      )}
+      <p className={styles.note} data-tone="plain">
+        <Info aria-hidden="true" />
+        <span>
+          {copy.notJoinedPrefix} <Link to="/t/roster?filter=notjoined">{copy.roster}</Link>
+        </span>
+      </p>
 
       <Modal
         open={target !== null}
