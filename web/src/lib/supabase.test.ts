@@ -17,6 +17,7 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   forbidden: { message: 'คุณไม่มีสิทธิ์ทำรายการนี้', action: 'go_home_reload_role' },
   admin_mode_required: { message: 'ต้องเข้าหน้าครูในโหมดผู้ดูแลก่อน', action: 'enter_admin_mode' },
   rate_limited: { message: 'ทำรายการถี่เกินไป รอสักครู่แล้วลองใหม่', action: 'retry_later' },
+  already_bound: { message: 'บัญชีนี้เลือกชื่อเรียบร้อยแล้ว', action: 'reload' },
   storage_full: {
     message:
       'ตอนนี้ยังอัปโหลดไฟล์ไม่ได้ · พื้นที่เก็บไฟล์ของระบบเต็มชั่วคราว ไม่ใช่ปัญหาจากเครื่องหรืออินเทอร์เน็ตของคุณ',

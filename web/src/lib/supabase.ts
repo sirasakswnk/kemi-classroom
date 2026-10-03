@@ -39,6 +39,7 @@ export const ERROR_CODES = [
   'score_locked',
   'reason_required',
   'stale_revision',
+  'already_bound',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -81,6 +82,8 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   score_locked: 'field',
   reason_required: 'focus_field',
   stale_revision: 'reload_latest',
+  // A02: ไม่แสดงเป็นข้อผิดพลาด ปิดป๊อปอัปแล้วโหลดข้อมูลใหม่ (UX 4)
+  already_bound: 'reload',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

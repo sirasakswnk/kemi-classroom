@@ -1,0 +1,206 @@
+/* A02 เลือกชื่อ — แบบ v2 .sheet.pick / .acct-line / .search-field / .pick-row / .pick-card / .note */
+
+.acct {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--purple);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .link {
+    min-height: var(--tap-min);
+  }
+}
+
+.searchRow {
+  display: flex;
+  gap: 8px;
+}
+
+.searchField {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchField > svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.searchField input {
+  padding-left: 42px;
+}
+
+.hint {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.note > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.note[data-tone='plain'] {
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+.note[data-tone='amber'] {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.note[data-tone='red'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  width: 100%;
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--field-bg);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.row b {
+  display: block;
+  font-weight: 600;
+}
+
+.row span span {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.row > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--ink-3);
+}
+
+@media (hover: hover) {
+  button.row:hover {
+    border-color: var(--purple-mid);
+    background: var(--purple-tint);
+  }
+}
+
+button.row:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.row[data-taken='true'] {
+  grid-template-columns: auto minmax(0, 1fr);
+  border-style: dashed;
+  background: var(--bg-2);
+  cursor: default;
+}
+
+.avatar,
+.avatarLg {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9dcc8;
+  color: #5a4630;
+  font-weight: 600;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.9375rem;
+}
+
+.avatar svg {
+  width: 16px;
+  height: 16px;
+}
+
+.avatarLg {
+  width: 44px;
+  height: 44px;
+  font-size: 1.0625rem;
+}
+
+.card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border: 1.5px solid var(--line-2);
+  border-radius: 18px;
+  background: var(--purple-tint);
+}
+
+.card > div {
+  min-width: 0;
+}
+
+.card > div span {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.cardName {
+  display: block;
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 1.3125rem;
+  color: var(--purple-deep);
+  overflow-wrap: anywhere;
+}

@@ -4,6 +4,7 @@ import { LoginPage } from './auth/LoginPage'
 import { RequireRole } from './auth/RequireRole'
 import { AppShell } from './common/AppShell'
 import { FullPageStatus } from './common/FullPageStatus'
+import { StudentHome } from '../features/identity/StudentHome'
 import { RoleHome } from './home/RoleHome'
 
 // เส้นทางระยะ 1 (TECHNICAL_BUILD_PLAN ส่วน 6) — หน้าแรกตามบทบาท: นักเรียน /, ครู /t, ผู้ดูแล /admin
@@ -28,8 +29,9 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: (
+          // ยังไม่ผูกชื่อ → A02 เลือกชื่อ (UX 4)
           <RequireRole roles={['student']}>
-            <RoleHome role="student" />
+            <StudentHome />
           </RequireRole>
         ),
       },
