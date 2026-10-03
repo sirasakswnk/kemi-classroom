@@ -44,7 +44,10 @@ insert into expected_authenticated values
   ('public.roster_overview(boolean)'),
   ('public.rebind_preview(uuid,text,boolean)'),
   ('public.rebind_student(uuid,text,boolean)'),
-  ('public.unbind_student(uuid,boolean)');
+  ('public.unbind_student(uuid,boolean)'),
+  ('public.admin_teachers()'),
+  ('public.admin_add_teacher(text,uuid,text)'),
+  ('public.admin_remove_teacher(uuid)');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
