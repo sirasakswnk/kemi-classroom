@@ -127,14 +127,17 @@ grant execute on function public.grade_submission to authenticated;
 | --- | --- | --- | --- |
 | 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; **ไม่ติดตั้ง `pgtap` ใน migration** — ไฟล์ทดสอบติดตั้งภายใน transaction แล้ว rollback จึงไม่เหลือบนฐานข้อมูลใด), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
 | 2 | `0002_accounts.sql` | `accounts`, `teachers`, `private.teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
-| 3 | `0003_roster_classes.sql` | `terms`, `term_control`, `students`, `roster_entries`, `classrooms`, `memberships`; ค้น/ผูกชื่อ (L3), แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
-| 4 | `0004_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
-| 5 | `0005_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
-| 6 | `0006_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
-| 7 | `0007_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
-| 8 | `0008_terms.sql` | `terms_start`, `terms_end` (J9, K5, I5), epoch และล้างยอด | 5 |
-| 9 | `0009_notifications.sql` | `notifications`; สร้างแจ้งเตือนนักเรียน 5 / ครู 3 เหตุการณ์, งานเตือน 24 ชม. (J7, L5), เกณฑ์พื้นที่ | 6 |
-| 10 | `0010_retention.sql` | `retention_requests`; รายการส่งออก, ยืนยันลบ (จำนวน/ไบต์ต้องตรง), ลบก่อนกำหนด (J10.4), ตรวจเทอมเปิดเกิน 6 เดือน | 6 |
+| 3 | `0003_roster.sql` (push แล้ว 3 ต.ค. 2026) | `terms`, `term_control`, `students`, `roster_entries`; RPC `preview_roster_import` / `commit_roster_import` (ไม่ลบคนที่หายจากไฟล์ ไม่แตะการผูกบัญชี มีแถวผิดแถวเดียวไม่บันทึกเลย) | 2 |
+| 4 | `0004_classrooms.sql` | `classrooms`, `memberships`; ค้น/ผูกชื่อ (L3), แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
+| 5 | `0005_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
+| 6 | `0006_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
+| 7 | `0007_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
+| 8 | `0008_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
+| 9 | `0009_terms.sql` | `terms_start`, `terms_end` (J9, K5, I5), epoch และล้างยอด | 5 |
+| 10 | `0010_notifications.sql` | `notifications`; สร้างแจ้งเตือนนักเรียน 5 / ครู 3 เหตุการณ์, งานเตือน 24 ชม. (J7, L5), เกณฑ์พื้นที่ | 6 |
+| 11 | `0011_retention.sql` | `retention_requests`; รายการส่งออก, ยืนยันลบ (จำนวน/ไบต์ต้องตรง), ลบก่อนกำหนด (J10.4), ตรวจเทอมเปิดเกิน 6 เดือน | 6 |
+
+เลขไฟล์จริงเรียงตามลำดับที่ push และ migration ที่ push แล้วแก้ไม่ได้ ถ้างานไหนต้องแยกไฟล์เพิ่ม เลขถัดไปเลื่อนตาม ให้ยึดกลุ่มเนื้อหาในตารางนี้ และอ้างชื่อไฟล์จริงใน PROGRESS
 
 `seed.sql`: ระดับ 4 ระดับน้ำหนัก 60/25/10/5, เครื่องราง 12 ชิ้นตาม UX_DESIGN ส่วน 11 (J8), `storage_settings` (`quota_bytes` = 10 GB แบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) ลบส่วนที่กันไว้ให้ bucket ทดสอบตามส่วน 3, 80/90%, `hard_stop_margin_bytes` **[ข้อเสนอ]** 300,000,000 ไบต์), `term_control` เริ่มต้น; บน prod ใส่เฉพาะข้อมูลตั้งต้น ไม่ใส่นักเรียนทดสอบ
 
@@ -310,7 +313,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 2 — บัญชี รายชื่อ ห้อง
 
-งาน: migration 3; นำเข้า Excel (ตัวอย่างก่อนบันทึก ตรวจซ้ำ ศูนย์นำหน้า); A02 (L3); A01 แบบมาจากลิงก์เชิญ + `/join/:code`; S01 + เข้าห้องด้วยรหัส; S06; T01, T09, T08 (แท็บสมาชิก + คัดลอกลิงก์เชิญ **[ข้อเสนอ]**), T10, T05 (แก้ผูก), T12; D01 ส่วนบัญชีครู + โหมดผู้ดูแล (L6)
+งาน: migration 3–4; นำเข้า Excel (ตัวอย่างก่อนบันทึก ตรวจซ้ำ ศูนย์นำหน้า); A02 (L3); A01 แบบมาจากลิงก์เชิญ + `/join/:code`; S01 + เข้าห้องด้วยรหัส; S06; T01, T09, T08 (แท็บสมาชิก + คัดลอกลิงก์เชิญ **[ข้อเสนอ]**), T10, T05 (แก้ผูก), T12; D01 ส่วนบัญชีครู + โหมดผู้ดูแล (L6)
 
 ตรวจรับ:
 - [ ] ค้นด้วยชื่อบางส่วนไม่เจอ ค้นเลขเต็ม/ชื่อเต็มเจอเป็นชื่อปิดบางส่วน + ห้อง + เลขที่; ค้นครั้งที่ 11 ใน 10 นาทีถูกปฏิเสธ (L3)
@@ -322,7 +325,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 3 — งานและไฟล์
 
-งาน: migration 4–5; Edge Functions `uploads`, `files` และ `process-jobs` ขั้นต่ำ (ลบไฟล์ที่ถูกแทน, sweeper `copying` และ batch ค้าง) พร้อม `pg_cron`; ตั้ง CORS/lifecycle/keys ของ B2; โมดูลอัปโหลด; T02 (K1: คะแนนเต็มจำนวนเต็ม ≥ 1 ไม่มีเพดาน 100, ปุ่มตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + โหมดแก้ไข (N2, N1), S02, S03 (ไฟล์โจทย์เปิดดู/ดาวน์โหลด, ส่ง/ส่งแก้/สถานะ), T08 รายการงาน, T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น; ระบบนับพื้นที่ + แถบพื้นที่เต็ม; **ตั้ง `backup.yml` แบบพื้นฐานกับ dev** (ใช้ `maintenance_locks`/`backup_runs` จาก migration 1 และ 4)
+งาน: migration 5–6; Edge Functions `uploads`, `files` และ `process-jobs` ขั้นต่ำ (ลบไฟล์ที่ถูกแทน, sweeper `copying` และ batch ค้าง) พร้อม `pg_cron`; ตั้ง CORS/lifecycle/keys ของ B2; โมดูลอัปโหลด; T02 (K1: คะแนนเต็มจำนวนเต็ม ≥ 1 ไม่มีเพดาน 100, ปุ่มตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + โหมดแก้ไข (N2, N1), S02, S03 (ไฟล์โจทย์เปิดดู/ดาวน์โหลด, ส่ง/ส่งแก้/สถานะ), T08 รายการงาน, T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น; ระบบนับพื้นที่ + แถบพื้นที่เต็ม; **ตั้ง `backup.yml` แบบพื้นฐานกับ dev** (ใช้ `maintenance_locks`/`backup_runs` จาก migration 1 และ 5)
 
 ตรวจรับ:
 - [ ] PUT ที่ขนาดไม่ตรงลายเซ็นถูก B2 ปฏิเสธ; ไฟล์ที่ magic number ไม่ใช่ JPEG/PNG/PDF ถูกปฏิเสธตอน complete
@@ -337,7 +340,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 4 — ตรวจงานและคะแนน
 
-งาน: migration 6; T03 หน้าตรวจ (ตัวดูรูป/PDF, ซูม, หมุน, ดาวน์โหลด PDF), แผงคะแนน (L2, L4, K2), สิทธิ์แก้ (K3), ความคิดเห็น + ยกเลิก, M1 เปลี่ยนกำหนดส่งสองทิศ (N3), M2 ปิดรับ, M3 เฉลย (K4), ลบงาน/ประกาศ (N4), T04 + CSV, หน้าผลตรวจ/เฉลยของนักเรียน
+งาน: migration 7; T03 หน้าตรวจ (ตัวดูรูป/PDF, ซูม, หมุน, ดาวน์โหลด PDF), แผงคะแนน (L2, L4, K2), สิทธิ์แก้ (K3), ความคิดเห็น + ยกเลิก, M1 เปลี่ยนกำหนดส่งสองทิศ (N3), M2 ปิดรับ, M3 เฉลย (K4), ลบงาน/ประกาศ (N4), T04 + CSV, หน้าผลตรวจ/เฉลยของนักเรียน
 
 ตรวจรับ:
 - [ ] ชุดสูตรคะแนนในส่วน 9 ผ่านทั้งหน้าเว็บและฐานข้อมูล; คะแนนเกินเต็มถูกปฏิเสธ; คะแนนเต็ม 150 ใช้ได้ (K1)
@@ -353,7 +356,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 5 — รางวัลและสะสม
 
-งาน: migration 7–8; ให้รางวัลใน transaction เดียวกับผลตรวจ, เอฟเฟกต์เมื่อได้รับโทเคนแสดงครั้งเดียวเมื่อกลับมา (`reward_effect_seen`), ปรับยอด, S04 (อัตราจริง), สุ่ม + เอฟเฟกต์, S05, สวมใส่ + แสดงในแท็บสมาชิก, T06 (อัตรารวม 100, อัปโหลดรูปเครื่องราง), T07 เริ่ม/จบภาคเรียน
+งาน: migration 8–9; ให้รางวัลใน transaction เดียวกับผลตรวจ, เอฟเฟกต์เมื่อได้รับโทเคนแสดงครั้งเดียวเมื่อกลับมา (`reward_effect_seen`), ปรับยอด, S04 (อัตราจริง), สุ่ม + เอฟเฟกต์, S05, สวมใส่ + แสดงในแท็บสมาชิก, T06 (อัตรารวม 100, อัปโหลดรูปเครื่องราง), T07 เริ่ม/จบภาคเรียน
 
 ตรวจรับ:
 - [ ] เอฟเฟกต์ได้รับโทเคนแสดงครั้งเดียว ไม่มีรายการในกระดิ่ง
@@ -365,7 +368,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 6 — แจ้งเตือนและงานเบื้องหลัง
 
-งาน: migration 9–10; เพิ่มงานใน `process-jobs`: เตือน 24 ชม. (J7, L5), สร้างแจ้งเตือน (นักเรียน 5 / ครู 3 เหตุการณ์, dedupe), เทียบยอดพื้นที่ B2 รายวัน, เกณฑ์ 80/90/100%, เทอมเปิดเกิน 6 เดือน, เสนอลบตามอายุ; C01, T11, แผงพื้นที่และรายการงานเบื้องหลังที่ล้มเหลวใน D01, แถวข้อมูลเก่าใน T07 + ZIP + ยืนยันลบ + ลบก่อนกำหนด (J10.4)
+งาน: migration 10–11; เพิ่มงานใน `process-jobs`: เตือน 24 ชม. (J7, L5), สร้างแจ้งเตือน (นักเรียน 5 / ครู 3 เหตุการณ์, dedupe), เทียบยอดพื้นที่ B2 รายวัน, เกณฑ์ 80/90/100%, เทอมเปิดเกิน 6 เดือน, เสนอลบตามอายุ; C01, T11, แผงพื้นที่และรายการงานเบื้องหลังที่ล้มเหลวใน D01, แถวข้อมูลเก่าใน T07 + ZIP + ยืนยันลบ + ลบก่อนกำหนด (J10.4)
 
 ตรวจรับ:
 - [ ] เตือนเฉพาะคนยังไม่ส่ง 24 ชม. ก่อนกำหนด ครั้งเดียว; โพสต์เมื่อเหลือไม่ถึง 24 ชม. ไม่มีเตือน; ขยายจากเหลือ 10 ชม. เป็น 3 วันได้เตือน 1 ครั้ง; เคยเตือนแล้วขยายอีกไม่เตือนซ้ำ (L5)
@@ -376,7 +379,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io
