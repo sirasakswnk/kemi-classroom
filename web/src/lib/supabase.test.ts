@@ -18,6 +18,8 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   admin_mode_required: { message: 'ต้องเข้าหน้าครูในโหมดผู้ดูแลก่อน', action: 'enter_admin_mode' },
   rate_limited: { message: 'ทำรายการถี่เกินไป รอสักครู่แล้วลองใหม่', action: 'retry_later' },
   already_bound: { message: 'บัญชีนี้เลือกชื่อเรียบร้อยแล้ว', action: 'reload' },
+  teacher_required: { message: 'เลือกครูเจ้าของชั้นเรียนก่อน', action: 'field' },
+  name_invalid: { message: 'ใส่ชื่อชั้นเรียน ไม่เกิน 80 ตัวอักษร', action: 'focus_field' },
   storage_full: {
     message:
       'ตอนนี้ยังอัปโหลดไฟล์ไม่ได้ · พื้นที่เก็บไฟล์ของระบบเต็มชั่วคราว ไม่ใช่ปัญหาจากเครื่องหรืออินเทอร์เน็ตของคุณ',

@@ -1,0 +1,84 @@
+/* ปุ่มเมนูรายแถว (เช่นแถวสมาชิกใน T08) */
+.wrap {
+  position: relative;
+  flex: none;
+}
+
+.trigger {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.trigger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.trigger[aria-expanded='true'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+@media (hover: hover) {
+  .trigger:hover {
+    background: var(--purple-tint);
+    color: var(--ink);
+  }
+}
+
+.menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 220px;
+  display: grid;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  box-shadow: var(--shadow-lg);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap-min);
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.item:focus-visible,
+.item:focus {
+  outline: none;
+  background: var(--purple-tint);
+}
+
+.danger {
+  color: var(--red);
+}
+
+.danger:focus {
+  background: var(--red-soft);
+}

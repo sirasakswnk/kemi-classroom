@@ -1,12 +1,13 @@
-import { FileSpreadsheet } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { th } from '../../copy/th'
 import { Button, Chip } from '../../ui'
 import type { Role } from '../auth/account'
 import { useAuth } from '../auth/useAuth'
 import { FullPageCard } from '../common/FullPageStatus'
+import { enterAdminMode } from '../../features/teacher/adminMode'
 
-// หน้าแรกของแต่ละบทบาทในระยะ 1 — ยังเป็นหน้าว่าง (TECHNICAL_BUILD_PLAN ส่วน 10 ระยะ 1)
+// หน้าแรกผู้ดูแลชั่วคราว (D01 มาใน P2-09) — ครูใช้ T01 (/t) นักเรียนใช้ StudentHome แล้ว
 export function RoleHome({ role }: { role: Role }) {
   const { state, signOut } = useAuth()
   const navigate = useNavigate()
@@ -20,9 +21,16 @@ export function RoleHome({ role }: { role: Role }) {
       </Chip>
       {email && <p>{th.login.signedInAs(email)}</p>}
       <p style={{ color: 'var(--ink-2)' }}>{th.home.placeholder}</p>
-      {role === 'teacher' && (
-        <Button icon={<FileSpreadsheet />} onClick={() => navigate('/t/roster/import')}>
-          {th.roster.openImport}
+      {role === 'admin' && (
+        // L6: เข้าหน้าครูในโหมดผู้ดูแล (D01 เต็มรูปแบบมาใน P2-09)
+        <Button
+          icon={<ShieldCheck />}
+          onClick={() => {
+            enterAdminMode()
+            navigate('/t')
+          }}
+        >
+          {th.teacher.enterAdmin}
         </Button>
       )}
       <Button variant="ghost" onClick={signOut}>

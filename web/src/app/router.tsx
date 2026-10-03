@@ -36,12 +36,32 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // หน้าครู T01/T08/T09 (+ T10 ใน T08) — ครู หรือผู้ดูแลในโหมดผู้ดูแล (L6)
         path: '/t',
-        element: (
-          <RequireRole roles={['teacher']}>
-            <RoleHome role="teacher" />
-          </RequireRole>
-        ),
+        lazy: async () => ({
+          Component: (await import('../features/teacher/TeacherRoute')).default,
+        }),
+        hydrateFallbackElement: <FullPageStatus />,
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).TeacherOverview,
+            }),
+          },
+          {
+            path: 'classes/new',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).CreateClassroom,
+            }),
+          },
+          {
+            path: 'classes/:id',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).ClassroomPage,
+            }),
+          },
+        ],
       },
       {
         path: '/admin',

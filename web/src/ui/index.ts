@@ -2,6 +2,7 @@ export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '.
 export { Card, type CardProps } from './Card'
 export { Chip, type ChipProps, type ChipTone } from './Chip'
 export { Field, Input, Select, Textarea, type FieldProps } from './Field'
+export { MenuButton, type MenuButtonProps, type MenuItem } from './Menu'
 export { Modal, type ModalProps } from './Modal'
 export { Sheet, type SheetProps } from './Sheet'
 export { Stepper, type StepperProps } from './Stepper'
