@@ -1311,7 +1311,7 @@ const memberCharm = i => (i % 3 === 1 ? null : (i * 3) % 8);
 
 const STUDENT_SCREENS = [
   ['login','เข้าสู่ระบบ','หน้าแรกก่อนล็อกอิน ใช้บัญชี Google'],
-  ['login:invite','มาจากลิงก์เชิญ','บอกชื่อห้องก่อนเข้าสู่ระบบ'],
+  ['login:invite','มาจากลิงก์เชิญ','บอกว่ามีลิงก์เชิญ ชื่อห้องแสดงหลังเข้าสู่ระบบ'],
   ['login:err','เข้าสู่ระบบไม่สำเร็จ','เช่น บัญชีโรงเรียนไม่อนุญาตเว็บภายนอก'],
   ['pick','เลือกชื่อครั้งแรก','ค้นเลขประจำตัวเต็มหรือชื่อเต็ม แล้วยืนยันว่าเป็นฉัน'],
   ['home','หน้าแรก','งานใกล้กำหนดส่งขึ้นก่อน และทางเข้าชั้นเรียน'],
@@ -1391,7 +1391,7 @@ function sLogin() {
   return `<div class="login">
     <div class="login-hero">${BENZENE}<span class="login-logo">${LOGO}</span><h1>ห้องเคมี</h1><p>ส่งการบ้านเคมี ดูผลตรวจ และสะสมเครื่องราง</p></div>
     <div class="login-body">
-      ${inv ? `<div class="note purple">${icon('key-round')}<span>คุณได้รับลิงก์เชิญเข้า <b>เคมี ม.5/1</b> เข้าสู่ระบบก่อน แล้วระบบจะพาไปยืนยันเข้าห้อง</span></div>` : ''}
+      ${inv ? `<div class="note purple">${icon('key-round')}<span>คุณได้รับ<b>ลิงก์เชิญเข้าชั้นเรียน</b> เข้าสู่ระบบก่อน แล้วระบบจะแสดงชื่อห้องให้ตรวจก่อนเข้าร่วม</span></div>` : ''}
       ${err ? `<div class="note red">${icon('triangle-alert')}<span><b>เข้าสู่ระบบไม่สำเร็จ</b><br>บัญชีโรงเรียนนี้อาจไม่อนุญาตให้ใช้กับเว็บภายนอก ลองใช้บัญชี Google ส่วนตัว หรือแจ้งคุณครู</span></div>` : ''}
       <button class="btn primary block google" data-act="gLogin">${icon('log-in')}${err ? 'ลองเข้าสู่ระบบอีกครั้ง' : 'เข้าสู่ระบบด้วยบัญชี Google'}</button>
       <span class="hint center">ใช้ได้ทั้งบัญชี Google ส่วนตัวและบัญชีของโรงเรียน</span>
