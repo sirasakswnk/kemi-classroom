@@ -151,6 +151,8 @@
 }
 
 .tableWrap {
+  /* relative: caption แบบ sr-only (absolute) อยู่ในกรอบเลื่อน ไม่ดันหน้าให้ล้นแนวนอน */
+  position: relative;
   overflow-x: auto;
 }
 

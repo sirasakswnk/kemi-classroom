@@ -237,6 +237,11 @@
   align-content: start;
 }
 
+/* ลูกของ grid ไม่ขยายตามเนื้อหากว้าง (เช่นตาราง) — ให้ส่วนนั้นเลื่อนในกรอบของตัวเองแทน */
+.body > * {
+  min-width: 0;
+}
+
 .alert {
   display: flex;
   gap: 8px;
