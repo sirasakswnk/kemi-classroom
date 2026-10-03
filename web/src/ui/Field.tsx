@@ -98,3 +98,13 @@ export function Textarea({ className, ...rest }: ComponentProps<'textarea'>) {
     />
   )
 }
+
+export function Select({ className, ...rest }: ComponentProps<'select'>) {
+  return (
+    <select
+      {...rest}
+      {...useControlProps(rest)}
+      className={cx(styles.control, styles.select, className)}
+    />
+  )
+}

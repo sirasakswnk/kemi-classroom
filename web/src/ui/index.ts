@@ -1,7 +1,7 @@
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button'
 export { Card, type CardProps } from './Card'
 export { Chip, type ChipProps, type ChipTone } from './Chip'
-export { Field, Input, Textarea, type FieldProps } from './Field'
+export { Field, Input, Select, Textarea, type FieldProps } from './Field'
 export { Modal, type ModalProps } from './Modal'
 export { Sheet, type SheetProps } from './Sheet'
 export { Stepper, type StepperProps } from './Stepper'

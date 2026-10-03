@@ -80,3 +80,9 @@
   height: 15px;
   margin-top: 0.15em;
 }
+
+.select {
+  cursor: pointer;
+  /* ลูกศรของเบราว์เซอร์ + เว้นที่ด้านขวา */
+  padding-right: 36px;
+}

@@ -49,6 +49,14 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
+      {
+        // T05 นำเข้ารายชื่อจาก Excel [ข้อเสนอ เส้นทาง] — โหลดแยกจาก bundle หลัก
+        path: '/t/roster/import',
+        lazy: async () => ({
+          Component: (await import('../features/roster/RosterImportRoute')).default,
+        }),
+        hydrateFallbackElement: <FullPageStatus />,
+      },
       ...devRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],

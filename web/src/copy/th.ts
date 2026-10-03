@@ -86,6 +86,8 @@ export const th = {
     issuesDone: (left: number) => (left === 0 ? 'แก้ครบแล้ว' : `เหลือ ${left} รายการ`),
     noIssues: 'ไม่มีรายการที่ต้องแก้',
     confirmCode: 'ยืนยันว่าเลขนี้ถูกต้อง',
+    fixed: 'แก้แล้ว',
+    backToTeacher: 'กลับหน้าครู',
     previewTitle: 'ตัวอย่างรายการ',
     previewCount: (n: number) => `${n} รายชื่อ`,
     checking: 'กำลังตรวจกับรายชื่อในระบบ…',
