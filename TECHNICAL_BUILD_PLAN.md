@@ -129,7 +129,7 @@ grant execute on function public.grade_submission to authenticated;
 | 2 | `0002_accounts.sql` | `accounts`, `teachers`, `private.teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
 | 3 | `0003_roster.sql` (push แล้ว 3 ต.ค. 2026) | `terms`, `term_control`, `students`, `roster_entries`; RPC `preview_roster_import` / `commit_roster_import` (ไม่ลบคนที่หายจากไฟล์ ไม่แตะการผูกบัญชี มีแถวผิดแถวเดียวไม่บันทึกเลย) | 2 |
 | 4 | `0004_identity.sql` (push แล้ว 3 ต.ค. 2026) | `search_roster`, `claim_identity` (L3: เทียบตรงทั้งค่า ตัดคำนำหน้าและช่องว่าง, ชื่อปิดบางส่วน, รหัสอ้างอิงอายุสั้น, เพดานใน `rate_limits`, ชิงชื่อพร้อมกันสำเร็จบัญชีเดียว) | 2 |
-| 5 | `…_classrooms.sql` | `classrooms`, `memberships`; แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
+| 5 | `…_classrooms.sql` | `classrooms`, `memberships`; แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ (ไม่จำกัดห้องตามรายชื่อ), ปิด/เปิดการเข้าห้อง, เอานักเรียนออกจากชั้นเรียน `remove_member` (ไม่ลบงาน), จัดการบัญชีครู | 2 |
 | 6 | `…_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
 | 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
@@ -320,6 +320,7 @@ grant execute on function public.grade_submission to authenticated;
 - [ ] ค้นด้วยชื่อบางส่วนไม่เจอ ค้นเลขเต็ม/ชื่อเต็มเจอเป็นชื่อปิดบางส่วน + ห้อง + เลขที่; ค้นครั้งที่ 11 ใน 10 นาทีถูกปฏิเสธ (L3)
 - [ ] สองบัญชียืนยันชื่อเดียวกันพร้อมกัน สำเร็จบัญชีเดียว
 - [ ] แก้ผูกแล้วแท็บของบัญชีเดิมทำคำสั่งถัดไปไม่ได้
+- [ ] ครูเอานักเรียนออกแล้ว นักเรียนเปิดห้องหรือเรียก RPC ของห้องนั้นไม่ได้ (`not_member`) ข้อมูลเดิมยังอยู่ และเข้าใหม่ด้วยรหัสแล้วเห็นเหมือนเดิม
 - [ ] เข้าห้องได้ทั้งด้วยรหัสและลิงก์เชิญ (ลิงก์เชิญยังต้องล็อกอินและเลือกชื่อก่อน); รหัสห้องผิดซ้ำถูกจำกัด; ปิดการเข้าห้องแล้วเข้าไม่ได้ทั้งรหัสและลิงก์แต่สมาชิกเดิมใช้ต่อได้; กดเข้าซ้ำไม่เกิดสมาชิกซ้ำ
 - [ ] เอาบัญชีครูรายการสุดท้ายออกไม่ได้; โหมดผู้ดูแลมีแถบเตือนทุกหน้า และ RPC ฝั่งครูที่ผู้ดูแลเรียกโดยไม่ส่งโหมดถูกปฏิเสธ (L6)
 - [ ] นำเข้าไฟล์ Excel จริงของครูได้ (เมื่อได้ไฟล์)
