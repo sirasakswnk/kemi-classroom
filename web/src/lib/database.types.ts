@@ -58,6 +58,89 @@ export type Database = {
           },
         ]
       }
+      roster_entries: {
+        Row: {
+          created_at: string
+          group_name: string
+          id: string
+          roll_number: number
+          student_id: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_name: string
+          id?: string
+          roll_number: number
+          student_id: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_name?: string
+          id?: string
+          roll_number?: number
+          student_id?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_entries_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_entries_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          display_name: string
+          id: string
+          name_prefix: string | null
+          student_code: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          name_prefix?: string | null
+          student_code: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          name_prefix?: string | null
+          student_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teachers: {
         Row: {
           created_at: string
@@ -76,13 +159,94 @@ export type Database = {
         }
         Relationships: []
       }
+      term_control: {
+        Row: {
+          ended_at: string | null
+          epoch: number
+          singleton: boolean
+          started_at: string
+          status: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          ended_at?: string | null
+          epoch?: number
+          singleton?: boolean
+          started_at?: string
+          status?: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          ended_at?: string | null
+          epoch?: number
+          singleton?: boolean
+          started_at?: string
+          status?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "term_control_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      terms: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          name: string
+          started_at: string
+          status: string
+          superseded_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          name: string
+          started_at?: string
+          status?: string
+          superseded_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          name?: string
+          started_at?: string
+          status?: string
+          superseded_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      commit_roster_import: {
+        Args: {
+          p_admin_mode?: boolean
+          p_group_name: string
+          p_request_key: string
+          p_rows: Json
+        }
+        Returns: Json
+      }
       ensure_account: { Args: never; Returns: Json }
       ping: { Args: never; Returns: string }
+      preview_roster_import: {
+        Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
