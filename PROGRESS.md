@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 2 (ระยะ 1 ปิดแล้ว 2 ต.ค. 2026: merge `phase-1` เข้า `main` @ `137ea08`, production ใช้งานได้)
-- งานถัดไป: P2-01 **[ทำบน branch `phase-2`]** (migration `0003` ส่วนแรก) พร้อม/ตามด้วย P2-01a **[effort สูง]**; งานฝั่งครูของระยะ 2 เริ่มได้เลย · **หน้าฝั่งนักเรียนของระยะ 2 (A02, S01, S06 = P2-04, P2-07) รอแบบหน้าจอแท็บเล็ตจาก Claude app ก่อน — ถามผู้ใช้ก่อนเริ่ม**
+- งานถัดไป: P2-01 **[ทำบน branch `phase-2`]** (migration `0003` ส่วนแรก) พร้อม/ตามด้วย P2-01a **[effort สูง]** → P2-02 (ตัวนำเข้า ทดสอบด้วย `exports/sample-roster/` เท่านั้น) · แบบแท็บเล็ตของหน้านักเรียนมาแล้ว (UX 13) — ข้อกำหนดระยะ 2 ทั้งหมดอยู่ใต้หัวข้อระยะ 2
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -15,7 +15,7 @@
 - **ดีไซน์ (ผู้ใช้ตัดสิน 30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`) ตามเดิม — P1-03/P1-04 ไม่ต้องรอแล้ว
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
-- รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2 · แบบหน้าจอแท็บเล็ตของหน้านักเรียน (A02, S01, S06) จาก Claude app ก่อนเริ่ม P2-04/P2-07
+- รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
 - ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค/endpoint — · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
 
 ## ระยะ 0 — เตรียมบริการ (ผู้ใช้เปิดบัญชีเอง Claude ช่วยเตรียม)
@@ -65,8 +65,16 @@
 ## ระยะ 2 — บัญชี รายชื่อ ห้อง
 
 ข้อกำหนดจากผู้ใช้ (2 ต.ค. 2026):
-- **หน้าฝั่งนักเรียนของระยะ 2 (A02, S01, S06 → P2-04, P2-07) รอแบบหน้าจอแท็บเล็ตจาก Claude app ก่อน** ถามผู้ใช้ก่อนเริ่มทุกครั้งจนกว่าจะยืนยัน; P2-01 และงานฝั่งครู (P2-02, P2-05 ส่วนฐานข้อมูล, P2-06, P2-08, P2-09) เริ่มได้เลย
+- ~~หน้าฝั่งนักเรียนของระยะ 2 (A02, S01, S06 → P2-04, P2-07) รอแบบหน้าจอแท็บเล็ตจาก Claude app ก่อน~~ (แบบมาแล้ว 3 ต.ค. ดูด้านล่าง); P2-01 และงานฝั่งครู (P2-02, P2-05 ส่วนฐานข้อมูล, P2-06, P2-08, P2-09) เริ่มได้เลย
 - **ไฟล์ Excel ตัวอย่างสำหรับ P2-02 ต้องเป็นข้อมูลสมมติทั้งหมด** ใช้รูปแบบคอลัมน์ตามไฟล์จริงของครู (เลขที่ · เลขประจำตัว · ชื่อและนามสกุล) — **ห้ามนำเข้ารายชื่อนักเรียนจริงใน `kemi-dev`** (production ของ Pages ยังชี้ kemi-dev จนถึงระยะ 7) และห้าม commit ไฟล์รายชื่อจริง
+
+ข้อกำหนดเพิ่ม (3 ต.ค. 2026) — เอกสารอัปเดตใน commit `843bc37`:
+- แบบหน้าจอแท็บเล็ตของหน้านักเรียนมาแล้ว (UX_DESIGN ส่วน 13: 600 / 768 / 960 px + ปุ่มสลับแท็บเล็ตใน `exports/chemistry-design-v2.html`)
+- **ตัวนำเข้า (P2-02)** ทำตาม TECHNICAL_DESIGN ส่วน 4 (ไฟล์ละห้อง หัวตาราง 2 แถว คำนำหน้า/ชื่อ/นามสกุล 3 ช่อง อ่านเฉพาะ 5 ช่อง ไม่อ่านคะแนน) และ **ทดสอบด้วยไฟล์ใน `exports/sample-roster/` เท่านั้น** — ไฟล์ `sample-roster-errors-FAKE.xlsx` ต้องเจอครบ 5 จุดตาม README (เลขประจำตัวซ้ำ, ชื่อว่าง, เลขที่ซ้ำ, รหัสเป็นข้อความมีศูนย์นำหน้า, เลขประจำตัวว่าง)
+- **หน้าฝั่งนักเรียน** ทำตาม UX_DESIGN ส่วน 13 ครบ 3 ขนาด และเพิ่ม 820 × 1180 กับ 1180 × 820 (แบบสัมผัส) ในชุด Playwright
+- **ลำดับใน DOM ต้องตรงกับลำดับที่เห็น** ห้ามใช้ CSS `order` (หรือ grid placement) สลับลำดับ — S03 แนวนอนเลือกโครงตาม media query แทน
+- **ไฟล์ Excel จริงของครูห้ามเข้า repo หรือ `kemi-dev`** (`.gitignore` ยกเว้นเฉพาะ `exports/sample-roster/*-FAKE.xlsx`)
+- ข้อเสนอใน SYSTEM_SPEC/TECHNICAL_DESIGN: การค้นชื่อ (L3) ตัดคำนำหน้าและช่องว่างทั้งหมดก่อนเทียบ — ใช้ใน P2-03 (บอกผู้ใช้ว่าใช้ข้อเสนอนี้ตอนสรุป)
 
 - [ ] P2-01 migration `0003` ส่วนแรก: terms, term_control, students, roster_entries + RPC นำเข้า + ทดสอบ
   - โน้ต: policy ฝั่งครูใน 0003 ต้องใช้ฟังก์ชันช่วยใน `private` ที่ **คืน boolean** (เช่น `private.is_teacher_or_admin()`) แบบ SECURITY DEFINER + GRANT EXECUTE ให้ authenticated — `require_teacher()` ใช้ใน policy ไม่ได้เพราะ raise error
