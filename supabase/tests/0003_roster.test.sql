@@ -1,5 +1,6 @@
 -- ทดสอบ 0003_roster: สิทธิ์อ่านรายชื่อ, ตรวจ/เทียบ/บันทึกการนำเข้า, กันคำขอซ้ำ
--- ข้อมูลสมมติทั้งหมด (เลขประจำตัว 9xxxx) และ rollback ตอนจบ
+-- ข้อมูลสมมติทั้งหมด (เลขประจำตัว 0?666xxxxx ไม่ชนไฟล์ sample-roster ที่อาจนำเข้าไว้บน kemi-dev) และ rollback ตอนจบ
+-- การนับ/รายการนักเรียนกรองเฉพาะเลขชุดนี้ เพื่อให้ผลไม่ขึ้นกับข้อมูลทดสอบที่มีอยู่แล้วบน kemi-dev
 begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
@@ -76,34 +77,34 @@ grant select on payloads to authenticated;
 insert into payloads values
   -- ข้อผิดพลาดครบทุกชนิดต่อแถว
   ('err', '[
-     {"row": 3,  "roll_number": 1, "student_code": "90001", "first_name": "ก", "last_name": "ข"},
-     {"row": 4,  "roll_number": 2, "student_code": "09002", "first_name": "ค", "last_name": "ง"},
-     {"row": 5,  "roll_number": 3, "student_code": "90003", "first_name": "",  "last_name": "ว่าง"},
-     {"row": 6,  "roll_number": 3, "student_code": "90004", "first_name": "จ", "last_name": "ฉ"},
-     {"row": 7,  "roll_number": 5, "student_code": "90001", "first_name": "ช", "last_name": "ซ"},
+     {"row": 3,  "roll_number": 1, "student_code": "66600001", "first_name": "ก", "last_name": "ข"},
+     {"row": 4,  "roll_number": 2, "student_code": "06660002", "first_name": "ค", "last_name": "ง"},
+     {"row": 5,  "roll_number": 3, "student_code": "66600003", "first_name": "",  "last_name": "ว่าง"},
+     {"row": 6,  "roll_number": 3, "student_code": "66600004", "first_name": "จ", "last_name": "ฉ"},
+     {"row": 7,  "roll_number": 5, "student_code": "66600001", "first_name": "ช", "last_name": "ซ"},
      {"row": 8,  "roll_number": 6, "student_code": "",      "first_name": "ฌ", "last_name": "ญ"},
-     {"row": 9,  "roll_number": 7, "student_code": 90007,   "first_name": "ฎ", "last_name": "ฏ"},
+     {"row": 9,  "roll_number": 7, "student_code": 66600007,   "first_name": "ฎ", "last_name": "ฏ"},
      {"row": 10, "roll_number": 8, "student_code": "9x008", "first_name": "ฐ", "last_name": "ฑ"},
-     {"row": 11,                   "student_code": "90009", "first_name": "ฒ", "last_name": "ณ"},
-     {"row": 12, "roll_number": 0, "student_code": "90010", "first_name": "ด", "last_name": "ต"}
+     {"row": 11,                   "student_code": "66600009", "first_name": "ฒ", "last_name": "ณ"},
+     {"row": 12, "roll_number": 0, "student_code": "66600010", "first_name": "ด", "last_name": "ต"}
    ]'),
   -- นำเข้าครั้งแรก: ศูนย์นำหน้า ช่องว่างหัวท้าย และช่องว่างกลางนามสกุล
   ('ok', '[
-     {"row": 3, "roll_number": 1, "student_code": "90001", "name_prefix": "นาย",    "first_name": " สมชาย", "last_name": "ใจดี "},
-     {"row": 4, "roll_number": 2, "student_code": "09002", "name_prefix": "นางสาว", "first_name": "สมหญิง", "last_name": "อิ นทร์แก้ว"},
-     {"row": 5, "roll_number": 3, "student_code": "90003",                          "first_name": "มานี",   "last_name": "มีนา"}
+     {"row": 3, "roll_number": 1, "student_code": "66600001", "name_prefix": "นาย",    "first_name": " สมชาย", "last_name": "ใจดี "},
+     {"row": 4, "roll_number": 2, "student_code": "06660002", "name_prefix": "นางสาว", "first_name": "สมหญิง", "last_name": "อิ นทร์แก้ว"},
+     {"row": 5, "roll_number": 3, "student_code": "66600003",                          "first_name": "มานี",   "last_name": "มีนา"}
    ]'),
   ('ok_changed', '[
-     {"row": 3, "roll_number": 1, "student_code": "90001", "name_prefix": "นาย", "first_name": "สมชาย", "last_name": "ใจดี"}
+     {"row": 3, "roll_number": 1, "student_code": "66600001", "name_prefix": "นาย", "first_name": "สมชาย", "last_name": "ใจดี"}
    ]'),
-  -- นำเข้าซ้ำ: เปลี่ยนชื่อ สลับเลขที่ 1↔2 เพิ่มคนใหม่ และไม่มี 90003 ในไฟล์
+  -- นำเข้าซ้ำ: เปลี่ยนชื่อ สลับเลขที่ 1↔2 เพิ่มคนใหม่ และไม่มี 66600003 ในไฟล์
   ('reimport', '[
-     {"row": 3, "roll_number": 2, "student_code": "90001", "name_prefix": "นาย",    "first_name": "สมชาย",  "last_name": "ใจดีมาก"},
-     {"row": 4, "roll_number": 1, "student_code": "09002", "name_prefix": "นางสาว", "first_name": "สมหญิง", "last_name": "อิ นทร์แก้ว"},
-     {"row": 5, "roll_number": 4, "student_code": "90005", "name_prefix": "นาย",    "first_name": "ปิติ",    "last_name": "ยินดี"}
+     {"row": 3, "roll_number": 2, "student_code": "66600001", "name_prefix": "นาย",    "first_name": "สมชาย",  "last_name": "ใจดีมาก"},
+     {"row": 4, "roll_number": 1, "student_code": "06660002", "name_prefix": "นางสาว", "first_name": "สมหญิง", "last_name": "อิ นทร์แก้ว"},
+     {"row": 5, "roll_number": 4, "student_code": "66600005", "name_prefix": "นาย",    "first_name": "ปิติ",    "last_name": "ยินดี"}
    ]'),
-  ('moved', '[{"roll_number": 1, "student_code": "90003", "first_name": "มานี", "last_name": "มีนา"}]'),
-  ('taken', '[{"roll_number": 3, "student_code": "90006", "first_name": "ชูใจ", "last_name": "ใจงาม"}]');
+  ('moved', '[{"roll_number": 1, "student_code": "66600003", "first_name": "มานี", "last_name": "มีนา"}]'),
+  ('taken', '[{"roll_number": 3, "student_code": "66600006", "first_name": "ชูใจ", "last_name": "ใจงาม"}]');
 
 -- ---------------------------------------------------------------------------
 -- B. ใครเรียกได้
@@ -129,7 +130,7 @@ select throws_ok($$ select public.commit_roster_import('5/2', (select rows from 
 -- ---------------------------------------------------------------------------
 select is(
   (select v -> 'counts' -> 'errors' from (select public.preview_roster_import('5/2', (select rows from payloads where name = 'err')) v) s),
-  '9'::jsonb, 'พบแถวผิด 9 แถว (แถวเลขประจำตัว 09002 ถูกต้อง)'
+  '9'::jsonb, 'พบแถวผิด 9 แถว (แถวเลขประจำตัว 06660002 ถูกต้อง)'
 );
 select is(
   (select jsonb_agg(x -> 'errors' order by (x ->> 'index')::int)
@@ -141,14 +142,14 @@ select is(
 );
 select is(
   (select v -> 'rows' -> 1 ->> 'student_code' from (select public.preview_roster_import('5/2', (select rows from payloads where name = 'err')) v) s),
-  '09002', 'เลขประจำตัวที่มีศูนย์นำหน้าคงไว้เป็นข้อความ'
+  '06660002', 'เลขประจำตัวที่มีศูนย์นำหน้าคงไว้เป็นข้อความ'
 );
 select is(
   (select (v ->> 'ok') || ' ' || (v -> 'term' ->> 'name') || ' ' || (v ->> 'group_name')
      from (select public.preview_roster_import(' 5/2 ', (select rows from payloads where name = 'err')) v) s),
   'false ภาคเรียนทดสอบ 5/2', 'ตัวอย่างบอกภาคเรียนและห้อง (ตัดช่องว่าง) และไม่ผ่านเมื่อมีแถวผิด'
 );
-select is((select count(*)::int from public.students), 0, 'ดูตัวอย่างไม่เขียนข้อมูล');
+select is((select count(*)::int from public.students where student_code ~ '^0?666'), 0, 'ดูตัวอย่างไม่เขียนข้อมูล');
 
 -- ---------------------------------------------------------------------------
 -- D. ยืนยันนำเข้าครั้งแรก + กันคำขอซ้ำ
@@ -160,14 +161,14 @@ select is(
   'true new=3', 'นำเข้า 3 คนสำเร็จ'
 );
 select results_eq(
-  $$ select student_code, coalesce(name_prefix, '-'), display_name from public.students order by student_code $$,
-  $$ values ('09002', 'นางสาว', 'สมหญิง อิ นทร์แก้ว'), ('90001', 'นาย', 'สมชาย ใจดี'), ('90003', '-', 'มานี มีนา') $$,
+  $$ select student_code, coalesce(name_prefix, '-'), display_name from public.students where student_code ~ '^0?666' order by student_code $$,
+  $$ values ('06660002', 'นางสาว', 'สมหญิง อิ นทร์แก้ว'), ('66600001', 'นาย', 'สมชาย ใจดี'), ('66600003', '-', 'มานี มีนา') $$,
   'เก็บศูนย์นำหน้า ตัดช่องว่างหัวท้าย ต่อชื่อ-นามสกุลด้วยช่องว่าง 1 ช่อง และคงช่องว่างกลางนามสกุล'
 );
 select results_eq(
   $$ select s.student_code, e.group_name, e.roll_number from public.roster_entries e
-       join public.students s on s.id = e.student_id order by e.roll_number $$,
-  $$ values ('90001', '5/2', 1), ('09002', '5/2', 2), ('90003', '5/2', 3) $$,
+       join public.students s on s.id = e.student_id where s.student_code ~ '^0?666' order by e.roll_number $$,
+  $$ values ('66600001', '5/2', 1), ('06660002', '5/2', 2), ('66600003', '5/2', 3) $$,
   'รายชื่อห้อง 5/2 ของภาคเรียนปัจจุบันพร้อมเลขที่'
 );
 -- คำขอซ้ำ key เดิม: ได้ผลเดิม (new=3 ไม่ใช่ unchanged) และไม่สร้างซ้ำ
@@ -177,7 +178,7 @@ select is(
                   '50000000-0000-4000-8000-000000000001') v) s),
   'true new=3', 'คำขอซ้ำด้วย request key เดิมคืนผลเดิม'
 );
-select is((select count(*)::int from public.students), 3, 'คำขอซ้ำไม่สร้างนักเรียนซ้ำ');
+select is((select count(*)::int from public.students where student_code ~ '^0?666'), 3, 'คำขอซ้ำไม่สร้างนักเรียนซ้ำ');
 select throws_ok(
   $$ select public.commit_roster_import('5/2', (select rows from payloads where name = 'ok_changed'),
                                         '50000000-0000-4000-8000-000000000001') $$,
@@ -189,13 +190,13 @@ select is(
                   '50000000-0000-4000-8000-000000000002') v) s),
   'false false', 'มีแถวผิด = ไม่บันทึกอะไรเลย'
 );
-select is((select count(*)::int from public.students), 3, 'ชุดที่ผิดไม่เพิ่มนักเรียนแม้มีแถวที่ถูก');
+select is((select count(*)::int from public.students where student_code ~ '^0?666'), 3, 'ชุดที่ผิดไม่เพิ่มนักเรียนแม้มีแถวที่ถูก');
 
 -- ---------------------------------------------------------------------------
 -- E. นำเข้าซ้ำ: แสดงการเปลี่ยนแปลง ไม่ลบคนที่หาย ไม่แตะการผูกบัญชี
 -- ---------------------------------------------------------------------------
 set local role postgres;
-update public.students set account_id = '30000000-0000-4000-8000-000000000002' where student_code = '90001';
+update public.students set account_id = '30000000-0000-4000-8000-000000000002' where student_code = '66600001';
 set local role authenticated;
 select is(
   (select jsonb_agg(jsonb_build_object('s', x -> 'status', 'c', x -> 'changes', 'b', x -> 'bound') order by (x ->> 'index')::int)
@@ -208,7 +209,7 @@ select is(
 );
 select is(
   (select v -> 'missing' from (select public.preview_roster_import('5/2', (select rows from payloads where name = 'reimport')) v) s),
-  '[{"student_code": "90003", "display_name": "มานี มีนา", "roll_number": 3, "bound": false}]'::jsonb,
+  '[{"student_code": "66600003", "display_name": "มานี มีนา", "roll_number": 3, "bound": false}]'::jsonb,
   'คนที่อยู่ในห้องแต่ไม่อยู่ในไฟล์ถูกแจ้ง'
 );
 select is(
@@ -219,11 +220,11 @@ select is(
 select results_eq(
   $$ select s.student_code, s.display_name, e.roll_number from public.roster_entries e
        join public.students s on s.id = e.student_id where e.group_name = '5/2' order by e.roll_number $$,
-  $$ values ('09002', 'สมหญิง อิ นทร์แก้ว', 1), ('90001', 'สมชาย ใจดีมาก', 2), ('90003', 'มานี มีนา', 3), ('90005', 'ปิติ ยินดี', 4) $$,
+  $$ values ('06660002', 'สมหญิง อิ นทร์แก้ว', 1), ('66600001', 'สมชาย ใจดีมาก', 2), ('66600003', 'มานี มีนา', 3), ('66600005', 'ปิติ ยินดี', 4) $$,
   'ชื่อและเลขที่อัปเดต คนที่หายจากไฟล์ยังอยู่ และคนใหม่ถูกเพิ่ม'
 );
 set local role postgres;
-select is((select account_id from public.students where student_code = '90001'),
+select is((select account_id from public.students where student_code = '66600001'),
   '30000000-0000-4000-8000-000000000002'::uuid, 'การนำเข้าไม่แตะการผูกบัญชี');
 set local role authenticated;
 
@@ -251,7 +252,7 @@ select is(
 );
 select is(
   (select v -> 'errors' from (select public.preview_roster_import('5/2',
-     (select jsonb_agg(jsonb_build_object('roll_number', g, 'student_code', (91000 + g)::text, 'first_name', 'ก', 'last_name', 'ข'))
+     (select jsonb_agg(jsonb_build_object('roll_number', g, 'student_code', (66610000 + g)::text, 'first_name', 'ก', 'last_name', 'ข'))
         from generate_series(1, 301) g)) v) s),
   '["rows_count"]'::jsonb, 'เกิน 300 แถวถูกปฏิเสธ'
 );
@@ -259,9 +260,9 @@ select is(
 -- ---------------------------------------------------------------------------
 -- G. สิทธิ์อ่านผ่าน RLS (policy เรียกฟังก์ชันใน private ได้โดยไม่มี USAGE)
 -- ---------------------------------------------------------------------------
-select is((select count(*)::int from public.students), 4, 'ครูเห็นนักเรียนทุกคน');
+select is((select count(*)::int from public.students where student_code ~ '^0?666'), 4, 'ครูเห็นนักเรียนทุกคน');
 set local request.jwt.claims to '{"sub": "20000000-0000-4000-8000-000000000002", "role": "authenticated"}';
-select results_eq($$ select student_code from public.students $$, $$ values ('90001') $$,
+select results_eq($$ select student_code from public.students $$, $$ values ('66600001') $$,
   'นักเรียนเห็นเฉพาะแถวของตัวเอง');
 select results_eq($$ select group_name, roll_number from public.roster_entries $$, $$ values ('5/2', 2) $$,
   'นักเรียนเห็นเฉพาะห้องและเลขที่ของตัวเอง');
