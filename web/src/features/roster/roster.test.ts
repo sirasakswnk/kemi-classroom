@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx'
 import { describe, expect, it } from 'vitest'
 import { detectLayout, extractRows, guessGroupName, type RosterDraftRow } from './parseRoster'
 import { readSheet } from './readSheet'
-import { toPayload, validateRoster } from './validateRoster'
+import { rowLabel, toPayload, validateRoster } from './validateRoster'
 
 const SAMPLES = resolve(process.cwd(), '../exports/sample-roster')
 
@@ -91,21 +91,36 @@ describe('ไฟล์ปกติ', () => {
 })
 
 describe('ไฟล์ errors (README: exports/sample-roster/README.md)', () => {
-  it('เลขประจำตัวซ้ำ (เลขที่ 5–6), เลขที่ซ้ำ (12) และรหัสข้อความมีศูนย์นำหน้า (18) พร้อมข้อความไทย', async () => {
+  it('ครบ 5 จุด: รหัสซ้ำ (5–6), ชื่อว่าง (10), เลขที่ซ้ำ (12), รหัสข้อความมีศูนย์นำหน้า (18), รหัสว่าง (23)', async () => {
     const { rows } = await loadSample('sample-roster-errors-FAKE.xlsx')
+    expect(rows).toHaveLength(47)
     const issues = validateRoster(rows)
     const summary = issues.map((i) => `${rows[i.index].roll}:${i.kind}`).sort()
     expect(summary).toEqual(
       [
         '5:code_duplicate',
         '6:code_duplicate',
+        '10:name_required',
         '12:roll_duplicate',
         '12:roll_duplicate',
         '18:code_length',
+        '23:code_required',
       ].sort(),
     )
-    const dup = issues.find((i) => i.kind === 'code_duplicate' && rows[i.index].roll === '5')!
-    expect(dup.message).toBe('เลขประจำตัวซ้ำกับ แถว 8 · อนุชา อิ นทร์แก้ว')
+  })
+
+  it('ข้อความไทยที่ครูเข้าใจ บอกแถว Excel และชื่อ', async () => {
+    const { rows } = await loadSample('sample-roster-errors-FAKE.xlsx')
+    const issues = validateRoster(rows)
+    const message = (roll: string, kind: string) =>
+      issues.find((i) => rows[i.index].roll === roll && i.kind === kind)!.message
+    const label = (roll: string) => rowLabel(rows.find((r) => r.roll === roll)!)
+    expect(message('5', 'code_duplicate')).toBe('เลขประจำตัวซ้ำกับ แถว 8 · อนุชา อิ นทร์แก้ว')
+    expect(message('10', 'name_required')).toBe('ไม่มีชื่อหรือนามสกุล')
+    expect(label('10')).toBe('แถว 12 · สุขสวัสดิ์')
+    expect(message('12', 'roll_duplicate')).toMatch(/^เลขที่ซ้ำกับ แถว 1[45] · /)
+    expect(message('23', 'code_required')).toBe('ไม่มีเลขประจำตัว')
+    expect(label('23')).toBe('แถว 25 · ณัฐธิดา แก้วมณี')
     const length = issues.find((i) => i.kind === 'code_length')!
     expect(rows[length.index].code).toBe('090174')
     expect(length.confirmable).toBe(true)
@@ -117,25 +132,6 @@ describe('ไฟล์ errors (README: exports/sample-roster/README.md)', () => 
     const index = rows.findIndex((r) => r.code === '090174')
     expect(validateRoster(rows, new Set([index])).some((i) => i.kind === 'code_length')).toBe(false)
     expect(toPayload(rows)[index].student_code).toBe('090174')
-  })
-
-  // README ระบุ “ชื่อว่าง (เลขที่ 10)” และ “เลขประจำตัวว่าง (เลขที่ 23)” แต่ไฟล์ปัจจุบันยังไม่มีสองจุดนี้
-  // (เทียบกับ 5-2 แล้วต่างแค่ B8, A15, B20) — ทดสอบด้วยไฟล์ที่สร้างในหน่วยความจำแทนจนกว่าไฟล์ตัวอย่างจะถูกแก้
-  it('ชื่อว่างและเลขประจำตัวว่าง (ไฟล์สร้างในเทสต์)', async () => {
-    const { rows } = await load(
-      buildXlsx([
-        [1, 90001, 'นาย', 'สมชาย', 'ใจดี', 9.5],
-        [2, 90002, 'นางสาว', '', '', 7],
-        [3, null, 'นาย', 'ปิติ', 'ยินดี', 8],
-        [4, 90004, 'นาย', 'มานะ', 'ขยัน', 6],
-      ]),
-    )
-    expect(rows).toHaveLength(4)
-    const issues = validateRoster(rows).map((i) => `${rows[i.index].roll}:${i.kind}:${i.message}`)
-    expect(issues).toEqual([
-      '2:name_required:ไม่มีชื่อหรือนามสกุล',
-      '3:code_required:ไม่มีเลขประจำตัว',
-    ])
   })
 })
 
