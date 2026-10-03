@@ -39,6 +39,8 @@ describe('ชั้นเรียน', () => {
     expect(initialOfTeacher('ครูอิงฟ้า')).toBe('อ')
     expect(initialOfTeacher('ครู สมศรี')).toBe('ส')
     expect(initialOfTeacher('ผู้ดูแลระบบ')).toBe('ผ')
+    expect(initialOfTeacher('ครูเคมี (dev)')).toBe('ค')
+    expect(initialOfTeacher('ไพลิน')).toBe('พ')
     expect(initialOfTeacher('')).toBe('')
   })
 
