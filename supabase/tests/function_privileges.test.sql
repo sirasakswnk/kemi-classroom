@@ -30,7 +30,15 @@ insert into expected_authenticated values
   ('public.preview_roster_import(text,jsonb,boolean)'),
   ('public.commit_roster_import(text,jsonb,uuid,boolean)'),
   ('public.search_roster(text)'),
-  ('public.claim_identity(uuid)');
+  ('public.claim_identity(uuid)'),
+  ('private.current_student()'),
+  ('private.is_member(uuid)'),
+  ('private.can_teach_classroom(uuid)'),
+  ('public.create_classroom(text,text,uuid,uuid,boolean)'),
+  ('public.set_join_enabled(uuid,boolean,boolean)'),
+  ('public.remove_member(uuid,uuid,boolean)'),
+  ('public.lookup_classroom(text)'),
+  ('public.join_classroom(text)');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
