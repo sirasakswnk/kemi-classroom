@@ -58,6 +58,90 @@ export type Database = {
           },
         ]
       }
+      classrooms: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          join_code: string
+          join_enabled: boolean
+          name: string
+          teacher_id: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          join_code: string
+          join_enabled?: boolean
+          name: string
+          teacher_id: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          join_code?: string
+          join_enabled?: boolean
+          name?: string
+          teacher_id?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classrooms_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classrooms_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          classroom_id: string
+          joined_at: string
+          student_id: string
+        }
+        Insert: {
+          classroom_id: string
+          joined_at?: string
+          student_id: string
+        }
+        Update: {
+          classroom_id?: string
+          joined_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_entries: {
         Row: {
           created_at: string
@@ -242,13 +326,41 @@ export type Database = {
         }
         Returns: Json
       }
+      create_classroom: {
+        Args: {
+          p_admin_mode?: boolean
+          p_description: string
+          p_name: string
+          p_request_key: string
+          p_teacher_id?: string
+        }
+        Returns: Json
+      }
       ensure_account: { Args: never; Returns: Json }
+      join_classroom: { Args: { p_code: string }; Returns: Json }
+      lookup_classroom: { Args: { p_code: string }; Returns: Json }
       ping: { Args: never; Returns: string }
       preview_roster_import: {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
         Returns: Json
       }
+      remove_member: {
+        Args: {
+          p_admin_mode?: boolean
+          p_classroom_id: string
+          p_student_id: string
+        }
+        Returns: Json
+      }
       search_roster: { Args: { p_query: string }; Returns: Json }
+      set_join_enabled: {
+        Args: {
+          p_admin_mode?: boolean
+          p_classroom_id: string
+          p_enabled: boolean
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
