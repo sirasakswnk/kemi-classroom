@@ -232,6 +232,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_identity: { Args: { p_ref: string }; Returns: Json }
       commit_roster_import: {
         Args: {
           p_admin_mode?: boolean
@@ -247,6 +248,7 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
         Returns: Json
       }
+      search_roster: { Args: { p_query: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
