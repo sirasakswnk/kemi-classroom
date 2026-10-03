@@ -40,7 +40,11 @@ insert into expected_authenticated values
   ('public.lookup_classroom(text)'),
   ('public.join_classroom(text)'),
   ('public.my_classrooms()'),
-  ('public.classroom_view(uuid)');
+  ('public.classroom_view(uuid)'),
+  ('public.roster_overview(boolean)'),
+  ('public.rebind_preview(uuid,text,boolean)'),
+  ('public.rebind_student(uuid,text,boolean)'),
+  ('public.unbind_student(uuid,boolean)');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
