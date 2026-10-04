@@ -51,6 +51,9 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm test
+      # Edge Functions: ตรวจ type ด้วย TypeScript ของ web (ติดตั้งแพ็กเกจที่ root แบบไม่รันสคริปต์ เพื่อหา aws4fetch)
+      - run: npm ci --ignore-scripts && npm run functions:typecheck
+        working-directory: .
       - run: npm run build
         env:
           # ค่าสมมติเพื่อตรวจว่า build ผ่านเท่านั้น — ค่าจริงเป็นตัวแปร build ของ Cloudflare Pages

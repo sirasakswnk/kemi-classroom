@@ -33,7 +33,12 @@ const rfc3986 = (s: string) =>
   encodeURIComponent(s).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
 
 // ตัวตรวจอิสระ: คำนวณลายเซ็นแบบที่ฝั่ง S3 ทำจาก URL ดิบ (ถอดรหัส %XX ตาม RFC 3986 — '+' ไม่ใช่ช่องว่าง)
-function verify(signedUrl: string, method: string, headers: Record<string, string>, secret: string) {
+function verify(
+  signedUrl: string,
+  method: string,
+  headers: Record<string, string>,
+  secret: string,
+) {
   const url = new URL(signedUrl)
   const pairs = url.search
     .slice(1)
@@ -103,9 +108,21 @@ test('regionOf / b2ConfigFrom อ่าน endpoint ของ B2 และไม
     endpoint: 'https://s3.eu-central-003.backblazeb2.com',
     region: 'eu-central-003',
   })
-  assert.throws(() => b2ConfigFrom((n) => (n === 'B2_APP_KEY' ? '' : env[n])), /^Error: b2_config_missing:B2_APP_KEY$/)
-  assert.throws(() => b2ConfigFrom((n) => (n === 'B2_ENDPOINT' ? 'http://s3.eu-central-003.backblazeb2.com' : env[n])), /b2_endpoint_invalid/)
-  assert.throws(() => b2ConfigFrom((n) => (n === 'B2_BUCKET' ? 'Kemi_Files' : env[n])), /b2_bucket_invalid/)
+  assert.throws(
+    () => b2ConfigFrom((n) => (n === 'B2_APP_KEY' ? '' : env[n])),
+    /^Error: b2_config_missing:B2_APP_KEY$/,
+  )
+  assert.throws(
+    () =>
+      b2ConfigFrom((n) =>
+        n === 'B2_ENDPOINT' ? 'http://s3.eu-central-003.backblazeb2.com' : env[n],
+      ),
+    /b2_endpoint_invalid/,
+  )
+  assert.throws(
+    () => b2ConfigFrom((n) => (n === 'B2_BUCKET' ? 'Kemi_Files' : env[n])),
+    /b2_bucket_invalid/,
+  )
 })
 
 test('isStagingKeyOf: เฉพาะ staging/{batch_id}/{uuid} ของ batch นั้น', () => {
@@ -118,23 +135,42 @@ test('isStagingKeyOf: เฉพาะ staging/{batch_id}/{uuid} ของ batch 
 })
 
 test('presignPut: key ใต้ staging/ อายุ 5 นาที ลงลายเซ็น content-type และ content-length', async () => {
-  const url = await presignPut(config, { key: KEY, contentType: 'image/jpeg', sizeBytes: 940000 }, NOW)
+  const url = await presignPut(
+    config,
+    { key: KEY, contentType: 'image/jpeg', sizeBytes: 940000 },
+    NOW,
+  )
   assert.ok(url.startsWith(`https://s3.eu-central-003.backblazeb2.com/kemi-dev-files/${KEY}?`))
-  const params = verify(url, 'PUT', { 'content-length': '940000', 'content-type': 'image/jpeg' }, config.appKey)
+  const params = verify(
+    url,
+    'PUT',
+    { 'content-length': '940000', 'content-type': 'image/jpeg' },
+    config.appKey,
+  )
   assert.equal(params.get('X-Amz-Expires'), '300')
   assert.equal(params.get('X-Amz-Date'), '20261005T030405Z')
-  assert.equal(params.get('X-Amz-Credential'), `${config.keyId}/20261005/eu-central-003/s3/aws4_request`)
+  assert.equal(
+    params.get('X-Amz-Credential'),
+    `${config.keyId}/20261005/eu-central-003/s3/aws4_request`,
+  )
   assert.equal(params.get('X-Amz-SignedHeaders'), 'content-length;content-type;host')
   assert.ok(!url.includes(config.appKey))
   // ขนาดหรือชนิดต่างจากที่ลงลายเซ็น = ลายเซ็นไม่ตรง
-  assert.throws(() => verify(url, 'PUT', { 'content-length': '940001', 'content-type': 'image/jpeg' }, config.appKey))
-  assert.throws(() => verify(url, 'PUT', { 'content-length': '940000', 'content-type': 'image/png' }, config.appKey))
+  assert.throws(() =>
+    verify(url, 'PUT', { 'content-length': '940001', 'content-type': 'image/jpeg' }, config.appKey),
+  )
+  assert.throws(() =>
+    verify(url, 'PUT', { 'content-length': '940000', 'content-type': 'image/png' }, config.appKey),
+  )
 })
 
 test('presignPut ปฏิเสธ key นอก staging/ และขนาดผิด', async () => {
   const file = { key: KEY, contentType: 'image/png', sizeBytes: 10 }
   await assert.rejects(presignPut(config, { ...file, key: 'files/abc' }), /b2_key_not_staging/)
-  await assert.rejects(presignPut(config, { ...file, key: `staging/${BATCH}/x` }), /b2_key_not_staging/)
+  await assert.rejects(
+    presignPut(config, { ...file, key: `staging/${BATCH}/x` }),
+    /b2_key_not_staging/,
+  )
   await assert.rejects(presignPut(config, { ...file, sizeBytes: 0 }), /b2_size_invalid/)
   await assert.rejects(presignPut(config, { ...file, sizeBytes: 1.5 }), /b2_size_invalid/)
 })
@@ -144,7 +180,10 @@ test('contentDisposition: ชื่อไทยเป็น filename* แบบ 
     contentDisposition('attachment', "การบ้าน (1)'s.pdf"),
     `attachment; filename="_______ (1)'s.pdf"; filename*=UTF-8''%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%20%281%29%27s.pdf`,
   )
-  assert.equal(contentDisposition('inline', 'a"b\\c.png'), `inline; filename="a_b_c.png"; filename*=UTF-8''a%22b%5Cc.png`)
+  assert.equal(
+    contentDisposition('inline', 'a"b\\c.png'),
+    `inline; filename="a_b_c.png"; filename*=UTF-8''a%22b%5Cc.png`,
+  )
 })
 
 test('presignGet: versionId + response-* อยู่ในลายเซ็น ช่องว่างเป็น %20 (ไม่ใช่ +)', async () => {
@@ -153,7 +192,8 @@ test('presignGet: versionId + response-* อยู่ในลายเซ็น
     config,
     {
       key: KEY,
-      versionId: '4_z27c88f1d182b150646ff0b16_f1004ba650fe24e6b_d20260105_m030405_c003_v0312005_t0000_u01',
+      versionId:
+        '4_z27c88f1d182b150646ff0b16_f1004ba650fe24e6b_d20260105_m030405_c003_v0312005_t0000_u01',
       contentType: 'application/pdf',
       disposition,
       cacheControl: GET_CACHE_CONTROL,
@@ -171,8 +211,15 @@ test('presignGet: versionId + response-* อยู่ในลายเซ็น
 })
 
 test('isCapExceeded: 403 ที่ข้อความลงท้าย cap exceeded เท่านั้น', () => {
-  const body = (m: string) => `<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>${m}</Message></Error>`
-  assert.equal(isCapExceeded(403, body('Cannot download file, download bandwidth or transaction (Class B) cap exceeded.')), true)
+  const body = (m: string) =>
+    `<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>${m}</Message></Error>`
+  assert.equal(
+    isCapExceeded(
+      403,
+      body('Cannot download file, download bandwidth or transaction (Class B) cap exceeded.'),
+    ),
+    true,
+  )
   assert.equal(isCapExceeded(403, body('Cannot upload files, storage cap exceeded.')), true)
   assert.equal(isCapExceeded(403, body('Signature validation failed')), false)
   assert.equal(isCapExceeded(500, body('cap exceeded')), false)

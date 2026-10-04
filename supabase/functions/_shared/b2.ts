@@ -110,7 +110,8 @@ export async function presignPut(
   now?: Date,
 ): Promise<string> {
   if (!STAGING_KEY.test(file.key)) throw new Error('b2_key_not_staging')
-  if (!Number.isSafeInteger(file.sizeBytes) || file.sizeBytes < 1) throw new Error('b2_size_invalid')
+  if (!Number.isSafeInteger(file.sizeBytes) || file.sizeBytes < 1)
+    throw new Error('b2_size_invalid')
   return presignUrl({
     config,
     method: 'PUT',

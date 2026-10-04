@@ -1,0 +1,22 @@
+{
+  // ตรวจ type ของ Edge Functions ด้วย TypeScript ของ web (npm run functions:typecheck)
+  // index.ts ใช้ Deno.serve จึงไม่รวม — logic อยู่ใน handler.ts / _shared ซึ่งใช้แค่ Web API
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "typeRoots": ["../../web/node_modules/@types"]
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["**/index.ts"]
+}
