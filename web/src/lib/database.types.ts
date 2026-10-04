@@ -58,6 +58,50 @@ export type Database = {
           },
         ]
       }
+      assignments: {
+        Row: {
+          accept_after_solution: boolean
+          close_at: string | null
+          due_at: string
+          full_score: number
+          full_score_locked_at: string | null
+          late_penalty_pct: number
+          post_id: string
+          reward_locked_at: string | null
+          reward_tokens: number
+        }
+        Insert: {
+          accept_after_solution?: boolean
+          close_at?: string | null
+          due_at: string
+          full_score: number
+          full_score_locked_at?: string | null
+          late_penalty_pct?: number
+          post_id: string
+          reward_locked_at?: string | null
+          reward_tokens?: number
+        }
+        Update: {
+          accept_after_solution?: boolean
+          close_at?: string | null
+          due_at?: string
+          full_score?: number
+          full_score_locked_at?: string | null
+          late_penalty_pct?: number
+          post_id?: string
+          reward_locked_at?: string | null
+          reward_tokens?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: true
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classrooms: {
         Row: {
           created_at: string
@@ -142,6 +186,47 @@ export type Database = {
           },
         ]
       }
+      posts: {
+        Row: {
+          body: string | null
+          classroom_id: string
+          content_updated_at: string | null
+          id: string
+          kind: string
+          published_at: string
+          title: string
+          version: number
+        }
+        Insert: {
+          body?: string | null
+          classroom_id: string
+          content_updated_at?: string | null
+          id?: string
+          kind: string
+          published_at?: string
+          title: string
+          version?: number
+        }
+        Update: {
+          body?: string | null
+          classroom_id?: string
+          content_updated_at?: string | null
+          id?: string
+          kind?: string
+          published_at?: string
+          title?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_entries: {
         Row: {
           created_at: string
@@ -184,6 +269,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "terms"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      solutions: {
+        Row: {
+          assignment_id: string
+          body: string | null
+          created_at: string
+          published_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          assignment_id: string
+          body?: string | null
+          created_at?: string
+          published_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          assignment_id?: string
+          body?: string | null
+          created_at?: string
+          published_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solutions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: true
+            referencedRelation: "assignments"
+            referencedColumns: ["post_id"]
           },
         ]
       }
