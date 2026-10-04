@@ -53,7 +53,9 @@ insert into expected_authenticated values
   -- 0011_files
   ('private.can_read_solution(uuid)'),                              -- ใช้ใน RLS policy
   -- 0012_backups
-  ('private.is_admin()');                                           -- ใช้ใน RLS policy
+  ('private.is_admin()'),                                           -- ใช้ใน RLS policy
+  -- 0014_post_rpcs
+  ('public.create_post(uuid,jsonb,uuid,boolean)');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);
