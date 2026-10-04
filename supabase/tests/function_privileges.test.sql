@@ -57,7 +57,9 @@ insert into expected_authenticated values
   -- 0014_post_rpcs
   ('public.create_post(uuid,jsonb,uuid,boolean)'),
   -- 0015_post_update
-  ('public.update_post(uuid,jsonb,integer,uuid,boolean)');
+  ('public.update_post(uuid,jsonb,integer,uuid,boolean)'),
+  -- 0016_upload_batch
+  ('public.create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);
