@@ -74,7 +74,7 @@ Classroom/                     # root ของ repo
 
 - **ระยะ 1–6 ยังไม่มี `kemi-prod`:** ตัวแปร Production ของ Pages ชี้ `kemi-dev` ชั่วคราว (ตัดสินใจ 2 ต.ค. 2026) เพื่อให้ `https://<ชื่อ>.pages.dev` ใช้สาธิตได้; หน้าเว็บแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” ทุกหน้า เว้นแต่ build ตั้ง `VITE_DEPLOY_ENV=prod` (ลืมตั้งแล้วแถบยังขึ้น ไม่ใช่หายไปเงียบ ๆ) และห้ามนำเข้ารายชื่อหรือข้อมูลนักเรียนจริงจนกว่าจะสลับไป prod ในระยะ 7 ซึ่งเป็นช่วงเดียวกับที่เผยแพร่ OAuth (P7-06) ก่อนหน้านั้นมีแค่บัญชีใน Test users ที่ล็อกอินได้
 - แผนฟรีของ Supabase มีได้ 2 โปรเจกต์ (prod + dev) จึงไม่กู้ข้อมูลจริงเข้า `kemi-dev` ซึ่งมีลิงก์ preview และบัญชีทดสอบ แต่กู้เข้า Supabase ชั่วคราวในงาน Actions แทน **[ต้องพิสูจน์]**
-- พื้นที่ฟรี 10 GB ของ B2 นับรวมทุก bucket ในบัญชี: ให้ bucket ทดสอบใช้ไฟล์เล็ก ล้างเป็นระยะ และ **ตั้ง `quota_bytes` ของระบบจริงเป็น 10 GB ลบพื้นที่ที่กันไว้ให้ bucket ทดสอบ** (เช่น 9,500,000,000 ไบต์ เมื่อกันไว้ 0.5 GB) เพื่อให้ระบบหยุดรับตาม J10.2 ก่อนเพดานรวมของบัญชี; `restore-test` รอบรายเดือนกู้ไฟล์เป็นตัวอย่างและลบทันที
+- พื้นที่ฟรี 10 GB ของ B2 นับรวมทุก bucket ในบัญชี: ให้ bucket ทดสอบใช้ไฟล์เล็ก ล้างเป็นระยะ และ **ตั้ง `quota_bytes` ของระบบจริงเป็น 10 GB ลบพื้นที่ที่กันไว้ให้ bucket ทดสอบ** (เช่น 9,500,000,000 ไบต์ เมื่อกันไว้ 0.5 GB) เพื่อให้ระบบหยุดรับตาม J10.2 ก่อนเพดานรวมของบัญชี; **ส่วน `kemi-dev` ตั้ง `quota_bytes` เท่าพื้นที่ที่กันไว้ให้ bucket ทดสอบ (เช่น 500,000,000 ไบต์) และ `hard_stop_margin_bytes` เล็กตามสัดส่วน (เช่น 50,000,000)** เพราะ bucket dev ใช้ 10 GB ก้อนเดียวกับ prod; ค่าที่ migration ใส่เป็นค่าเริ่มต้นให้ใช้ค่าฝั่ง dev (ลืมแก้บน prod แล้วหยุดรับเร็ว ดีกว่าเกินเพดานบัญชี) แล้วตั้งค่า prod ในงานเตรียม prod ระยะ 7 (ทบทวน 4 ต.ค. 2026); `restore-test` รอบรายเดือนกู้ไฟล์เป็นตัวอย่างและลบทันที
 - **ภูมิภาค B2 เลือกตอนสมัครบัญชีและเปลี่ยนภายหลังไม่ได้** (ต้องเปิดบัญชีใหม่) และไม่มีเอเชีย: ในระยะ 0 วัดเวลาเชื่อมต่อ (`curl -w '%{time_connect} %{time_appconnect}'`) ไปยัง endpoint S3 ของทุกภูมิภาคตามเอกสาร B2 จาก Wi-Fi โรงเรียนและเน็ตมือถือหลายรอบ แล้วเลือกที่เร็วสุดตาม SYSTEM_SPEC ส่วน 12 ก่อนสมัคร และวัดซ้ำด้วยการอัปโหลดจริงที่จุดสาธิต 2
 
 **ที่เก็บความลับ** (ห้ามอยู่ในโค้ดหรือไฟล์ build)
@@ -98,7 +98,7 @@ Classroom/                     # root ของ repo
 4. เวลาเก็บเป็น `timestamptz` (UTC) และตัดสินด้วย `clock_timestamp()` หลังล็อกแถว; คะแนนและโทเคนเป็นจำนวนเต็ม คำนวณหักสายด้วย `(raw * (100 - pct) + 99) / 100`
 5. ลำดับล็อก: `term_control` → `assignments` → `submissions` → `wallets`; ห้ามเรียกบริการภายนอกระหว่างถือล็อก
 6. คำสั่งที่เสี่ยงกดซ้ำรับ `p_request_key uuid` และบันทึกใน `operation_receipts` (อายุ 24 ชม.) คำขอซ้ำคืนผลเดิม
-7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN ส่วน 7.1; migration ที่เพิ่มรหัสใหม่ต้องแจ้งให้เพิ่มแถวในตารางนั้นก่อนหน้าเว็บจะใช้ และรหัสที่ไม่มีในตารางแสดงข้อความสำรองของตาราง
+7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `full_score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN ส่วน 7.1; migration ที่เพิ่มรหัสใหม่ต้องแจ้งให้เพิ่มแถวในตารางนั้นก่อนหน้าเว็บจะใช้ และรหัสที่ไม่มีในตารางแสดงข้อความสำรองของตาราง
 8. ทุก migration มีไฟล์ทดสอบ pgTAP คู่กันก่อน merge
 9. `accounts.auth_user_id` **ไม่ใส่ foreign key ไป `auth.users`** เพราะ dump ไม่รวม schema `auth` และต้องกู้ข้ามโปรเจกต์ได้ ตอนกู้ตั้งค่านี้เป็น NULL แล้ว `ensure_account()` จับคู่ใหม่ด้วย `provider_subject` (TECHNICAL_DESIGN ส่วน 3.1 ข้อ 7)
 
@@ -134,7 +134,8 @@ grant execute on function public.grade_submission to authenticated;
 | 5b | `0007_student_classrooms.sql` (push แล้ว 4 ต.ค. 2026) | RPC `my_classrooms()` และ `classroom_view(uuid)` ให้นักเรียนเห็นชื่อห้อง ชื่อครู จำนวนสมาชิก และชื่อ + เลขที่ของเพื่อนในห้อง โดยไม่เปิด RLS ของตารางให้กว้างขึ้น (ไม่คืนเลขประจำตัว อีเมล หรือห้องตามรายชื่อของคนอื่น) | 2 |
 | 5c | `0008_rebind.sql` (push แล้ว 4 ต.ค. 2026) | `roster_overview`, `rebind_preview`, `rebind_student`, `unbind_student`: แก้การผูก 2 แบบ ลบ `auth.sessions` และ refresh token ของบัญชีเดิมใน transaction เดียว ไม่แตะ membership งาน คะแนน โทเคน | 2 |
 | 5d | `0009_teacher_admin.sql` (push แล้ว 4 ต.ค. 2026) | `admin_teachers`, `admin_add_teacher`, `admin_remove_teacher`: จัดการ allowlist ใน D01 ต้องเหลือครูอย่างน้อย 1 รายการ เอาออกแล้วสิทธิ์ครูหายทันที | 2 |
-| 6 | `…_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
+| 6 | `0010_posts.sql` (push แล้ว 4 ต.ค. 2026) | `posts`, `assignments`, `solutions`; ตัวกันช่องที่ล็อกเป็น trigger ระดับตาราง (I4 `reward_locked`, J2/L4/K2 `full_score_locked`, รับหลังเฉลย `after_solution_locked`, ชนิดโพสต์และเวลาเผยแพร่เฉลยแรก K4); RLS อ่านผ่าน `is_member`/`can_teach_classroom` และ `private.post_access`; GRANT แค่ SELECT ยังไม่มี RPC เขียน | 3 |
+| 6b | `…_posts_files.sql` (ส่วนที่เหลือ: P3-01b, P3-01c) | `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง; RPC สร้าง/แก้โพสต์ (K1, N2 + `content_updated_at`) เป็นไฟล์แยกมากับ P3-02/P3-02b และต้องผ่านตัวกันใน `0010_posts` | 3 |
 | 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
 | 9 | `…_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
@@ -144,7 +145,7 @@ grant execute on function public.grade_submission to authenticated;
 
 เลขไฟล์จริงเรียงตามลำดับที่ push และ migration ที่ push แล้วแก้ไม่ได้ ตารางนี้จึงใส่เลขเฉพาะไฟล์ที่ push แล้ว ไฟล์ที่ยังไม่ทำเขียนเป็น `…_ชื่อ.sql` ให้ใช้เลขถัดไปตอนสร้าง และแยกไฟล์ย่อยได้ตามงาน; ส่วนแผนรายระยะอ้างกลุ่มเนื้อหาด้วยชื่อ ไม่อ้างเลข
 
-`seed.sql`: ระดับ 4 ระดับน้ำหนัก 60/25/10/5, เครื่องราง 12 ชิ้นตาม UX_DESIGN ส่วน 11 (J8), `storage_settings` (`quota_bytes` = 10 GB แบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) ลบส่วนที่กันไว้ให้ bucket ทดสอบตามส่วน 3, 80/90%, `hard_stop_margin_bytes` **[ข้อเสนอ]** 300,000,000 ไบต์), `term_control` เริ่มต้น; บน prod ใส่เฉพาะข้อมูลตั้งต้น ไม่ใส่นักเรียนทดสอบ
+`seed.sql`: ระดับ 4 ระดับน้ำหนัก 60/25/10/5, เครื่องราง 12 ชิ้นตาม UX_DESIGN ส่วน 11 (J8), `storage_settings` (ค่า prod: `quota_bytes` = 10 GB แบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) ลบส่วนที่กันไว้ให้ bucket ทดสอบตามส่วน 3 ส่วน dev ใช้ค่าตามส่วน 3, 80/90%, `hard_stop_margin_bytes` **[ข้อเสนอ]** 300,000,000 ไบต์), `term_control` เริ่มต้น; บน prod ใส่เฉพาะข้อมูลตั้งต้น ไม่ใส่นักเรียนทดสอบ
 
 ## 5. RPC และ Edge Functions
 
