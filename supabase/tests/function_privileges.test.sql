@@ -17,7 +17,7 @@ set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
 
-select plan(7);
+select plan(9);
 
 -- รายการที่ตั้งใจให้ authenticated เรียกได้ (เรียงตาม migration)
 create temp table expected_authenticated (fn text primary key);
@@ -51,7 +51,20 @@ insert into expected_authenticated values
   -- 0010_posts
   ('private.post_access(uuid)'),                                    -- ใช้ใน RLS policy
   -- 0011_files
-  ('private.can_read_solution(uuid)');                              -- ใช้ใน RLS policy
+  ('private.can_read_solution(uuid)'),                              -- ใช้ใน RLS policy
+  -- 0012_backups
+  ('private.is_admin()');                                           -- ใช้ใน RLS policy
+
+-- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
+create temp table postgres_only (fn text primary key);
+insert into postgres_only values
+  ('private.backup_start()'),
+  ('private.backup_running_run(uuid)'),
+  ('private.backup_record_manifest(uuid)'),
+  ('private.backup_finish(uuid,boolean,text,integer,bigint,integer,text)'),
+  ('private.backup_release_lock()'),
+  ('private.backup_record_restore_test(boolean,text,integer,text)'),
+  ('private.backup_prune_manifests()');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
@@ -72,6 +85,23 @@ select is_empty(
 select is_empty(
   $$ select fn from callable where role = 'public' $$,
   'PUBLIC ไม่มีสิทธิ์เรียกฟังก์ชันใน public/private'
+);
+-- service_role (กุญแจของ Edge Function / ping) ไม่ต้องเรียกฟังก์ชันใน private — งานสำรองต่อด้วย postgres
+select is_empty(
+  $$ select p.oid::regprocedure::text
+       from pg_proc p
+      where p.pronamespace = 'private'::regnamespace
+        and has_function_privilege('service_role', p.oid, 'EXECUTE') $$,
+  'service_role เรียกฟังก์ชันใน private ไม่ได้ (รวมฟังก์ชันสำรอง)'
+);
+select is_empty(
+  $$ select format('%s %s', r, o.fn)
+       from postgres_only o
+       cross join unnest(array['public', 'anon', 'authenticated', 'service_role']) r
+      where to_regprocedure(o.fn) is null
+         or has_function_privilege(r, to_regprocedure(o.fn), 'EXECUTE')
+         or not has_function_privilege('postgres', to_regprocedure(o.fn), 'EXECUTE') $$,
+  'ฟังก์ชันสำรองมีอยู่จริงและเรียกได้เฉพาะ postgres'
 );
 select is_empty(
   $$ select c.fn from callable c
