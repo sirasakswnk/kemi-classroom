@@ -1,0 +1,115 @@
+import { Award, CalendarX, FilePen, Sparkles } from 'lucide-react'
+import { th } from '../../copy/th'
+import { initialOf } from '../../lib/initial'
+import { thaiDate, thaiTime } from '../../lib/thaiTime'
+import { Chip } from '../../ui'
+import type { Post } from './api'
+import styles from './posts.module.css'
+
+// รายการโพสต์ของห้อง ใช้ร่วมกันใน S02 (นักเรียน) และ T08 (ครู) — แบบ v2 .work-card / .post
+// ยังไม่มีหน้างาน S03/T03 (P3-08/P3-09) การ์ดจึงยังไม่เป็นลิงก์ และยังไม่มีสถานะส่ง/ตรวจจริง
+
+type Heading = 'h2' | 'h3'
+
+/** การบ้าน: ชื่อ กำหนดส่ง (เวลาไทย) และป้ายสถานะ/รางวัล — จอกว้าง ≥ 960 px แสดง 2 คอลัมน์ (UX 13) */
+export function HomeworkList({
+  posts,
+  audience,
+  heading = 'h3',
+}: {
+  posts: Post[]
+  audience: 'student' | 'teacher'
+  heading?: Heading
+}) {
+  const copy = th.posts.list
+  const Title = heading
+  return (
+    <ul
+      className={styles.workList}
+      data-columns={audience === 'student' ? '2' : undefined}
+      aria-label={copy.homeworkListAria}
+    >
+      {posts.map((post) => {
+        const a = post.assignment
+        return (
+          <li key={post.id}>
+            <article className={styles.workCard}>
+              <span className={styles.wIc} aria-hidden="true">
+                <FilePen />
+              </span>
+              <div className={styles.workText}>
+                <Title className={styles.workTitle}>{post.title}</Title>
+                {a && (
+                  <span className={styles.meta}>
+                    {copy.due(thaiDate(a.due_at), thaiTime(a.due_at))}
+                  </span>
+                )}
+                <span className={styles.chips}>
+                  {audience === 'student' ? (
+                    <Chip tone="amber" icon={<FilePen />}>
+                      {copy.notSubmitted}
+                    </Chip>
+                  ) : (
+                    a && (
+                      <Chip tone="plain" icon={<Award />}>
+                        {copy.fullScore(a.full_score)}
+                      </Chip>
+                    )
+                  )}
+                  {a && a.reward_tokens > 0 && (
+                    <Chip tone="gold" icon={<Sparkles />}>
+                      {copy.reward(a.reward_tokens)}
+                    </Chip>
+                  )}
+                  {audience === 'teacher' && a && (
+                    <Chip tone="plain" icon={<CalendarX />}>
+                      {a.close_at
+                        ? copy.closeAt(thaiDate(a.close_at), thaiTime(a.close_at))
+                        : copy.noClose}
+                    </Chip>
+                  )}
+                </span>
+              </div>
+            </article>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/** ประกาศ: ผู้โพสต์ เวลา หัวข้อ และข้อความ (คงการขึ้นบรรทัด) — กว้างไม่เกิน 760 px เพื่อให้อ่านง่าย (UX 13) */
+export function AnnouncementList({
+  posts,
+  teacherName,
+  heading = 'h3',
+}: {
+  posts: Post[]
+  teacherName: string
+  heading?: Heading
+}) {
+  const Title = heading
+  return (
+    <ul className={styles.postList} aria-label={th.posts.list.announcementListAria}>
+      {posts.map((post) => (
+        <li key={post.id}>
+          <article className={styles.post}>
+            <div className={styles.postHead}>
+              <span className={styles.avatar} aria-hidden="true">
+                {initialOf(teacherName)}
+              </span>
+              <span>
+                <b>{teacherName}</b>
+                <time dateTime={post.published_at}>
+                  {thaiDate(post.published_at)} · {thaiTime(post.published_at)} น.
+                </time>
+              </span>
+            </div>
+            <Title className={styles.postTitle}>{post.title}</Title>
+            {post.body && <p className={styles.postBody}>{post.body}</p>}
+          </article>
+        </li>
+      ))}
+    </ul>
+  )
+}

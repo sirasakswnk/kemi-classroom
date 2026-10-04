@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, FileText, Lock, Megaphone, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Lock, TriangleAlert } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
@@ -8,12 +8,13 @@ import { appErrorOf } from '../../lib/request'
 import { useTabParam } from '../../lib/useTabParam'
 import { Button, Chip, Tabs } from '../../ui'
 import { ClassBanner } from '../classrooms/ClassBanner'
+import { RoomPosts } from '../posts/RoomPosts'
 import { classroomViewQuery, myClassroomsQuery } from './api'
 import styles from './student.module.css'
 
 const TABS = ['general', 'work', 'members'] as const
 
-// S02 ห้องเรียนของนักเรียน: หัวห้อง + สามแท็บ (งาน/ประกาศมาในระยะ 3, สมาชิกใช้ได้แล้ว)
+// S02 ห้องเรียนของนักเรียน: หัวห้อง + สามแท็บ (งานของคุณครู · โพสต์ทั่วไป · สมาชิก)
 // ตรวจ membership ทุกครั้งที่โหลด (classroom_view) — ถูกครูเอาออกแล้วเห็นข้อความ not_member (UX 7.1)
 export default function StudentClassroom() {
   const { classId = '' } = useParams()
@@ -120,10 +121,13 @@ export default function StudentClassroom() {
             <p className={styles.muted}>{copy.membersNote}</p>
           </>
         ) : (
-          <div className={styles.empty}>
-            {tab === 'general' ? <Megaphone aria-hidden="true" /> : <FileText aria-hidden="true" />}
-            <span>{tab === 'general' ? copy.generalEmpty : copy.workEmpty}</span>
-          </div>
+          // อ่านโพสต์ผ่าน RLS (สมาชิกขณะนี้) — ถูกเอาออกแล้ว classroom_view ด้านบนตอบ not_member ก่อน
+          <RoomPosts
+            classroomId={c.id}
+            kind={tab === 'work' ? 'homework' : 'announcement'}
+            audience="student"
+            teacherName={c.teacher_name}
+          />
         )}
       </Tabs>
     </main>

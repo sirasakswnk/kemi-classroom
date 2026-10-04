@@ -92,6 +92,12 @@ export const router = createBrowserRouter([
               Component: (await import('../features/teacher/pages')).ClassroomPage,
             }),
           },
+          {
+            path: 'c/:classId/new',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).CreatePost,
+            }),
+          },
         ],
       },
       {
