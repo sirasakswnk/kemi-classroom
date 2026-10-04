@@ -133,6 +133,7 @@ grant execute on function public.grade_submission to authenticated;
 | 5a | `0006_teachers_read.sql` (push แล้ว 3 ต.ค. 2026) | ให้ครูและผู้ดูแลอ่านตาราง `teachers` ได้ (ชื่อครูบนแถบบน และให้ผู้ดูแลเลือกครูเจ้าของห้องใน T09) | 2 |
 | 5b | `0007_student_classrooms.sql` (push แล้ว 4 ต.ค. 2026) | RPC `my_classrooms()` และ `classroom_view(uuid)` ให้นักเรียนเห็นชื่อห้อง ชื่อครู จำนวนสมาชิก และชื่อ + เลขที่ของเพื่อนในห้อง โดยไม่เปิด RLS ของตารางให้กว้างขึ้น (ไม่คืนเลขประจำตัว อีเมล หรือห้องตามรายชื่อของคนอื่น) | 2 |
 | 5c | `0008_rebind.sql` (push แล้ว 4 ต.ค. 2026) | `roster_overview`, `rebind_preview`, `rebind_student`, `unbind_student`: แก้การผูก 2 แบบ ลบ `auth.sessions` และ refresh token ของบัญชีเดิมใน transaction เดียว ไม่แตะ membership งาน คะแนน โทเคน | 2 |
+| 5d | `0009_teacher_admin.sql` (push แล้ว 4 ต.ค. 2026) | `admin_teachers`, `admin_add_teacher`, `admin_remove_teacher`: จัดการ allowlist ใน D01 ต้องเหลือครูอย่างน้อย 1 รายการ เอาออกแล้วสิทธิ์ครูหายทันที | 2 |
 | 6 | `…_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
 | 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
@@ -249,7 +250,7 @@ grant execute on function public.grade_submission to authenticated;
 | workflow | เมื่อไร | ทำอะไร |
 | --- | --- | --- |
 | `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; เมื่อแก้ `supabase/**` รัน pgTAP กับฐานข้อมูลชั่วคราวใน runner (Supabase CLI เปิด Postgres ใน Docker แล้วใส่ migration ของ commit นั้น) — ไม่ใช้ secret และไม่แตะ `kemi-dev` |
-| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น |
+| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น และ**ห้ามรัน pgTAP กับ prod เด็ดขาด** (บางเทสต์แก้แถวจริงชั่วคราวใน transaction ที่ย้อนกลับ เช่นเทสต์ครูคนสุดท้าย) สคริปต์รันเทสต์ต้องตรวจ project ref ว่าเป็น `kemi-dev` หรือฐานข้อมูลในเครื่องก่อนรัน |
 | `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง | สำรองตาม TECHNICAL_DESIGN ส่วน 12 |
 | `restore-test.yml` | กดรันเอง เลือกจุดกู้คืนและชุดไฟล์ | กู้เข้า Supabase ชั่วคราวใน runner + ไฟล์ใน `kemi-dev-files` แล้วตรวจ ลบทิ้ง และบันทึกผลลง prod |
 
@@ -326,7 +327,7 @@ grant execute on function public.grade_submission to authenticated;
 - [ ] ครูเอานักเรียนออกแล้ว นักเรียนเปิดห้องหรือเรียก RPC ของห้องนั้นไม่ได้ (`not_member`) ข้อมูลเดิมยังอยู่ และเข้าใหม่ด้วยรหัสแล้วเห็นเหมือนเดิม
 - [ ] เข้าห้องได้ทั้งด้วยรหัสและลิงก์เชิญ (ลิงก์เชิญยังต้องล็อกอินและเลือกชื่อก่อน); รหัสห้องผิดซ้ำถูกจำกัด; ปิดการเข้าห้องแล้วเข้าไม่ได้ทั้งรหัสและลิงก์แต่สมาชิกเดิมใช้ต่อได้; กดเข้าซ้ำไม่เกิดสมาชิกซ้ำ
 - [ ] เอาบัญชีครูรายการสุดท้ายออกไม่ได้; โหมดผู้ดูแลมีแถบเตือนทุกหน้า และ RPC ฝั่งครูที่ผู้ดูแลเรียกโดยไม่ส่งโหมดถูกปฏิเสธ (L6)
-- [ ] นำเข้าไฟล์ Excel จริงของครูได้ (เมื่อได้ไฟล์)
+- [ ] ตัวอ่านอ่านไฟล์ Excel จริงของครูทั้ง 3 ห้องได้ครบ (ได้ไฟล์แล้ว 2 ต.ค. 2026) โดยทดสอบแบบอ่านอย่างเดียวบนเครื่องผู้พัฒนา ไฟล์อยู่นอก repo หรือใน `.work/` ไม่ส่งข้อมูลขึ้นเซิร์ฟเวอร์ใด และรายงานแค่จำนวนแถวกับจำนวนปัญหา ไม่พิมพ์ชื่อหรือเลขประจำตัว; นำเข้าจริงทำบน prod ในระยะ 8 เท่านั้น
 
 ### ระยะ 3 — งานและไฟล์
 
