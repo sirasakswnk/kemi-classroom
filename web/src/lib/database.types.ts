@@ -58,6 +58,78 @@ export type Database = {
           },
         ]
       }
+      assets: {
+        Row: {
+          checksum: string | null
+          content_type: string
+          created_at: string
+          delete_requested_at: string | null
+          file_name: string
+          final_key: string
+          id: string
+          owner_account_id: string
+          purpose: string
+          ready_at: string | null
+          size_bytes: number
+          staging_key: string
+          staging_version_id: string
+          status: string
+          upload_batch_id: string | null
+          version_id: string | null
+        }
+        Insert: {
+          checksum?: string | null
+          content_type: string
+          created_at?: string
+          delete_requested_at?: string | null
+          file_name: string
+          final_key: string
+          id?: string
+          owner_account_id: string
+          purpose: string
+          ready_at?: string | null
+          size_bytes: number
+          staging_key: string
+          staging_version_id: string
+          status?: string
+          upload_batch_id?: string | null
+          version_id?: string | null
+        }
+        Update: {
+          checksum?: string | null
+          content_type?: string
+          created_at?: string
+          delete_requested_at?: string | null
+          file_name?: string
+          final_key?: string
+          id?: string
+          owner_account_id?: string
+          purpose?: string
+          ready_at?: string | null
+          size_bytes?: number
+          staging_key?: string
+          staging_version_id?: string
+          status?: string
+          upload_batch_id?: string | null
+          version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_owner_account_id_fkey"
+            columns: ["owner_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_upload_batch_id_fkey"
+            columns: ["upload_batch_id"]
+            isOneToOne: false
+            referencedRelation: "upload_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignments: {
         Row: {
           accept_after_solution: boolean
@@ -99,6 +171,55 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "posts"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      attachments: {
+        Row: {
+          asset_id: string
+          created_at: string
+          id: string
+          position: number
+          post_id: string | null
+          solution_id: string | null
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          id?: string
+          position: number
+          post_id?: string | null
+          solution_id?: string | null
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          post_id?: string | null
+          solution_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: true
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_solution_id_fkey"
+            columns: ["solution_id"]
+            isOneToOne: false
+            referencedRelation: "solutions"
+            referencedColumns: ["assignment_id"]
           },
         ]
       }
@@ -307,6 +428,33 @@ export type Database = {
           },
         ]
       }
+      storage_settings: {
+        Row: {
+          admin_warn_pct: number
+          hard_stop_margin_bytes: number
+          quota_bytes: number
+          singleton: boolean
+          teacher_warn_pct: number
+          updated_at: string
+        }
+        Insert: {
+          admin_warn_pct?: number
+          hard_stop_margin_bytes: number
+          quota_bytes: number
+          singleton?: boolean
+          teacher_warn_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_warn_pct?: number
+          hard_stop_margin_bytes?: number
+          quota_bytes?: number
+          singleton?: boolean
+          teacher_warn_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           account_id: string | null
@@ -430,6 +578,70 @@ export type Database = {
           superseded_at?: string | null
         }
         Relationships: []
+      }
+      upload_batches: {
+        Row: {
+          base_version: number | null
+          classroom_id: string | null
+          created_at: string
+          expires_at: string
+          files: Json
+          id: string
+          owner_account_id: string
+          post_id: string | null
+          purpose: string
+          reserved_bytes: number
+          status: string
+        }
+        Insert: {
+          base_version?: number | null
+          classroom_id?: string | null
+          created_at?: string
+          expires_at: string
+          files?: Json
+          id?: string
+          owner_account_id: string
+          post_id?: string | null
+          purpose: string
+          reserved_bytes: number
+          status?: string
+        }
+        Update: {
+          base_version?: number | null
+          classroom_id?: string | null
+          created_at?: string
+          expires_at?: string
+          files?: Json
+          id?: string
+          owner_account_id?: string
+          post_id?: string | null
+          purpose?: string
+          reserved_bytes?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_batches_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upload_batches_owner_account_id_fkey"
+            columns: ["owner_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upload_batches_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
