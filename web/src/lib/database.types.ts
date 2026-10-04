@@ -718,6 +718,15 @@ export type Database = {
         }
         Returns: Json
       }
+      create_post: {
+        Args: {
+          p_admin_mode?: boolean
+          p_classroom_id: string
+          p_post: Json
+          p_request_key: string
+        }
+        Returns: Json
+      }
       ensure_account: { Args: never; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
