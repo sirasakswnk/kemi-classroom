@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: P3-03 (ไฟล์ตั้งค่า B2 + `_shared/b2.ts` + `uploads` ขั้นสร้าง batch; พิสูจน์ข้อ 18) บน branch `phase-3` — **ต้องมี:** B2 + key ใน secrets · **รอผู้ใช้:** ลองแก้งาน/ประกาศบน preview `phase-3` ตามรายการในรายงาน P3-02b · ไฟล์ migration จริงใช้เลขถัดไปตอนสร้าง (`0016_…` ขึ้นไป)
+- งานถัดไป: ปิด P3-03 บน branch `phase-3` — โค้ด, migration `0016` และฟังก์ชัน `uploads` บน kemi-dev เสร็จแล้ว **รอผู้ใช้:** ทำ `ops/b2/README.md` ขั้น 1–5 (สร้าง bucket, รัน `apply-settings.mjs`, สร้างกุญแจ `kemi-edge-dev`, ใส่ secrets 4 ตัวใน kemi-dev, รัน `proof.mjs`) แล้วส่งผลที่สคริปต์พิมพ์ → Claude จดผลพิสูจน์แล้วติ๊ก · ถัดไป P3-04 **[effort สูง]** · migration ถัดไปใช้ `0017_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -16,7 +16,7 @@
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
 - รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
-- ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค/endpoint — · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
+- ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค eu-central-003 (S3 endpoint `https://s3.eu-central-003.backblazeb2.com`; bucket dev `kemi-dev-files` — รอยืนยันจาก `apply-settings.mjs`) · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
 
 ## ระยะ 0 — เตรียมบริการ (ผู้ใช้เปิดบัญชีเอง Claude ช่วยเตรียม)
 
@@ -143,15 +143,47 @@
 - [x] P3-02b โหมดแก้ไขงาน/ประกาศหลังโพสต์ (N2 ช่องที่ล็อก, N1 ไม่มีแจ้งเตือน + “แก้ไขล่าสุด”) + ทดสอบ → 5 ต.ค. 2026: `0015_post_update.sql` — `update_post(p_post_id, p_post jsonb, p_expected_version, p_request_key, p_admin_mode)` (ครู/ผู้ดูแลในโหมดผู้ดูแล เข้าเทสต์วนทุก RPC ฝั่งครูอัตโนมัติ; ตรวจ request key ก่อน version → ส่งซ้ำได้ผลเดิม; version ไม่ตรง `stale_revision`; ล็อกห้อง → โพสต์ → งาน; คีย์ที่ไม่ส่ง = คงค่าเดิม; กำหนดส่ง/วันปิดรับส่งได้เฉพาะค่าเดิม ไม่งั้น `invalid_request`; `content_updated_at` ขยับเฉพาะชื่อ/รายละเอียดเปลี่ยนจริง; ไม่มีอะไรเปลี่ยน = ไม่ขยับ version/เวลา คืน `changed: false`; ไม่จำกัดตามภาคเรียน; ไม่สร้างแจ้งเตือน) — pgTAP 44 (รวม 712) ผ่านในเครื่องและ kemi-dev, advisor เพิ่มเฉพาะ WARN ของ RPC ใหม่ (21) · เว็บ: `PostEditor` ใช้ร่วมสร้าง/แก้ไข, หน้า `/t/w/:postId/edit` (`EditPost`), ปุ่มแก้ไขบนการ์ด T08 (ประกาศถาวร, การบ้านชั่วคราว), ข้อความรหัส P3-02 จาก UX 7.1 แสดงใต้ช่อง + `full_score_locked`/`reward_locked`/`after_solution_locked` (เลิกใช้ `score_locked`) — Vitest 178, Playwright โหมดแก้ไข 56/56 (1280 + 390/768/1024) และชุดเดิม 7 ชุดผ่าน (check12 ปรับข้อความตาม UX 7.1)
     - ค่าที่เลือกเอง/ต่างจากเอกสาร: ข้อความตรวจฝั่งหน้าเว็บใช้ถ้อยคำเดียวกับ UX 7.1 ของรหัสเซิร์ฟเวอร์ (ชื่อว่าง/ยาวเกินใช้ข้อความเดียว); โหมดแก้ไขส่ง version ของตอนเปิดฟอร์ม (การโหลดเบื้องหลังไม่เลื่อน version เพื่อไม่กลืนการแก้จากหน้าจออื่น) และเปลี่ยนเมื่อกด “โหลดข้อมูลล่าสุด” เท่านั้น — กล่อง “สิ่งที่คุณพิมพ์ไว้ก่อนโหลดใหม่” แบบอ่านอย่างเดียวให้คัดลอก; ช่องที่ล็อกส่งค่าล่าสุดจากเซิร์ฟเวอร์เสมอ; ยกเลิก/บันทึกแล้วกลับ T08 แท็บของชนิดนั้น (T03 มาใน P3-09); โหมดแก้ไขไม่แสดงตัวเลือกชนิด, หมายเหตุแจ้งเตือน และสวิตช์วันปิดรับ; โพสต์ที่ไม่มี/ไม่มีสิทธิ์ตอบ `forbidden` (หน้าเว็บบอก “ไม่พบโพสต์นี้”); บนจอ ≤ 480 px ปุ่มแก้ไขบนการ์ดเหลือไอคอน (ชื่อเต็มใน aria-label)
     - รหัสใหม่: ไม่มี (ใช้ `stale_revision`, `full_score_locked`, `reward_locked`, `after_solution_locked` และรหัสเนื้อหาของ P3-02 ที่มีใน UX 7.1 แล้ว); รหัสภายในเดิม `invalid_request`, `request_key_required`, `request_key_conflict`
-- [ ] P3-03 ไฟล์ตั้งค่า B2 (`ops/b2/cors.json`, `lifecycle.json`) + `_shared/b2.ts` + `uploads` ขั้นสร้าง batch · (ต้องมี: B2 + key ใน secrets)
+- [ ] P3-03 ไฟล์ตั้งค่า B2 (`ops/b2/cors.json`, `lifecycle.json`) + `_shared/b2.ts` + `uploads` ขั้นสร้าง batch · (ต้องมี: B2 + key ใน secrets) — **โค้ดเสร็จ 5 ต.ค. 2026 เหลือผลพิสูจน์กับ B2 จริง (รอผู้ใช้ทำ `ops/b2/README.md` ขั้น 1–5)**
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** พิสูจน์ข้อ 18 (BUILD_PLAN ส่วน 13) กับ bucket dev: GET แบบ Range ได้ `x-amz-version-id` + `Content-Range`; presigned GET รับ `response-cache-control`; รูปแบบคำตอบ 403 เมื่อเกินเพดานรายวัน (ใช้แยกรหัส `download_budget_reached` ใน P3-04/P3-05)
+    - ทำแล้ว:
+      - `0016_upload_batch`: `create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)` — ครูเจ้าของห้อง/ผู้ดูแลในโหมดผู้ดูแล, purpose post|solution (submission → P3-07, charm → ระยะ 5), J4–J6 (10 ไฟล์, รูป ≤ 2 MiB, PDF ≤ 10 MiB, รวม ≤ 20 MiB ต่อชุด), request key, เพดานครั้ง, `reserve_storage` + batch ใน transaction เดียว, key `staging/{batch_id}/{uuid}`; pgTAP 43 (รวม 755 ผ่านทั้งในเครื่องและ kemi-dev; advisor ไม่มี ERROR)
+      - `supabase/functions/_shared/b2.ts` (+ `http.ts`, `rpc.ts`) และ `uploads` (logic อยู่ใน `handler.ts` ทดสอบด้วย Node ได้) — deploy ขึ้น kemi-dev แล้ว ลองเรียก: CORS ของเว็บเรา/preview ผ่าน origin อื่นไม่ผ่าน, ไม่ล็อกอินได้ 401, ตอนนี้ได้ 500 เพราะยังไม่มี B2 secrets (ตรวจค่าตั้งก่อนเรียก RPC จึงไม่จองพื้นที่)
+      - unit test 18 ข้อ (`npm run functions:test`, ตรงตัวอย่างลายเซ็นของ AWS + ตัวตรวจลายเซ็นอิสระ) + `functions:typecheck` อยู่ใน CI แล้ว · `aws4fetch` เป็น devDependency ที่ root (สำหรับเทสต์/สคริปต์; ฟังก์ชันใช้ `npm:aws4fetch@1.0.20` ผ่าน `deno.json`)
+      - `ops/b2/`: `cors.json`, `lifecycle.json`, `apply-settings.mjs` (กุญแจชั่วคราว `listBuckets`+`writeBuckets` อายุ 1 ชม. ลบทิ้งเสมอ), `proof.mjs` (รันด้วยมือ), `README.md` (ขั้นตอนผู้ใช้); สคริปต์ถามกุญแจแบบซ่อนตัวอักษร ต้องเป็น terminal จริง ไม่พิมพ์/ไม่เก็บค่าลับ
+    - ค่าที่เลือกเอง:
+      - CORS: origin production + `https://*.kemi-classroom.pages.dev` + `http://localhost:5173`; header `content-type`, `content-length` (ตาม TECHNICAL_DESIGN 9.2 — BUILD_PLAN 7 ยังเขียน `authorization`, `x-amz-*` ซึ่งไม่จำเป็นเพราะลายเซ็นอยู่ใน query); maxAge 3600
+      - ลิงก์ PUT 300 วินาที, GET 600 วินาที; `response-cache-control` = `private,max-age=600` (ไม่มีช่องว่าง); query ใช้ `%20` แทน `+`
+      - batch อายุ 120 นาที; เพดานขอ batch 30 ครั้ง/10 นาที/บัญชี; body คำขอ ≤ 16 KB
+      - สถานะ HTTP: `storage_full` 507, `rate_limited` 429, สิทธิ์ 403, `term_ended`/`request_key_conflict` 409, ไม่ล็อกอิน 401; error รูปแบบ `{code:'P0001', message:<รหัส>}` ให้ `toAppError()` อ่านได้
+      - `verify_jwt = false`: ฟังก์ชันส่ง JWT ของผู้ใช้ต่อให้ PostgREST ตรวจ ไม่ใช้ service role
+      - `WEB_ORIGINS` ไม่ตั้ง = รายการ dev ข้างบน (prod ระยะ 7 ตั้งเป็น production อย่างเดียว)
+      - กุญแจ `kemi-edge-dev` สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket: กว้างกว่าที่ใช้จริง (มี `listFiles`, `shareFiles`, ค่าเข้ารหัสของ bucket) แต่ไม่มี `writeBuckets`/จัดการกุญแจ — ทำให้แคบลงผ่าน API ได้ในระยะ 7
+      - ชื่อไฟล์ `_shared` เป็น `http.ts`/`rpc.ts` แทน `auth.ts`/`errors.ts` ใน BUILD_PLAN 2
+    - **รูปแบบ 403 เกินเพดาน (จากเอกสาร B2, ไม่ได้ทดสอบจริงตามข้อห้าม):**
+      - Integration Checklist: “403 Forbidden, cap_exceeded …”
+      - Native API ตอบรหัสเช่น `download_cap_exceeded` + ข้อความ “Cannot download file, download bandwidth or transaction (Class B) cap exceeded. See the Caps & Alerts page to increase your cap.”
+      - S3 API ตอบ XML `<Error>` ข้อความเดียวกัน (Code ไม่ระบุในเอกสาร)
+      - `isCapExceeded()` ตรวจ 403 + `cap exceeded`/`*_cap_exceeded`
+      - มีรายงานว่าเพดานดาวน์โหลดกัน **CopyObject** ด้วย → ดูโน้ต P3-04
+    - คำขอ B2 ที่ Claude ใช้: **0** (ทุกเทสต์ใช้ของจำลอง)
+    - เหลือ: ผู้ใช้ทำ `ops/b2/README.md` ขั้น 1–5 แล้วส่งผลที่ `apply-settings.mjs` และ `proof.mjs` พิมพ์ → Claude จดผลข้อ 18/9/10, PUT ไม่ตรงลายเซ็น, lifecycle แยก prefix (ข้อ 6), CORS wildcard แล้วติ๊กงานนี้
 - [ ] P3-04 **[effort สูง]** `uploads` ขั้น complete (GET แบบ Range **ครั้งเดียว** ไม่ HEAD แยก: `staging_version_id` จาก `x-amz-version-id`, ขนาดจาก `Content-Range`, magic number จากไบต์ชุดเดียวกัน → CopyObject ระบุเวอร์ชัน → finalize) + ทดสอบกับ bucket dev
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** นับคำขอ Class B ของ complete ลงตัวนับรายวัน; B2 ปฏิเสธเพราะเกินเพดาน → `download_budget_reached` (ข้อความตอนส่งงานบอกให้ลองใหม่หลัง 07:00 น. ตาม UX 7.1)
+    - จาก P3-03:
+      - เพดานดาวน์โหลดของ B2 กัน CopyObject ด้วย → ถ้า CopyObject ได้ 403 + `isCapExceeded()` ตอบ `download_budget_reached` เหมือนขั้น GET
+      - ต่อจาก `handler.ts` เส้นทาง `/uploads/:id/complete`; ใช้ `staging_key` จากแถว batch (ห้ามรับ key จากหน้าเว็บ)
+      - พิสูจน์ ETag ของ CopyObject ตอนนี้ (P3-03 พิสูจน์แค่ PUT ชิ้นเดียว)
 - [ ] P3-05 **[effort สูง]** `files` (sign GET โหมดเปิดดู/ดาวน์โหลด ชื่อไฟล์ไทย) + `authorize_files` + ทดสอบข้ามคน
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ก่อนออกลิงก์เปิดดูทุกครั้งตรวจและนับงบดาวน์โหลดรายวัน (ไบต์จากขนาดใน assets + จำนวนคำขอ; ครบงบตอบ `download_budget_reached` — ค่าเริ่มต้นเสนอ 750 MB หรือ 1,800 คำขอ เหลือส่วนให้การส่งงานและสำรอง); ลิงก์ใส่ `response-cache-control: private, max-age=600`; หน้าเว็บแคชลิงก์ที่ลงลายเซ็นตลอดอายุลิงก์ (TanStack Query) และตัวดูโหลดเฉพาะไฟล์ที่กำลังดู ไม่โหลดล่วงหน้า; เพิ่ม `download_budget_reached` ใน `ERROR_CODES`/`th.errors`
     - ตัดสินที่เก็บตัวนับรายวัน (รอบวัน UTC = 07:00 น. ไทย; ไบต์/คำขอแยกตามแหล่ง: เปิดดู, complete, สำรอง) และค่างบ ใช้ร่วมกับ P3-04, P3-10, P3-11
 - [ ] P3-06 โมดูลอัปโหลดฝั่งเว็บ (ตรวจไฟล์, HEIC, ย่อรูป, PUT แสดงความคืบหน้า) + unit test
     - จากเอกสาร 5 ต.ค. 2026 (UX 9): ไฟล์โจทย์/เฉลยรวมเกิน 5 MB แสดงคำแนะนำใต้รายการไฟล์ (ไม่บล็อก) เรื่องโควตาดาวน์โหลดรายวัน
+    - จาก P3-03:
+      - เพิ่ม endpoint B2 (`https://s3.eu-central-003.backblazeb2.com`) ใน CSP `connect-src` (และ `img-src` ถ้าแสดงรูปจากลิงก์ตรง) ใน `web/public/_headers`
+      - เพิ่ม `too_many_files`, `file_too_large`, `file_type_not_allowed`, `batch_too_large` ใน `ERROR_CODES`/`th.errors`
+      - PUT ต้องส่ง `content-type` ตรงกับที่ขอ batch และขนาดไฟล์ตรง `size_bytes` (ลายเซ็นผูกทั้งคู่)
+      - ลิงก์หมดอายุใน 5 นาที: ถ้าอัปโหลดไม่ทันให้เรียก `POST /uploads` ซ้ำด้วย request key เดิม → ได้ batch เดิมพร้อมลิงก์ใหม่
+      - ทดสอบอัปโหลดจริงจาก preview ครั้งแรก (ฟังก์ชัน `uploads` บน kemi-dev ยังไม่เคยถูกเรียกด้วย JWT ของครู)
 - [ ] P3-07 **[effort สูง]** migration กลุ่ม submissions + ตารางรับการส่ง 7 แถว + ทดสอบ
 - [ ] P3-08 S03 ไฟล์โจทย์ (เปิดดู/ดาวน์โหลด) + ส่ง/ส่งแก้/สถานะ
     - จาก P3-02b (N1): หน้างาน S03 แสดง “ครูแก้ไขโจทย์ล่าสุด …” ใต้โจทย์เมื่อ `posts.content_updated_at` ไม่ว่าง (ไม่มีรายการในกระดิ่ง)
