@@ -136,7 +136,9 @@ grant execute on function public.grade_submission to authenticated;
 | 5d | `0009_teacher_admin.sql` (push แล้ว 4 ต.ค. 2026) | `admin_teachers`, `admin_add_teacher`, `admin_remove_teacher`: จัดการ allowlist ใน D01 ต้องเหลือครูอย่างน้อย 1 รายการ เอาออกแล้วสิทธิ์ครูหายทันที | 2 |
 | 6 | `0010_posts.sql` (push แล้ว 4 ต.ค. 2026) | `posts`, `assignments`, `solutions`; ตัวกันช่องที่ล็อกเป็น trigger ระดับตาราง (I4 `reward_locked`, J2/L4/K2 `full_score_locked`, รับหลังเฉลย `after_solution_locked`, ชนิดโพสต์และเวลาเผยแพร่เฉลยแรก K4); RLS อ่านผ่าน `is_member`/`can_teach_classroom` และ `private.post_access`; GRANT แค่ SELECT ยังไม่มี RPC เขียน | 3 |
 | 6a | `0011_files.sql` (push แล้ว 4 ต.ค. 2026) | `assets`, `attachments`, `upload_batches`, `storage_settings` (แถวเดียว ค่า dev); `private.storage_used_bytes()`, `private.reserve_storage()` (ล็อกแถวตั้งค่าก่อนนับ ตอบ `storage_full`), `private.can_read_solution(uuid)`; แถวผูกหายตามโพสต์/เฉลยแต่ asset อยู่ต่อ; สถานะไฟล์เดินหน้าอย่างเดียว; GRANT แค่ SELECT และไม่เปิดคอลัมน์ key/เวอร์ชัน/checksum/เจ้าของ | 3 |
-| 6b | `…_posts_files.sql` (ส่วนที่เหลือ: P3-01c) | `backup_runs`, `backup_manifests`; บันทึกรอบสำรอง; RPC สร้าง/แก้โพสต์ (K1, N2 + `content_updated_at`) เป็นไฟล์แยกมากับ P3-02/P3-02b และต้องผ่านตัวกันใน `0010_posts` | 3 |
+| 6b | `0012_backups.sql` (push แล้ว 4 ต.ค. 2026) | `backup_runs` (public, ผู้ดูแลอ่าน, เก็บเป็นประวัติ), `private.backup_manifests`; ฟังก์ชันสำรอง 6 ตัวใน `private` เรียกได้เฉพาะ postgres (เริ่มรอบพร้อมตั้ง `maintenance_locks`, บันทึก manifest จาก snapshot แบบ REPEATABLE READ, จบรอบ, ปลดล็อก, บันทึก restore_test, ล้าง manifest เก่า); **ตาราง manifest แบบแถวต่อไฟล์ต่อรอบจะเปลี่ยนเป็นไฟล์ละแถวใน P3-01d (แถวถัดไป)** | 3 |
+| 6c | `…_backup_files.sql` (P3-01d) | เปลี่ยน manifest ในฐานข้อมูลเป็นไฟล์ละแถว (`final_key`, `version_id`, ขนาด, checksum, รอบสำเร็จแรกและล่าสุดที่เห็นไฟล์) ตามที่ตัดสิน 4 ต.ค. 2026 ในส่วน 8 | 3 |
+| 6d | `…_post_rpcs.sql` (P3-02/P3-02b) | RPC สร้าง/แก้โพสต์ (K1, N2 + `content_updated_at`) ต้องผ่านตัวกันใน `0010_posts` | 3 |
 | 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
 | 9 | `…_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
@@ -261,14 +263,16 @@ grant execute on function public.grade_submission to authenticated;
 **ขั้นตอน `backup.yml`** (สคริปต์ `ops/backup.sh`, ทุกขั้นล้มเหลวแล้ว ping `/fail` และปลดล็อก):
 
 1. `concurrency: backup`; ping `/start`; ติดตั้ง `postgresql-client` รุ่นหลักตรงกับเซิร์ฟเวอร์จาก PGDG และ rclone
-2. RPC: ตั้ง `maintenance_locks` (หมดอายุ 2 ชม.) และสร้าง `backup_runs` สถานะกำลังทำ
-3. เปิด session A ผ่าน Session pooler: `BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT pg_export_snapshot();` แล้วใน session เดียวกันรัน `ops/manifest.sql` (รายการ `final_key`, `version_id`, ขนาด, checksum ของ attachments/assets สถานะ `ready`)
-4. session B: `pg_dump --snapshot=<id> --schema=public --schema=private` แยกไฟล์ schema และ data จากนั้น COMMIT session A — dump กับ manifest จึงมาจากจุดเดียวกัน **[ต้องพิสูจน์ผ่าน pooler]**
-5. หาไฟล์ใหม่ = manifest ลบรายการที่มีในสำรองแล้ว → `rclone copy b2ro:<bucket> gcrypt:files --files-from new.txt`
+2. psql เรียก `private.backup_start` (ตั้ง `maintenance_locks` หมดอายุ 2 ชม. + สร้าง `backup_runs` สถานะกำลังทำ ใน transaction เดียว; รอบค้างที่ธงหมดอายุแล้วถูกปิดเป็น failed) — ฟังก์ชันสำรองทุกตัวเรียกได้เฉพาะ postgres ผ่าน connection string เดียวกับ pg_dump จึงไม่ต้องมี service role key ใน GitHub; สคริปต์ตั้ง `trap` ให้เรียก `private.backup_release_lock` ทุกครั้งที่ออก เพราะจบรอบไม่ปลดธงเอง
+3. เปิด session A ผ่าน Session pooler: `BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT pg_export_snapshot();` แล้วใน session เดียวกันรัน `ops/manifest.sql` ซึ่งเรียกฟังก์ชันบันทึก manifest (ดึง asset สถานะ `ready` จาก snapshot นี้เอง ไม่ใช่ใน REPEATABLE READ ตอบ `snapshot_required`) แล้วอ่านรายการ `final_key`, `version_id`, ขนาด, checksum ออกมาเป็นไฟล์ manifest
+4. session B: `pg_dump --snapshot=<id> --schema=public --schema=private --exclude-table-data=<ตาราง manifest ใน private>` (manifest อัปโหลดเป็นไฟล์แยกอยู่แล้ว ไม่ต้องอยู่ใน dump) แยกไฟล์ schema และ data จากนั้น COMMIT session A — dump กับ manifest จึงมาจากจุดเดียวกัน **[ต้องพิสูจน์ผ่าน pooler]**
+5. หาไฟล์ใหม่ = ไฟล์ในรอบนี้ที่ยังไม่เคยอยู่ในรอบสำเร็จใด (ฟังก์ชันใน P3-01d ตอบรายการให้) → `rclone copy b2ro:<bucket> gcrypt:files --files-from new.txt`
 6. `rclone cryptcheck b2ro:<bucket> gcrypt:files --files-from new.txt` + ตรวจการมีอยู่/ขนาดของไฟล์เดิมจาก `rclone lsjson`; ไฟล์ที่ขนาดไม่ตรง manifest ดึงตาม `version_id` ด้วย `aws s3api get-object --version-id` (endpoint B2) แล้วคัดลอกแทน; ยังไม่ครบ = ล้มเหลว
-7. อัปโหลด dump + manifest ไป `gcrypt:runs/<เวลา>/` → RPC บันทึก `backup_runs` สำเร็จพร้อมจำนวน/ขนาด → ping สำเร็จ
-8. ล้างรอบเก่ากว่า 7 วัน และไฟล์ที่ไม่มี manifest ใน 7 วันอ้างถึง ด้วย `--drive-use-trash=false` เฉพาะในโฟลเดอร์สำรอง
-9. RPC ปลดล็อก และเรียก `ping()` ผ่าน Data API (ช่วยกันโปรเจกต์หลับ)
+7. อัปโหลด dump + manifest ไป `gcrypt:runs/<เวลา>/` → psql เรียกฟังก์ชันจบรอบสำเร็จพร้อมชื่อจุดกู้คืน จำนวน และขนาด (ไม่ตรงกับ manifest ตอบ `manifest_mismatch` = รอบล้มเหลว) → ping สำเร็จ
+8. ล้างรอบเก่ากว่า 7 วัน และไฟล์ที่รอบสำเร็จล่าสุดที่เห็นไฟล์นั้นเก่ากว่า 7 วัน ด้วย `--drive-use-trash=false` เฉพาะในโฟลเดอร์สำรอง แล้วจึงเรียกฟังก์ชันล้างแถว manifest ที่ตรงกัน (ลบจาก Drive สำเร็จก่อน ค่อยลบแถว)
+9. ปลดล็อก (`private.backup_release_lock` จาก trap ในข้อ 2) และเรียก `ping()` ผ่าน Data API (ช่วยกันโปรเจกต์หลับ; ตรวจตอนทำ P3-11 ว่าบทบาทที่ใช้เรียกได้จริง เพราะ anon เรียกฟังก์ชันใดไม่ได้)
+
+**ตาราง manifest ในฐานข้อมูล (ตัดสิน 4 ต.ค. 2026 จากขนาดที่วัดใน P3-01c):** แบบแถวต่อไฟล์ต่อรอบใช้ประมาณ 468 ไบต์ต่อแถว เก็บ 16 รอบแล้วกิน 75–150 MB (15–30% ของ 500 MB ฟรี) จึงเปลี่ยนเป็น**ไฟล์ละแถว** เก็บ `final_key`, `version_id`, ขนาด, checksum, รอบสำเร็จแรกและรอบสำเร็จล่าสุดที่เห็นไฟล์ (ประมาณ 5–10 MB) ใช้ได้เพราะ `final_key` ไม่ถูกใช้ซ้ำและ asset ไม่ย้อนเป็น `ready` ไฟล์จึงอยู่ในรอบติดกันเสมอ; รายการของรอบที่กำลังทำเก็บชั่วคราวได้แต่ต้องล้างเมื่อจบรอบไม่ว่าผลใด; รอบแรก/ล่าสุดขยับเฉพาะตอนจบรอบสำเร็จ; รายการเต็มของแต่ละจุดกู้คืนอยู่ในไฟล์ manifest บน Drive ซึ่งเป็นสิ่งที่ `restore-test` และการกู้จริงใช้
 
 **ขั้นตอน `restore-test.yml`** (สคริปต์ `ops/restore-test.sh`, input: จุดกู้คืน และ `files: sample|all`):
 
@@ -277,7 +281,7 @@ grant execute on function public.grade_submission to authenticated;
 3. อัปโหลดไฟล์จาก manifest (`sample` = สุ่มประมาณ 50 ไฟล์สำหรับรอบรายเดือน, `all` = ทุกไฟล์ ใช้ก่อนเปิดใช้จริงเมื่อข้อมูลยังเล็ก) เข้า `final_key` เดิมใน `kemi-dev-files` เก็บ `version_id` ใหม่ → อัปเดตในฐานข้อมูลชั่วคราวตาม TECHNICAL_DESIGN ส่วน 12 ตรวจขนาด/checksum
 4. ตรวจยอดแถวหลัก ยอดโทเคน owned_charms และสร้าง presigned GET ของไฟล์ที่กู้แล้วดาวน์โหลดเทียบ checksum
 5. ลบไฟล์ที่อัปโหลดในข้อ 3 จาก `kemi-dev-files` โดยระบุ `version_id` (ทำแม้ขั้นก่อนหน้าล้มเหลว) และหยุด `supabase stop`
-6. บันทึกผล (ผ่าน/ไม่ผ่าน จุดกู้คืน จำนวนไฟล์ที่ตรวจ) ลง `backup_runs` ของ prod เป็นชนิด `restore_test` ผ่าน RPC เพื่อแสดง “ทดสอบกู้คืนล่าสุด” ใน D01 แล้ว ping `kemi-restore-test`
+6. บันทึกผล (ผ่าน/ไม่ผ่าน จุดกู้คืน จำนวนไฟล์ที่ตรวจ) ลง `backup_runs` ของ prod เป็นชนิด `restore_test` ด้วย psql เรียก `private.backup_record_restore_test` (บันทึกครั้งเดียวตอนจบ) เพื่อแสดง “ทดสอบกู้คืนล่าสุด” ใน D01 แล้ว ping `kemi-restore-test`
 
 **งาน `guard`** (อยู่ใน `backup.yml` แยก job): ตรวจว่า `private.settings` ของ prod ไม่มี `allow_test_logins = on` ถ้ามีให้ job นี้ล้มเหลวเพื่อให้ GitHub ส่งอีเมล โดยงานสำรองยังทำต่อตามปกติ
 
