@@ -3,9 +3,15 @@ import { addDays, bangkokParts, bangkokToUtcIso, thaiDate, thaiTime } from '../.
 import {
   defaultPostForm,
   dueReminder,
+  formFromPost,
+  locksOf,
   parseWholeNumber,
   POST_LIMITS,
+  SERVER_FIELD,
+  toUpdatePayload,
   validatePostForm,
+  withLockedValues,
+  type EditablePost,
   type PostFormValues,
 } from './postForm'
 import { applyScript, toScript } from './script'
@@ -130,18 +136,18 @@ describe('ตรวจฟอร์ม T02', () => {
   })
 
   it('ชื่อว่าง/ยาวเกิน และประกาศไม่มีข้อความ', () => {
-    expect(validatePostForm(homework({ title: '   ' })).errors.title).toBe('title_required')
+    expect(validatePostForm(homework({ title: '   ' })).errors.title).toBe('post_title_invalid')
     expect(
       validatePostForm(homework({ title: 'ก'.repeat(POST_LIMITS.titleMax + 1) })).errors.title,
-    ).toBe('title_too_long')
+    ).toBe('post_title_invalid')
     expect(
       validatePostForm(homework({ title: 'ก'.repeat(POST_LIMITS.titleMax) })).errors.title,
     ).toBeUndefined()
     const announcement = { ...defaultPostForm('announcement', now), title: 'ประกาศ', body: ' ' }
-    expect(validatePostForm(announcement).errors.body).toBe('body_required')
+    expect(validatePostForm(announcement).errors.body).toBe('post_body_required')
     expect(
       validatePostForm(homework({ body: 'ข'.repeat(POST_LIMITS.bodyMax + 1) })).errors.body,
-    ).toBe('body_too_long')
+    ).toBe('post_body_too_long')
   })
 
   it('นับความยาวเป็นตัวอักษร (ตัวห้อย/อีโมจิไม่นับเกิน) ให้ตรงกับฐานข้อมูล', () => {
@@ -174,18 +180,18 @@ describe('ตรวจฟอร์ม T02', () => {
 
   it('โทเคน 0–1,000', () => {
     expect(validatePostForm(homework({ reward: 0 })).payload).toMatchObject({ reward_tokens: 0 })
-    expect(validatePostForm(homework({ reward: 1001 })).errors.reward).toBe('reward_invalid')
+    expect(validatePostForm(homework({ reward: 1001 })).errors.reward).toBe('reward_tokens_invalid')
   })
 
   it('กำหนดส่งต้องมีวันและเวลา; วันปิดรับต้องไม่ก่อนกำหนดส่ง', () => {
-    expect(validatePostForm(homework({ dueDate: '' })).errors.due).toBe('due_invalid')
-    expect(validatePostForm(homework({ dueTime: '' })).errors.due).toBe('due_invalid')
+    expect(validatePostForm(homework({ dueDate: '' })).errors.due).toBe('due_at_invalid')
+    expect(validatePostForm(homework({ dueTime: '' })).errors.due).toBe('due_at_invalid')
     const before = homework({ hasClose: true, closeDate: '2026-10-11', closeTime: '19:59' })
     expect(validatePostForm(before).errors.close).toBe('close_before_due')
     const same = homework({ hasClose: true, closeDate: '2026-10-11', closeTime: '20:00' })
     expect(validatePostForm(same).payload).toMatchObject({ close_at: '2026-10-11T13:00:00.000Z' })
     expect(validatePostForm(homework({ hasClose: true, closeDate: '' })).errors.close).toBe(
-      'close_invalid',
+      'close_at_invalid',
     )
     // ปิดสวิตช์แล้วไม่ส่งวันปิดรับ แม้ช่องวันที่ยังมีค่าเดิม
     expect(
@@ -215,5 +221,116 @@ describe('ข้อความเตือนในตัวอย่างฝ�
     expect(dueReminder('2026-10-05T04:59:00Z', now)).toBe('soon')
     expect(dueReminder('2026-10-05T05:00:00Z', now)).toBe('normal')
     expect(dueReminder(null, now)).toBeNull()
+  })
+})
+
+describe('โหมดแก้ไข (N2)', () => {
+  const homework: EditablePost = {
+    id: 'p1',
+    classroom_id: 'c1',
+    kind: 'homework',
+    title: 'การคำนวณ Kc',
+    body: 'H₂O',
+    version: 3,
+    published_at: '2026-10-01T02:00:00Z',
+    content_updated_at: null,
+    assignment: {
+      full_score: 20,
+      late_penalty_pct: 30,
+      reward_tokens: 2,
+      due_at: '2026-10-11T13:00:00+00:00',
+      close_at: null,
+      accept_after_solution: true,
+      reward_locked_at: null,
+      full_score_locked_at: null,
+      solution_published: false,
+    },
+  }
+  const lockedAll: EditablePost = {
+    ...homework,
+    assignment: {
+      ...homework.assignment!,
+      reward_locked_at: '2026-10-05T01:00:00Z',
+      full_score_locked_at: '2026-10-06T01:00:00Z',
+      solution_published: true,
+    },
+  }
+
+  it('ค่าของฟอร์มจากโพสต์ที่บันทึกแล้ว (เวลาไทย)', () => {
+    expect(formFromPost(homework)).toMatchObject({
+      kind: 'homework',
+      title: 'การคำนวณ Kc',
+      body: 'H₂O',
+      fullScore: '20',
+      latePct: '30',
+      reward: 2,
+      dueDate: '2026-10-11',
+      dueTime: '20:00',
+      hasClose: false,
+      acceptAfterSolution: true,
+    })
+    const announcement = {
+      ...homework,
+      kind: 'announcement' as const,
+      body: null,
+      assignment: null,
+    }
+    expect(formFromPost(announcement)).toMatchObject({ kind: 'announcement', body: '' })
+  })
+
+  it('สถานะล็อก: คะแนนเต็ม/% หัก (J2/L4/K2), โทเคน (I4), รับหลังเฉลย (N2)', () => {
+    expect(locksOf(homework)).toEqual({ fullScore: false, reward: false, afterSolution: false })
+    expect(locksOf(lockedAll)).toEqual({ fullScore: true, reward: true, afterSolution: true })
+  })
+
+  it('ช่องที่ล็อกใช้ค่าล่าสุดจากเซิร์ฟเวอร์ ช่องอื่นคงค่าที่พิมพ์', () => {
+    const typed = {
+      ...formFromPost(homework),
+      title: 'ชื่อใหม่',
+      fullScore: '99',
+      latePct: '0',
+      reward: 9,
+      acceptAfterSolution: false,
+    }
+    expect(withLockedValues(typed, homework)).toEqual(typed)
+    expect(withLockedValues(typed, lockedAll)).toMatchObject({
+      title: 'ชื่อใหม่',
+      fullScore: '20',
+      latePct: '30',
+      reward: 2,
+      acceptAfterSolution: true,
+    })
+  })
+
+  it('ก้อน p_post ของการแก้ไขไม่ส่งกำหนดส่ง/วันปิดรับ (M1/M2 มาใน P4-03)', () => {
+    const { payload } = validatePostForm({ ...formFromPost(homework), title: 'ชื่อใหม่' })
+    expect(payload && toUpdatePayload(payload)).toEqual({
+      kind: 'homework',
+      title: 'ชื่อใหม่',
+      body: 'H₂O',
+      full_score: 20,
+      late_penalty_pct: 30,
+      reward_tokens: 2,
+      accept_after_solution: true,
+    })
+    const ann = validatePostForm({
+      ...defaultPostForm('announcement'),
+      title: 'ประกาศ',
+      body: 'ข้อความ',
+    })
+    expect(ann.payload && toUpdatePayload(ann.payload)).toEqual({
+      kind: 'announcement',
+      title: 'ประกาศ',
+      body: 'ข้อความ',
+    })
+  })
+
+  it('รหัสจากเซิร์ฟเวอร์ชี้ไปช่องที่ถูกต้อง', () => {
+    expect(SERVER_FIELD.full_score_locked).toBe('fullScore')
+    expect(SERVER_FIELD.reward_locked).toBe('reward')
+    expect(SERVER_FIELD.after_solution_locked).toBe('afterSolution')
+    expect(SERVER_FIELD.post_title_invalid).toBe('title')
+    expect(SERVER_FIELD.close_before_due).toBe('close')
+    expect(SERVER_FIELD.stale_revision).toBeUndefined()
   })
 })

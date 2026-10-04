@@ -36,7 +36,9 @@ export const ERROR_CODES = [
   'rate_limited',
   'storage_full',
   'term_ended',
-  'score_locked',
+  'full_score_locked',
+  'reward_locked',
+  'after_solution_locked',
   'reason_required',
   'stale_revision',
   'already_bound',
@@ -54,6 +56,15 @@ export const ERROR_CODES = [
   'teacher_email_exists',
   'teacher_name_invalid',
   'last_teacher',
+  'post_title_invalid',
+  'post_body_required',
+  'post_body_too_long',
+  'full_score_invalid',
+  'late_penalty_invalid',
+  'reward_tokens_invalid',
+  'due_at_invalid',
+  'close_at_invalid',
+  'close_before_due',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -93,7 +104,10 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   rate_limited: 'retry_later',
   storage_full: 'storage_full_notice',
   term_ended: 'reload',
-  score_locked: 'field',
+  // T02 โหมดแก้ไข (P3-02b): ช่องล็อกระหว่างเปิดฟอร์ม — ข้อความใต้ช่อง แล้วเปลี่ยนช่องเป็นค่าล่าสุดสีจาง (UX 9)
+  full_score_locked: 'field',
+  reward_locked: 'field',
+  after_solution_locked: 'field',
   reason_required: 'focus_field',
   stale_revision: 'reload_latest',
   // A02: ไม่แสดงเป็นข้อผิดพลาด ปิดป๊อปอัปแล้วโหลดข้อมูลใหม่ (UX 4)
@@ -116,6 +130,16 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   teacher_email_exists: 'field',
   teacher_name_invalid: 'focus_field',
   last_teacher: 'field',
+  // T02 สร้าง/แก้โพสต์ (P3-02/P3-02b): ด่านหลังของการตรวจฝั่งหน้าเว็บ — แสดงใต้ช่องที่เกี่ยวข้อง
+  post_title_invalid: 'focus_field',
+  post_body_required: 'field',
+  post_body_too_long: 'field',
+  full_score_invalid: 'field',
+  late_penalty_invalid: 'field',
+  reward_tokens_invalid: 'field',
+  due_at_invalid: 'field',
+  close_at_invalid: 'field',
+  close_before_due: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

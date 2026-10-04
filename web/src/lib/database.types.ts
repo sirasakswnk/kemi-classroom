@@ -766,6 +766,16 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_student_id: string }
         Returns: Json
       }
+      update_post: {
+        Args: {
+          p_admin_mode?: boolean
+          p_expected_version: number
+          p_post: Json
+          p_post_id: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

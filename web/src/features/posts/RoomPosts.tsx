@@ -102,7 +102,12 @@ export function RoomPosts({
       {homework ? (
         <HomeworkList posts={items} audience={audience} heading={heading} />
       ) : (
-        <AnnouncementList posts={items} teacherName={teacherName} heading={heading} />
+        <AnnouncementList
+          posts={items}
+          teacherName={teacherName}
+          heading={heading}
+          editable={teacher}
+        />
       )}
     </>
   )

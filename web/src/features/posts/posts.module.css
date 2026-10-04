@@ -505,3 +505,92 @@
 .empty {
   composes: empty from '../classrooms/classrooms.module.css';
 }
+
+/* ---------- T02 โหมดแก้ไข (N2) และปุ่มแก้ไขบนการ์ด ---------- */
+.readonlyList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--bg-2);
+}
+
+.readonlyList dt {
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.readonlyList dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .readonlyList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.lockHint {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.lockHint svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switchRow[data-locked],
+.rewardEdit[data-locked] {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.alertAction {
+  composes: btn soft sm from '../../ui/Button.module.css';
+  margin-left: auto;
+}
+
+.alertAction svg {
+  width: 16px;
+  height: 16px;
+}
+
+.workCard[data-action] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.cardAction {
+  composes: btn ghost sm from '../../ui/Button.module.css';
+  text-decoration: none;
+  align-self: start;
+}
+
+.cardAction svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.postHead > .cardAction {
+  margin-left: auto;
+}
+
+/* จอแคบ: ปุ่มแก้ไขเหลือแต่ไอคอน (ชื่อปุ่มเต็มอยู่ใน aria-label) */
+@media (max-width: 480px) {
+  .cardAction > span {
+    display: none;
+  }
+}

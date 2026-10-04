@@ -1,4 +1,5 @@
-import { Award, CalendarX, FilePen, Sparkles } from 'lucide-react'
+import { Award, CalendarX, FilePen, PenLine, Sparkles } from 'lucide-react'
+import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { initialOf } from '../../lib/initial'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
@@ -8,6 +9,7 @@ import styles from './posts.module.css'
 
 // รายการโพสต์ของห้อง ใช้ร่วมกันใน S02 (นักเรียน) และ T08 (ครู) — แบบ v2 .work-card / .post
 // ยังไม่มีหน้างาน S03/T03 (P3-08/P3-09) การ์ดจึงยังไม่เป็นลิงก์ และยังไม่มีสถานะส่ง/ตรวจจริง
+// ครู: ปุ่มแก้ไขบนการ์ด (ประกาศ = ถาวรตาม UX 9; การบ้าน = ชั่วคราว ย้ายไปการ์ดโจทย์ของ T03 ใน P3-09)
 
 type Heading = 'h2' | 'h3'
 
@@ -33,7 +35,7 @@ export function HomeworkList({
         const a = post.assignment
         return (
           <li key={post.id}>
-            <article className={styles.workCard}>
+            <article className={styles.workCard} data-action={audience === 'teacher' || undefined}>
               <span className={styles.wIc} aria-hidden="true">
                 <FilePen />
               </span>
@@ -70,6 +72,16 @@ export function HomeworkList({
                   )}
                 </span>
               </div>
+              {audience === 'teacher' && (
+                <Link
+                  to={`/t/w/${post.id}/edit`}
+                  className={styles.cardAction}
+                  aria-label={copy.editAria(post.title)}
+                >
+                  <PenLine aria-hidden="true" />
+                  <span aria-hidden="true">{copy.editHomework}</span>
+                </Link>
+              )}
             </article>
           </li>
         )
@@ -83,14 +95,18 @@ export function AnnouncementList({
   posts,
   teacherName,
   heading = 'h3',
+  editable = false,
 }: {
   posts: Post[]
   teacherName: string
   heading?: Heading
+  /** ครู: ปุ่ม “แก้ไข” บนการ์ดประกาศ (UX 9 [ยืนยัน N4]) */
+  editable?: boolean
 }) {
   const Title = heading
+  const copy = th.posts.list
   return (
-    <ul className={styles.postList} aria-label={th.posts.list.announcementListAria}>
+    <ul className={styles.postList} aria-label={copy.announcementListAria}>
       {posts.map((post) => (
         <li key={post.id}>
           <article className={styles.post}>
@@ -104,6 +120,16 @@ export function AnnouncementList({
                   {thaiDate(post.published_at)} · {thaiTime(post.published_at)} น.
                 </time>
               </span>
+              {editable && (
+                <Link
+                  to={`/t/w/${post.id}/edit`}
+                  className={styles.cardAction}
+                  aria-label={copy.editAria(post.title)}
+                >
+                  <PenLine aria-hidden="true" />
+                  <span aria-hidden="true">{copy.edit}</span>
+                </Link>
+              )}
             </div>
             <Title className={styles.postTitle}>{post.title}</Title>
             {post.body && <p className={styles.postBody}>{post.body}</p>}

@@ -98,6 +98,12 @@ export const router = createBrowserRouter([
               Component: (await import('../features/teacher/pages')).CreatePost,
             }),
           },
+          {
+            path: 'w/:postId/edit',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).EditPost,
+            }),
+          },
         ],
       },
       {
