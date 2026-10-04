@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: P3-01 **[ทำบน branch `phase-3`]** — **รอผู้ใช้สั่งเริ่ม** · migration จริงใช้เลขถัดไป (`0010_…`) เพราะ 0004–0009 ใช้ในระยะ 2 แล้ว · อ่านหมายเหตุใต้หัวข้อระยะ 3 ก่อนเริ่ม
+- งานถัดไป: P3-01a (กำลังทำ บน branch `phase-3`) → P3-01b → P3-01c · ไฟล์ migration จริงใช้เลขถัดไปตอนสร้าง (`0010_…` ขึ้นไป) รายการงานอ้างชื่อกลุ่มตาม BUILD_PLAN 4.2 · อ่านหมายเหตุใต้หัวข้อระยะ 3 ก่อนเริ่มงานหน้าเว็บ
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -120,14 +120,17 @@
 
 - **หมายเหตุจากผู้ใช้ (4 ต.ค. 2026):** เมื่อมีงานแล้ว หน้าแรกนักเรียน (S01) ต้องแบ่ง 2 คอลัมน์ “ใกล้กำหนดส่ง | ชั้นเรียนของฉัน” ที่ ≥ 960 px ตาม UX_DESIGN ส่วน 13 (ตอนนี้คอลัมน์เดียวกว้างไม่เกิน 760 px) · เทสต์ “เอาออกแล้วเข้าใหม่เห็นงานเดิม” ที่มีงานส่งจริงใน P3-07 (โน้ต P2-05)
 
-- [ ] P3-01 migration `0004` (posts, assignments, solutions, assets, attachments, upload_batches, storage_settings, backup_runs, backup_manifests) + ทดสอบ
+- [ ] P3-01 **[effort สูง]** migration กลุ่ม posts_files (posts, assignments, solutions, assets, attachments, upload_batches, storage_settings, backup_runs, backup_manifests) + ทดสอบ — แยกเป็นไฟล์ย่อยที่ push ขึ้น kemi-dev ได้ทีละส่วน แต่ละส่วนจบด้วย pgTAP ที่ผ่านทั้งในเครื่องและ kemi-dev
+  - [ ] P3-01a posts / assignments / solutions + RLS อ่าน (สมาชิกขณะนี้และครูเจ้าของห้อง) + ตัวกันช่องที่ล็อก (K1, I4, J2/L4/K2, N2, K4) + ทดสอบ
+  - [ ] P3-01b assets / attachments / upload_batches / storage_settings + ทดสอบ
+  - [ ] P3-01c backup_runs / backup_manifests + ทดสอบ
 - [ ] P3-02 T02 สร้างงาน/ประกาศ (K1, ตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + รายการโพสต์ใน S02
 - [ ] P3-02b โหมดแก้ไขงาน/ประกาศหลังโพสต์ (N2 ช่องที่ล็อก, N1 ไม่มีแจ้งเตือน + “แก้ไขล่าสุด”) + ทดสอบ
 - [ ] P3-03 ไฟล์ตั้งค่า B2 (`ops/b2/cors.json`, `lifecycle.json`) + `_shared/b2.ts` + `uploads` ขั้นสร้าง batch · (ต้องมี: B2 + key ใน secrets)
 - [ ] P3-04 **[effort สูง]** `uploads` ขั้น complete (HEAD, Range, CopyObject ระบุเวอร์ชัน, finalize) + ทดสอบกับ bucket dev
 - [ ] P3-05 **[effort สูง]** `files` (sign GET โหมดเปิดดู/ดาวน์โหลด ชื่อไฟล์ไทย) + `authorize_files` + ทดสอบข้ามคน
 - [ ] P3-06 โมดูลอัปโหลดฝั่งเว็บ (ตรวจไฟล์, HEIC, ย่อรูป, PUT แสดงความคืบหน้า) + unit test
-- [ ] P3-07 **[effort สูง]** migration `0005` submissions + ตารางรับการส่ง 7 แถว + ทดสอบ
+- [ ] P3-07 **[effort สูง]** migration กลุ่ม submissions + ตารางรับการส่ง 7 แถว + ทดสอบ
 - [ ] P3-08 S03 ไฟล์โจทย์ (เปิดดู/ดาวน์โหลด) + ส่ง/ส่งแก้/สถานะ
 - [ ] P3-09 T08 รายการงาน + T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น
 - [ ] P3-10 **[effort สูง]** `process-jobs` ขั้นต่ำ + `pg_cron` (ลบไฟล์ที่ถูกแทน, sweeper) + นับพื้นที่ + หน้าจอพื้นที่เต็ม
@@ -136,7 +139,7 @@
 
 ## ระยะ 4 — ตรวจงานและคะแนน
 
-- [ ] P4-01 **[effort สูง]** migration `0006` grades/comments + `grade_submission` (L2, L4, K1, K2) + ทดสอบชุดสูตรคะแนน
+- [ ] P4-01 **[effort สูง]** migration กลุ่ม grading (grades/comments) + `grade_submission` (L2, L4, K1, K2) + ทดสอบชุดสูตรคะแนน
 - [ ] P4-02 **[effort สูง]** สิทธิ์แก้ (K3) + ความคิดเห็น/ยกเลิก (F5) + ทดสอบ
 - [ ] P4-03 **[effort สูง]** เปลี่ยนกำหนดส่งสองทิศ (N3, I2) / ปิดรับ / เฉลย (K4) + ทดสอบ
 - [ ] P4-04 T03 หน้าตรวจ: ตัวดูรูป/PDF + แผงคะแนน + ปรับหักรายคน
@@ -149,22 +152,22 @@
 
 ## ระยะ 5 — รางวัลและสะสม
 
-- [ ] P5-01 **[effort สูง]** migration `0007` + ให้รางวัลในรอบเดียวกับผลตรวจ + seed ระดับ/เครื่องราง 12 ชิ้น + ทดสอบ
+- [ ] P5-01 **[effort สูง]** migration กลุ่ม rewards + ให้รางวัลในรอบเดียวกับผลตรวจ + seed ระดับ/เครื่องราง 12 ชิ้น + ทดสอบ
 - [ ] P5-02 **[effort สูง]** สุ่ม (K6) + อัตราจริง + ปรับยอด + ทดสอบคำขอพร้อมกัน
 - [ ] P5-03 S04 สุ่ม + เอฟเฟกต์ + เอฟเฟกต์ได้รับโทเคนครั้งเดียว
 - [ ] P5-04 S05 ตู้สะสม + สวมใส่ + แสดงในแท็บสมาชิก
 - [ ] P5-05 T06 จัดการเครื่องราง + อัตรา + อัปโหลดรูป
-- [ ] P5-06 **[effort สูง]** migration `0008` เริ่ม/จบภาคเรียน (K5, J9, I5) + ทดสอบ
+- [ ] P5-06 **[effort สูง]** migration กลุ่ม terms เริ่ม/จบภาคเรียน (K5, J9, I5) + ทดสอบ
 - [ ] P5-07 T07 หน้าภาคเรียน + สถานะหลังจบภาคเรียนในทุกหน้าที่เกี่ยวข้อง
 - [ ] P5-08 ตรวจรับระยะ 5 (จุดสาธิต 3)
 
 ## ระยะ 6 — แจ้งเตือนและงานเบื้องหลัง
 
-- [ ] P6-01 migration `0009` notifications + สร้างเหตุการณ์ (นักเรียน 5 / ครู 3) + ทดสอบ
+- [ ] P6-01 migration กลุ่ม notifications + สร้างเหตุการณ์ (นักเรียน 5 / ครู 3) + ทดสอบ
 - [ ] P6-02 **[effort สูง]** งานเตือน 24 ชม. (J7, L5) ใน `process-jobs` + ทดสอบ
 - [ ] P6-03 C01 + T11 กระดิ่ง
 - [ ] P6-04 เทียบยอดพื้นที่ B2 + เกณฑ์ 80/90/100% + แผงพื้นที่และงานล้มเหลวใน D01
-- [ ] P6-05 **[effort สูง]** migration `0010` เก็บตามอายุ/ส่งออก/ยืนยันลบ/ลบก่อนกำหนด + ทดสอบ
+- [ ] P6-05 **[effort สูง]** migration กลุ่ม retention เก็บตามอายุ/ส่งออก/ยืนยันลบ/ลบก่อนกำหนด + ทดสอบ
 - [ ] P6-06 T07 แถวข้อมูลเก่า + ดาวน์โหลด ZIP
 - [ ] P6-07 ตรวจรับระยะ 6
 
