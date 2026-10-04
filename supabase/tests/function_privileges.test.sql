@@ -64,7 +64,12 @@ insert into postgres_only values
   ('private.backup_finish(uuid,boolean,text,integer,bigint,integer,text)'),
   ('private.backup_release_lock()'),
   ('private.backup_record_restore_test(boolean,text,integer,text)'),
-  ('private.backup_prune_manifests()');
+  -- 0013_backup_manifest (backup_prune_manifests ถูกแทนด้วยการล้างสองขั้น)
+  ('private.backup_run_file_list(uuid)'),
+  ('private.backup_new_files(uuid)'),
+  ('private.backup_prune_eligible(uuid)'),
+  ('private.backup_prune_candidates()'),
+  ('private.backup_prune_confirm(text[])');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema

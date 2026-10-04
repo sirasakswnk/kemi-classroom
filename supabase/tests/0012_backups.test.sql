@@ -22,7 +22,7 @@ begin
 end
 $$;
 
-select plan(54);
+select plan(50);
 
 -- เริ่มจากสภาพว่าง (บน kemi-dev อาจมีรอบจริงค้าง — ย้อนกลับตอนจบ)
 delete from private.maintenance_locks where name = 'backup';
@@ -61,7 +61,7 @@ select is_empty(
   $$ select format('%s %s', r, f)
        from unnest(array['private.backup_start()', 'private.backup_running_run(uuid)', 'private.backup_record_manifest(uuid)',
                          'private.backup_finish(uuid,boolean,text,integer,bigint,integer,text)', 'private.backup_release_lock()',
-                         'private.backup_record_restore_test(boolean,text,integer,text)', 'private.backup_prune_manifests()']) f,
+                         'private.backup_record_restore_test(boolean,text,integer,text)']) f,
             unnest(array['public', 'anon', 'authenticated', 'service_role']) r
       where has_function_privilege(r, f, 'EXECUTE')
      union all
@@ -124,12 +124,12 @@ select is((select res from rec),
      from public.assets where status = 'ready'),
   'บันทึก manifest: ทุก asset สถานะ ready คืนจำนวนและขนาดรวม');
 select set_eq(
-  $$ select final_key from private.backup_manifests
+  $$ select final_key from private.backup_run_files
       where run_id = (select id from runs where label = 'r2') and final_key like 'files/t12/%' $$,
   array['files/t12/1.png', 'files/t12/2.png', 'files/t12/3.png'],
   'manifest มีเฉพาะไฟล์ ready (ไม่รวม copying ที่ยังไม่เสร็จ และ deleting ที่กำลังลบ)');
 select results_eq(
-  $$ select version_id, size_bytes, checksum from private.backup_manifests
+  $$ select version_id, size_bytes, checksum from private.backup_run_files
       where run_id = (select id from runs where label = 'r2') and final_key = 'files/t12/2.png' $$,
   $$ values ('v-2', 222::bigint, 'etag-2') $$,
   'manifest เก็บ version_id ขนาด และ checksum ของไฟล์');
@@ -141,7 +141,7 @@ select throws_ok($$ select private.backup_record_manifest((select id from runs w
   'P0001', 'backup_not_running', 'รอบที่ปิดแล้ว (failed) บันทึก manifest ไม่ได้');
 update public.assets set status = 'deleting', delete_requested_at = clock_timestamp() where id = 'ad000000-0000-4000-8000-000000000003';
 delete from public.assets where id = 'ad000000-0000-4000-8000-000000000003';
-select ok(exists (select 1 from private.backup_manifests
+select ok(exists (select 1 from private.backup_run_files
                    where run_id = (select id from runs where label = 'r2') and final_key = 'files/t12/3.png'),
   'ลบ asset ออกจากระบบแล้ว แถว manifest ยังอยู่');
 
@@ -192,41 +192,7 @@ select results_eq(
 select throws_ok($$ select private.backup_record_restore_test(false, 'runs/x', -1) $$,
   '23514', null, 'จำนวนไฟล์ที่ตรวจติดลบไม่ได้');
 
--- ล้าง manifest: รอบเก่ากว่า 8 วันและรอบที่ล้มเหลว (r4) ถูกล้าง รอบสำเร็จล่าสุด (r5) อยู่ต่อ
-create temp table rec5 (res jsonb) on commit drop;
-do $do$
-declare
-  v_r4 uuid;
-  v_r5 uuid;
-  v_res jsonb;
-begin
-  v_r4 := private.backup_start();
-  insert into runs values ('r4', v_r4);
-  perform private.backup_record_manifest(v_r4);
-  perform private.backup_finish(v_r4, false, null, null, null, null, 'ตรวจไม่ครบ');
-  perform private.backup_release_lock();
-  v_r5 := private.backup_start();
-  insert into runs values ('r5', v_r5);
-  v_res := private.backup_record_manifest(v_r5);
-  insert into rec5 values (v_res);
-  perform private.backup_finish(v_r5, true, 'runs/2026-10-04T1430', (v_res ->> 'file_count')::integer,
-                                (v_res ->> 'total_bytes')::bigint, 0, 'ตรวจครบ');
-  perform private.backup_release_lock();
-end
-$do$;
-update public.backup_runs set started_at = clock_timestamp() - interval '9 days', finished_at = clock_timestamp() - interval '9 days' + interval '5 minutes'
- where id = (select id from runs where label = 'r2');
-create temp table expected_prune on commit drop as
-  select count(*)::integer as n from private.backup_manifests
-   where run_id in (select id from runs where label in ('r2', 'r4'));
-select is(private.backup_prune_manifests(), (select n from expected_prune),
-  'ล้าง manifest ของรอบที่เริ่มเกิน 8 วันและรอบที่ล้มเหลว');
-select is_empty($$ select 1 from private.backup_manifests where run_id in (select id from runs where label in ('r2', 'r4')) $$,
-  'manifest ของรอบเก่าและรอบล้มเหลวหมดแล้ว');
-select is((select count(*)::integer from private.backup_manifests where run_id = (select id from runs where label = 'r5')),
-  ((select res from rec5) ->> 'file_count')::integer, 'manifest ของรอบสำเร็จล่าสุดยังอยู่ครบ');
-select ok(exists (select 1 from public.backup_runs where id = (select id from runs where label = 'r2')),
-  'แถว backup_runs ของรอบเก่ายังอยู่เป็นประวัติ');
+-- การล้าง manifest (สองขั้น) ทดสอบใน 0013_backup_manifest.test.sql
 
 -- ---------------------------------------------------------------------------
 -- ง: RLS — ผู้ดูแลอ่าน backup_runs ได้ ครูและนักเรียนไม่เห็น manifest ไม่มีใครอ่าน
@@ -236,7 +202,7 @@ set local role anon;
 select throws_ok($$ select id from public.backup_runs $$, '42501', null, 'anon อ่าน backup_runs ไม่ได้');
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "2d000000-0000-4000-8000-000000000001", "role": "authenticated"}';
-select is((select count(*)::integer from public.backup_runs where id in (select id from runs)), 6,
+select is((select count(*)::integer from public.backup_runs where id in (select id from runs)), 4,
   'ผู้ดูแลเห็นรอบสำรองและผลทดสอบกู้คืน (แผงสำรองใน D01)');
 select throws_ok($$ select final_key from private.backup_manifests $$, '42501', null, 'ผู้ดูแลก็อ่าน manifest ผ่าน API ไม่ได้');
 select throws_ok($$ select private.backup_start() $$, '42501', null, 'ผู้ดูแลเรียกฟังก์ชันสำรองผ่าน API ไม่ได้');
