@@ -223,6 +223,45 @@ export type Database = {
           },
         ]
       }
+      backup_runs: {
+        Row: {
+          detail: string | null
+          dump_name: string | null
+          file_count: number | null
+          finished_at: string | null
+          id: string
+          kind: string
+          new_file_count: number | null
+          started_at: string
+          status: string
+          total_bytes: number | null
+        }
+        Insert: {
+          detail?: string | null
+          dump_name?: string | null
+          file_count?: number | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          new_file_count?: number | null
+          started_at?: string
+          status: string
+          total_bytes?: number | null
+        }
+        Update: {
+          detail?: string | null
+          dump_name?: string | null
+          file_count?: number | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          new_file_count?: number | null
+          started_at?: string
+          status?: string
+          total_bytes?: number | null
+        }
+        Relationships: []
+      }
       classrooms: {
         Row: {
           created_at: string
