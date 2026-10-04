@@ -1,0 +1,370 @@
+/* T05 นำเข้า — แบบ v2 .desk-body / .page-head / .imp-grid / .panel / .issue / .gb.mini / .form-foot
+   หน้าครูบนคอมเป็นหลัก; ต่ำกว่า 1100 px เรียงเป็นคอลัมน์เดียว (ลำดับใน DOM = ลำดับที่เห็น) */
+/* อยู่ใน TeacherPage (ระยะขอบมาจากโครงหน้าครู) */
+.page {
+  width: min(100%, 1240px);
+  display: grid;
+  gap: 22px;
+  align-content: start;
+}
+
+.back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap-min);
+  color: var(--purple);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) {
+  .back:hover {
+    text-decoration: underline;
+  }
+}
+
+.head {
+  display: grid;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.head h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.intro {
+  color: var(--ink-2);
+}
+
+.steps {
+  max-width: 640px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.panel h2 {
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.okIcon {
+  width: 22px;
+  height: 22px;
+  color: var(--green);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fileChip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+  font-size: 0.875rem;
+}
+
+.fileIcon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.fileIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.fileText {
+  flex: 1;
+  min-width: 0;
+}
+
+.fileText b {
+  display: block;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.fileText small {
+  color: var(--ink-2);
+}
+
+.hint {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.mapping {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.lbl {
+  grid-column: 1 / -1;
+  padding: 0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.issues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.issue {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.issue:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.issueIcon {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.issueIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.issue[data-ok='true'] .issueIcon {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.fixInput {
+  max-width: 320px;
+}
+
+.confirm {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap-min);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.confirm input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--purple);
+}
+
+.tableCard {
+  overflow: hidden;
+}
+
+.tableBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tableBar h2 {
+  font-size: 1.0625rem;
+  margin-right: auto;
+}
+
+.tableWrap {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-top: 0;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  font-weight: 600;
+  font-size: 0.78125rem;
+}
+
+.table td:first-child,
+.table th:first-child {
+  width: 72px;
+  text-align: center;
+  color: var(--ink-3);
+}
+
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.missing {
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+}
+
+.missing summary {
+  cursor: pointer;
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.missing ul {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.footNote {
+  margin-right: auto;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.cancel {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.alert {
+  flex-basis: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.alert svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.ref {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+}
+
+.muted {
+  color: var(--ink-2);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

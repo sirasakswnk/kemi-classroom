@@ -4,7 +4,11 @@ import { LoginPage } from './auth/LoginPage'
 import { RequireRole } from './auth/RequireRole'
 import { AppShell } from './common/AppShell'
 import { FullPageStatus } from './common/FullPageStatus'
-import { RoleHome } from './home/RoleHome'
+import JoinPage from '../features/student/JoinPage'
+import MyAccount from '../features/student/MyAccount'
+import StudentClassroom from '../features/student/StudentClassroom'
+import StudentHome from '../features/student/StudentHome'
+import { StudentLayout } from '../features/student/StudentLayout'
 
 // เส้นทางระยะ 1 (TECHNICAL_BUILD_PLAN ส่วน 6) — หน้าแรกตามบทบาท: นักเรียน /, ครู /t, ผู้ดูแล /admin
 const devRoutes: RouteObject[] = import.meta.env.DEV
@@ -26,28 +30,75 @@ export const router = createBrowserRouter([
       { path: '/login', element: <LoginPage /> },
       { path: '/auth/callback', element: <AuthCallback /> },
       {
+        // หน้านักเรียน S01 / S02 / S06 และลิงก์เชิญ — ยังไม่ผูกชื่อ → A02 ก่อนทุกหน้า (UX 4)
+        // ยังไม่ล็อกอิน: RequireRole จำปลายทาง (ตัวกรอง path จาก P1-08) แล้วไป A01
         path: '/',
         element: (
           <RequireRole roles={['student']}>
-            <RoleHome role="student" />
+            <StudentLayout />
           </RequireRole>
         ),
+        children: [
+          { index: true, element: <StudentHome /> },
+          { path: 'c/:classId', element: <StudentClassroom /> },
+          { path: 'me', element: <MyAccount /> },
+          { path: 'join/:code', element: <JoinPage /> },
+        ],
       },
       {
+        // หน้าครู T01/T08/T09 (+ T10 ใน T08) — ครู หรือผู้ดูแลในโหมดผู้ดูแล (L6)
         path: '/t',
-        element: (
-          <RequireRole roles={['teacher']}>
-            <RoleHome role="teacher" />
-          </RequireRole>
-        ),
+        lazy: async () => ({
+          Component: (await import('../features/teacher/TeacherRoute')).default,
+        }),
+        hydrateFallbackElement: <FullPageStatus />,
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).TeacherOverview,
+            }),
+          },
+          {
+            // T12 บัญชีของครู
+            path: 'me',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).TeacherAccount,
+            }),
+          },
+          {
+            path: 'new-class',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).CreateClassroom,
+            }),
+          },
+          {
+            // T05 นำเข้า Excel — โหลดแยก chunk (SheetJS แยกอีกชั้น)
+            path: 'roster/import',
+            lazy: async () => ({
+              Component: (await import('../features/roster/RosterImportRoute')).default,
+            }),
+          },
+          {
+            // T05 รายชื่อนักเรียน + แก้การผูกบัญชี (นำเข้า Excel อยู่ที่ /t/roster/import)
+            path: 'roster',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).RosterList,
+            }),
+          },
+          {
+            path: 'c/:classId',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).ClassroomPage,
+            }),
+          },
+        ],
       },
       {
         path: '/admin',
-        element: (
-          <RequireRole roles={['admin']}>
-            <RoleHome role="admin" />
-          </RequireRole>
-        ),
+        // D01 ดูแลระบบ (บัญชีครู + เข้าหน้าครูในโหมดผู้ดูแล) — โหลดแยก chunk
+        lazy: async () => ({ Component: (await import('../features/admin/AdminRoute')).default }),
+        hydrateFallbackElement: <FullPageStatus />,
       },
       ...devRoutes,
       { path: '*', element: <Navigate to="/" replace /> },

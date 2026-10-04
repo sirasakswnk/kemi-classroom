@@ -10,9 +10,10 @@
     "db:start": "supabase db start",
     "db:reset": "supabase db reset --local",
     "db:test": "supabase test db --local",
-    "db:test:dev": "supabase test db --linked",
+    "db:test:dev": "node ops/check-dev-db.mjs && supabase test db --linked",
     "db:push": "supabase db push",
     "db:advisors": "supabase db advisors --linked --type security",
-    "db:types": "supabase gen types typescript --linked --schema public > web/src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --linked --schema public > web/src/lib/database.types.ts",
+    "ops:test": "node --test \"ops/*.test.mjs\""
   }
 }

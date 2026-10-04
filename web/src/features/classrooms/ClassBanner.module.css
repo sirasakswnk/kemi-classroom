@@ -1,0 +1,78 @@
+/* แบบ v2 .class-banner + สี 5 ชุดของชั้นเรียน (S.classes 3 ชุด + NEW_G 2 ชุด) */
+.banner {
+  position: relative;
+  overflow: hidden;
+  color: #fff9f0;
+  background: linear-gradient(135deg, #6b3fa0, #8a5bc2 60%, #a57bd6);
+}
+
+.banner[data-tone='1'] {
+  background: linear-gradient(135deg, #5e3a93, #7e55b8 60%, #9b7bcb);
+}
+
+.banner[data-tone='2'] {
+  background: linear-gradient(135deg, #7a4aa8, #9468c4 60%, #b894da);
+}
+
+.banner[data-tone='3'] {
+  background: linear-gradient(135deg, #6a4696, #8c63be 60%, #b08ed8);
+}
+
+.banner[data-tone='4'] {
+  background: linear-gradient(135deg, #55357f, #7650a8 60%, #9c7cc6);
+}
+
+.benzene {
+  position: absolute;
+  right: -14px;
+  top: -12px;
+  width: 110px;
+  height: 110px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.eyebrow {
+  position: relative;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: rgba(255, 249, 240, 0.8);
+}
+
+.title {
+  position: relative;
+  margin-top: 4px;
+  line-height: 1.2;
+  color: #fff9f0;
+  overflow-wrap: anywhere;
+}
+
+.card {
+  padding: 16px 18px;
+}
+
+.card .title {
+  font-size: 1.375rem;
+}
+
+.hero {
+  padding: 24px 28px;
+}
+
+.hero .benzene {
+  right: -18px;
+  top: -10px;
+  width: 150px;
+  height: 150px;
+}
+
+.hero .title {
+  font-size: clamp(1.625rem, 1.3rem + 1vw, 2rem);
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: 20px;
+  }
+}

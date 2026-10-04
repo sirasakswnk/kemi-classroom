@@ -127,14 +127,22 @@ grant execute on function public.grade_submission to authenticated;
 | --- | --- | --- | --- |
 | 1 | `0001_base.sql` | schema `private`, ส่วนขยาย (`pgcrypto`; **ไม่ติดตั้ง `pgtap` ใน migration** — ไฟล์ทดสอบติดตั้งภายใน transaction แล้ว rollback จึงไม่เหลือบนฐานข้อมูลใด), default privileges, `private.settings` (ค่าตั้งของระบบ), `operation_receipts`, `rate_limits`, `jobs`, `maintenance_locks`, `ping()` — ตารางกลางที่ทุกระยะใช้ | 1 |
 | 2 | `0002_accounts.sql` | `accounts`, `teachers`, `private.teacher_allowlist`, `ensure_account()`, `private.current_account()`, `require_teacher()`, `require_admin()` | 1 |
-| 3 | `0003_roster_classes.sql` | `terms`, `term_control`, `students`, `roster_entries`, `classrooms`, `memberships`; ค้น/ผูกชื่อ (L3), แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ, ปิด/เปิดการเข้าห้อง, จัดการบัญชีครู | 2 |
-| 4 | `0004_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
-| 5 | `0005_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
-| 6 | `0006_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
-| 7 | `0007_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
-| 8 | `0008_terms.sql` | `terms_start`, `terms_end` (J9, K5, I5), epoch และล้างยอด | 5 |
-| 9 | `0009_notifications.sql` | `notifications`; สร้างแจ้งเตือนนักเรียน 5 / ครู 3 เหตุการณ์, งานเตือน 24 ชม. (J7, L5), เกณฑ์พื้นที่ | 6 |
-| 10 | `0010_retention.sql` | `retention_requests`; รายการส่งออก, ยืนยันลบ (จำนวน/ไบต์ต้องตรง), ลบก่อนกำหนด (J10.4), ตรวจเทอมเปิดเกิน 6 เดือน | 6 |
+| 3 | `0003_roster.sql` (push แล้ว 3 ต.ค. 2026) | `terms`, `term_control`, `students`, `roster_entries`; RPC `preview_roster_import` / `commit_roster_import` (ไม่ลบคนที่หายจากไฟล์ ไม่แตะการผูกบัญชี มีแถวผิดแถวเดียวไม่บันทึกเลย) | 2 |
+| 4 | `0004_identity.sql` (push แล้ว 3 ต.ค. 2026) | `search_roster`, `claim_identity` (L3: เทียบตรงทั้งค่า ตัดคำนำหน้าและช่องว่าง, ชื่อปิดบางส่วน, รหัสอ้างอิงอายุสั้น, เพดานใน `rate_limits`, ชิงชื่อพร้อมกันสำเร็จบัญชีเดียว) | 2 |
+| 5 | `0005_classrooms.sql` (push แล้ว 3 ต.ค. 2026) | `classrooms`, `memberships`; แก้ผูก, สร้างห้อง/รหัส, เข้าห้องด้วยรหัสหรือลิงก์เชิญ (ไม่จำกัดห้องตามรายชื่อ), ปิด/เปิดการเข้าห้อง, เอานักเรียนออกจากชั้นเรียน `remove_member` (ไม่ลบงาน), จัดการบัญชีครู | 2 |
+| 5a | `0006_teachers_read.sql` (push แล้ว 3 ต.ค. 2026) | ให้ครูและผู้ดูแลอ่านตาราง `teachers` ได้ (ชื่อครูบนแถบบน และให้ผู้ดูแลเลือกครูเจ้าของห้องใน T09) | 2 |
+| 5b | `0007_student_classrooms.sql` (push แล้ว 4 ต.ค. 2026) | RPC `my_classrooms()` และ `classroom_view(uuid)` ให้นักเรียนเห็นชื่อห้อง ชื่อครู จำนวนสมาชิก และชื่อ + เลขที่ของเพื่อนในห้อง โดยไม่เปิด RLS ของตารางให้กว้างขึ้น (ไม่คืนเลขประจำตัว อีเมล หรือห้องตามรายชื่อของคนอื่น) | 2 |
+| 5c | `0008_rebind.sql` (push แล้ว 4 ต.ค. 2026) | `roster_overview`, `rebind_preview`, `rebind_student`, `unbind_student`: แก้การผูก 2 แบบ ลบ `auth.sessions` และ refresh token ของบัญชีเดิมใน transaction เดียว ไม่แตะ membership งาน คะแนน โทเคน | 2 |
+| 5d | `0009_teacher_admin.sql` (push แล้ว 4 ต.ค. 2026) | `admin_teachers`, `admin_add_teacher`, `admin_remove_teacher`: จัดการ allowlist ใน D01 ต้องเหลือครูอย่างน้อย 1 รายการ เอาออกแล้วสิทธิ์ครูหายทันที | 2 |
+| 6 | `…_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
+| 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
+| 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
+| 9 | `…_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
+| 10 | `…_terms.sql` | `terms_start`, `terms_end` (J9, K5, I5), epoch และล้างยอด | 5 |
+| 11 | `…_notifications.sql` | `notifications`; สร้างแจ้งเตือนนักเรียน 5 / ครู 3 เหตุการณ์, งานเตือน 24 ชม. (J7, L5), เกณฑ์พื้นที่ | 6 |
+| 12 | `…_retention.sql` | `retention_requests`; รายการส่งออก, ยืนยันลบ (จำนวน/ไบต์ต้องตรง), ลบก่อนกำหนด (J10.4), ตรวจเทอมเปิดเกิน 6 เดือน | 6 |
+
+เลขไฟล์จริงเรียงตามลำดับที่ push และ migration ที่ push แล้วแก้ไม่ได้ ตารางนี้จึงใส่เลขเฉพาะไฟล์ที่ push แล้ว ไฟล์ที่ยังไม่ทำเขียนเป็น `…_ชื่อ.sql` ให้ใช้เลขถัดไปตอนสร้าง และแยกไฟล์ย่อยได้ตามงาน; ส่วนแผนรายระยะอ้างกลุ่มเนื้อหาด้วยชื่อ ไม่อ้างเลข
 
 `seed.sql`: ระดับ 4 ระดับน้ำหนัก 60/25/10/5, เครื่องราง 12 ชิ้นตาม UX_DESIGN ส่วน 11 (J8), `storage_settings` (`quota_bytes` = 10 GB แบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) ลบส่วนที่กันไว้ให้ bucket ทดสอบตามส่วน 3, 80/90%, `hard_stop_margin_bytes` **[ข้อเสนอ]** 300,000,000 ไบต์), `term_control` เริ่มต้น; บน prod ใส่เฉพาะข้อมูลตั้งต้น ไม่ใส่นักเรียนทดสอบ
 
@@ -165,7 +173,7 @@ grant execute on function public.grade_submission to authenticated;
 | S04, S05, C01 | `/draw`, `/collection`, `/notifications` | 5–6 |
 | T01, T09, T08, T10 | `/t`, `/t/new-class`, `/t/c/:classId` (+ แสดงรหัสเต็มจอ) | 2 |
 | T02, T03 | `/t/c/:classId/new`, `/t/w/:postId/edit` (แก้ไข N2), `/t/w/:postId` (สถานะ + การ์ดโจทย์), `/t/w/:postId/s/:studentId` (ตรวจ) | 3–4 |
-| T04, T05 | `/t/c/:classId/grades`, `/t/c/:classId/roster` | 2–4 |
+| T04, T05 | `/t/c/:classId/grades`, `/t/roster` (รายชื่อทุกห้องตามไฟล์ เพราะรายชื่อไม่ได้ผูกกับชั้นเรียน; นำเข้าที่ `/t/roster/import`) | 2–4 |
 | T12 | `/t/me` | 2 |
 | T06, T07, T11 | `/t/charms`, `/t/term`, `/t/notifications` | 5–6 |
 | D01 | `/admin` (+ ปุ่มเข้าหน้าครูในโหมดผู้ดูแล แถบเตือนอยู่ใน layout ครู) | 2, 6–7 |
@@ -242,7 +250,7 @@ grant execute on function public.grade_submission to authenticated;
 | workflow | เมื่อไร | ทำอะไร |
 | --- | --- | --- |
 | `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; เมื่อแก้ `supabase/**` รัน pgTAP กับฐานข้อมูลชั่วคราวใน runner (Supabase CLI เปิด Postgres ใน Docker แล้วใส่ migration ของ commit นั้น) — ไม่ใช้ secret และไม่แตะ `kemi-dev` |
-| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น |
+| `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น และ**ห้ามรัน pgTAP กับ prod เด็ดขาด** (บางเทสต์แก้แถวจริงชั่วคราวใน transaction ที่ย้อนกลับ เช่นเทสต์ครูคนสุดท้าย) สคริปต์รันเทสต์ต้องตรวจ project ref ว่าเป็น `kemi-dev` หรือฐานข้อมูลในเครื่องก่อนรัน |
 | `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง | สำรองตาม TECHNICAL_DESIGN ส่วน 12 |
 | `restore-test.yml` | กดรันเอง เลือกจุดกู้คืนและชุดไฟล์ | กู้เข้า Supabase ชั่วคราวใน runner + ไฟล์ใน `kemi-dev-files` แล้วตรวจ ลบทิ้ง และบันทึกผลลง prod |
 
@@ -310,19 +318,20 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 2 — บัญชี รายชื่อ ห้อง
 
-งาน: migration 3; นำเข้า Excel (ตัวอย่างก่อนบันทึก ตรวจซ้ำ ศูนย์นำหน้า); A02 (L3); A01 แบบมาจากลิงก์เชิญ + `/join/:code`; S01 + เข้าห้องด้วยรหัส; S06; T01, T09, T08 (แท็บสมาชิก + คัดลอกลิงก์เชิญ **[ข้อเสนอ]**), T10, T05 (แก้ผูก), T12; D01 ส่วนบัญชีครู + โหมดผู้ดูแล (L6)
+งาน: migration กลุ่ม roster, identity, classrooms; นำเข้า Excel (ตัวอย่างก่อนบันทึก ตรวจซ้ำ ศูนย์นำหน้า); A02 (L3); A01 แบบมาจากลิงก์เชิญ + `/join/:code`; S01 + เข้าห้องด้วยรหัส; S06; T01, T09, T08 (แท็บสมาชิก + คัดลอกลิงก์เชิญ **[ข้อเสนอ]**), T10, T05 (แก้ผูก), T12; D01 ส่วนบัญชีครู + โหมดผู้ดูแล (L6)
 
 ตรวจรับ:
 - [ ] ค้นด้วยชื่อบางส่วนไม่เจอ ค้นเลขเต็ม/ชื่อเต็มเจอเป็นชื่อปิดบางส่วน + ห้อง + เลขที่; ค้นครั้งที่ 11 ใน 10 นาทีถูกปฏิเสธ (L3)
 - [ ] สองบัญชียืนยันชื่อเดียวกันพร้อมกัน สำเร็จบัญชีเดียว
 - [ ] แก้ผูกแล้วแท็บของบัญชีเดิมทำคำสั่งถัดไปไม่ได้
+- [ ] ครูเอานักเรียนออกแล้ว นักเรียนเปิดห้องหรือเรียก RPC ของห้องนั้นไม่ได้ (`not_member`) ข้อมูลเดิมยังอยู่ และเข้าใหม่ด้วยรหัสแล้วเห็นเหมือนเดิม
 - [ ] เข้าห้องได้ทั้งด้วยรหัสและลิงก์เชิญ (ลิงก์เชิญยังต้องล็อกอินและเลือกชื่อก่อน); รหัสห้องผิดซ้ำถูกจำกัด; ปิดการเข้าห้องแล้วเข้าไม่ได้ทั้งรหัสและลิงก์แต่สมาชิกเดิมใช้ต่อได้; กดเข้าซ้ำไม่เกิดสมาชิกซ้ำ
 - [ ] เอาบัญชีครูรายการสุดท้ายออกไม่ได้; โหมดผู้ดูแลมีแถบเตือนทุกหน้า และ RPC ฝั่งครูที่ผู้ดูแลเรียกโดยไม่ส่งโหมดถูกปฏิเสธ (L6)
-- [ ] นำเข้าไฟล์ Excel จริงของครูได้ (เมื่อได้ไฟล์)
+- [ ] ตัวอ่านอ่านไฟล์ Excel จริงของครูทั้ง 3 ห้องได้ครบ (ได้ไฟล์แล้ว 2 ต.ค. 2026) โดยทดสอบแบบอ่านอย่างเดียวบนเครื่องผู้พัฒนา ไฟล์อยู่นอก repo หรือใน `.work/` ไม่ส่งข้อมูลขึ้นเซิร์ฟเวอร์ใด และรายงานแค่จำนวนแถวกับจำนวนปัญหา ไม่พิมพ์ชื่อหรือเลขประจำตัว; นำเข้าจริงทำบน prod ในระยะ 8 เท่านั้น
 
 ### ระยะ 3 — งานและไฟล์
 
-งาน: migration 4–5; Edge Functions `uploads`, `files` และ `process-jobs` ขั้นต่ำ (ลบไฟล์ที่ถูกแทน, sweeper `copying` และ batch ค้าง) พร้อม `pg_cron`; ตั้ง CORS/lifecycle/keys ของ B2; โมดูลอัปโหลด; T02 (K1: คะแนนเต็มจำนวนเต็ม ≥ 1 ไม่มีเพดาน 100, ปุ่มตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + โหมดแก้ไข (N2, N1), S02, S03 (ไฟล์โจทย์เปิดดู/ดาวน์โหลด, ส่ง/ส่งแก้/สถานะ), T08 รายการงาน, T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น; ระบบนับพื้นที่ + แถบพื้นที่เต็ม; **ตั้ง `backup.yml` แบบพื้นฐานกับ dev** (ใช้ `maintenance_locks`/`backup_runs` จาก migration 1 และ 4)
+งาน: migration กลุ่ม posts_files, submissions; Edge Functions `uploads`, `files` และ `process-jobs` ขั้นต่ำ (ลบไฟล์ที่ถูกแทน, sweeper `copying` และ batch ค้าง) พร้อม `pg_cron`; ตั้ง CORS/lifecycle/keys ของ B2; โมดูลอัปโหลด; T02 (K1: คะแนนเต็มจำนวนเต็ม ≥ 1 ไม่มีเพดาน 100, ปุ่มตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + โหมดแก้ไข (N2, N1), S02, S03 (ไฟล์โจทย์เปิดดู/ดาวน์โหลด, ส่ง/ส่งแก้/สถานะ), T08 รายการงาน, T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น; ระบบนับพื้นที่ + แถบพื้นที่เต็ม; **ตั้ง `backup.yml` แบบพื้นฐานกับ dev** (ใช้ `maintenance_locks` จาก `0001_base` และ `backup_runs` จากกลุ่ม posts_files)
 
 ตรวจรับ:
 - [ ] PUT ที่ขนาดไม่ตรงลายเซ็นถูก B2 ปฏิเสธ; ไฟล์ที่ magic number ไม่ใช่ JPEG/PNG/PDF ถูกปฏิเสธตอน complete
@@ -337,7 +346,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 4 — ตรวจงานและคะแนน
 
-งาน: migration 6; T03 หน้าตรวจ (ตัวดูรูป/PDF, ซูม, หมุน, ดาวน์โหลด PDF), แผงคะแนน (L2, L4, K2), สิทธิ์แก้ (K3), ความคิดเห็น + ยกเลิก, M1 เปลี่ยนกำหนดส่งสองทิศ (N3), M2 ปิดรับ, M3 เฉลย (K4), ลบงาน/ประกาศ (N4), T04 + CSV, หน้าผลตรวจ/เฉลยของนักเรียน
+งาน: migration กลุ่ม grading; T03 หน้าตรวจ (ตัวดูรูป/PDF, ซูม, หมุน, ดาวน์โหลด PDF), แผงคะแนน (L2, L4, K2), สิทธิ์แก้ (K3), ความคิดเห็น + ยกเลิก, M1 เปลี่ยนกำหนดส่งสองทิศ (N3), M2 ปิดรับ, M3 เฉลย (K4), ลบงาน/ประกาศ (N4), T04 + CSV, หน้าผลตรวจ/เฉลยของนักเรียน
 
 ตรวจรับ:
 - [ ] ชุดสูตรคะแนนในส่วน 9 ผ่านทั้งหน้าเว็บและฐานข้อมูล; คะแนนเกินเต็มถูกปฏิเสธ; คะแนนเต็ม 150 ใช้ได้ (K1)
@@ -353,7 +362,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 5 — รางวัลและสะสม
 
-งาน: migration 7–8; ให้รางวัลใน transaction เดียวกับผลตรวจ, เอฟเฟกต์เมื่อได้รับโทเคนแสดงครั้งเดียวเมื่อกลับมา (`reward_effect_seen`), ปรับยอด, S04 (อัตราจริง), สุ่ม + เอฟเฟกต์, S05, สวมใส่ + แสดงในแท็บสมาชิก, T06 (อัตรารวม 100, อัปโหลดรูปเครื่องราง), T07 เริ่ม/จบภาคเรียน
+งาน: migration กลุ่ม rewards, terms; ให้รางวัลใน transaction เดียวกับผลตรวจ, เอฟเฟกต์เมื่อได้รับโทเคนแสดงครั้งเดียวเมื่อกลับมา (`reward_effect_seen`), ปรับยอด, S04 (อัตราจริง), สุ่ม + เอฟเฟกต์, S05, สวมใส่ + แสดงในแท็บสมาชิก, T06 (อัตรารวม 100, อัปโหลดรูปเครื่องราง), T07 เริ่ม/จบภาคเรียน
 
 ตรวจรับ:
 - [ ] เอฟเฟกต์ได้รับโทเคนแสดงครั้งเดียว ไม่มีรายการในกระดิ่ง
@@ -365,7 +374,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 6 — แจ้งเตือนและงานเบื้องหลัง
 
-งาน: migration 9–10; เพิ่มงานใน `process-jobs`: เตือน 24 ชม. (J7, L5), สร้างแจ้งเตือน (นักเรียน 5 / ครู 3 เหตุการณ์, dedupe), เทียบยอดพื้นที่ B2 รายวัน, เกณฑ์ 80/90/100%, เทอมเปิดเกิน 6 เดือน, เสนอลบตามอายุ; C01, T11, แผงพื้นที่และรายการงานเบื้องหลังที่ล้มเหลวใน D01, แถวข้อมูลเก่าใน T07 + ZIP + ยืนยันลบ + ลบก่อนกำหนด (J10.4)
+งาน: migration กลุ่ม notifications, retention; เพิ่มงานใน `process-jobs`: เตือน 24 ชม. (J7, L5), สร้างแจ้งเตือน (นักเรียน 5 / ครู 3 เหตุการณ์, dedupe), เทียบยอดพื้นที่ B2 รายวัน, เกณฑ์ 80/90/100%, เทอมเปิดเกิน 6 เดือน, เสนอลบตามอายุ; C01, T11, แผงพื้นที่และรายการงานเบื้องหลังที่ล้มเหลวใน D01, แถวข้อมูลเก่าใน T07 + ZIP + ยืนยันลบ + ลบก่อนกำหนด (J10.4)
 
 ตรวจรับ:
 - [ ] เตือนเฉพาะคนยังไม่ส่ง 24 ชม. ก่อนกำหนด ครั้งเดียว; โพสต์เมื่อเหลือไม่ถึง 24 ชม. ไม่มีเตือน; ขยายจากเหลือ 10 ชม. เป็น 3 วันได้เตือน 1 ครั้ง; เคยเตือนแล้วขยายอีกไม่เตือนซ้ำ (L5)
@@ -376,7 +385,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io

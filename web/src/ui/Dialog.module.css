@@ -88,11 +88,23 @@
   background: var(--line);
 }
 
+.sheetEyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--purple);
+}
+
 .sheetTitle {
   padding-inline: 48px;
   font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
   line-height: 1.25;
   color: var(--purple-deep);
+}
+
+/* หัวเรื่องรับโฟกัสด้วยโค้ดตอนเปลี่ยนขั้น ไม่ใช่จุดที่กดได้ */
+.sheetTitle[tabindex='-1']:focus {
+  outline: none;
 }
 
 .start .sheetTitle {
@@ -127,7 +139,12 @@
   }
 
   .sheet[open] {
-    padding-bottom: 22px;
+    padding: 22px 28px 26px;
+  }
+
+  /* แผ่นลอยไม่มีขีดจับ (UX 13) */
+  .handle {
+    display: none;
   }
 }
 

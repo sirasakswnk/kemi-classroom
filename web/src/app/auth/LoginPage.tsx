@@ -1,7 +1,8 @@
-import { Info, TriangleAlert } from 'lucide-react'
+import { Info, KeyRound, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { th } from '../../copy/th'
+import { peekNextPath } from '../../lib/redirect'
 import { supabase, toAppError, type AppError } from '../../lib/supabase'
 import { FullPageStatus } from '../common/FullPageStatus'
 import { BrandLogo, Benzene } from '../common/brand'
@@ -24,6 +25,8 @@ export function LoginPage() {
   if (state.status === 'error') return <Navigate to="/" replace />
 
   const notice = state.notice
+  // มาจากลิงก์เชิญ /join/:code: บอกเป็นข้อความกลาง ไม่บอกชื่อห้องก่อนล็อกอิน (UX 4 ตัดสิน 3 ต.ค. 2026)
+  const invite = peekNextPath()?.startsWith('/join/') ?? false
 
   const signIn = async () => {
     setBusy(true)
@@ -53,6 +56,16 @@ export function LoginPage() {
       </header>
 
       <main className={styles.body}>
+        {invite && (
+          <p className={styles.notePurple}>
+            <KeyRound aria-hidden="true" />
+            <span>
+              {th.login.invitePrefix}
+              <b>{th.login.inviteStrong}</b>
+              {th.login.inviteSuffix}
+            </span>
+          </p>
+        )}
         {notice && (
           <p className={styles.notePurple}>
             <Info aria-hidden="true" />

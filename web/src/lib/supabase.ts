@@ -39,6 +39,21 @@ export const ERROR_CODES = [
   'score_locked',
   'reason_required',
   'stale_revision',
+  'already_bound',
+  'teacher_required',
+  'name_invalid',
+  'not_member',
+  'identity_required',
+  'account_not_found',
+  'account_bound_elsewhere',
+  'account_not_student',
+  'rebind_same_account',
+  'account_ambiguous',
+  'student_not_found',
+  'email_invalid',
+  'teacher_email_exists',
+  'teacher_name_invalid',
+  'last_teacher',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -81,6 +96,26 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   score_locked: 'field',
   reason_required: 'focus_field',
   stale_revision: 'reload_latest',
+  // A02: ไม่แสดงเป็นข้อผิดพลาด ปิดป๊อปอัปแล้วโหลดข้อมูลใหม่ (UX 4)
+  already_bound: 'reload',
+  teacher_required: 'field',
+  name_invalid: 'focus_field',
+  // UX 7.1: แสดงข้อความแล้วพากลับหน้าแรก
+  not_member: 'go_home_reload_role',
+  // UX 7.1: เปิด A02 ให้เลือกชื่อก่อน (โหลดข้อมูลนักเรียนใหม่)
+  identity_required: 'reload',
+  // T05 แก้การผูก (P2-08): แสดงใต้ช่องอีเมล
+  account_not_found: 'field',
+  account_bound_elsewhere: 'field',
+  account_not_student: 'field',
+  rebind_same_account: 'field',
+  account_ambiguous: 'field',
+  student_not_found: 'reload',
+  // D01 บัญชีครู (P2-09)
+  email_invalid: 'focus_field',
+  teacher_email_exists: 'field',
+  teacher_name_invalid: 'focus_field',
+  last_teacher: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

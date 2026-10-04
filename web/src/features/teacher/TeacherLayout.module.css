@@ -1,0 +1,319 @@
+/* โครงหน้าครู — แบบ v2 .desk / .side / .nav / .desk-top / .crumbs / .who / .desk-body / .admin-bar
+   ตั้งแต่ 900 px: เมนูข้าง 236 px ติดอยู่ขณะเลื่อน; ต่ำกว่านั้นเมนูเป็นแถบเลื่อนแนวนอนด้านบน (UX 13) */
+.desk {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  background: var(--paper);
+}
+
+.side {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 14px;
+  background: var(--paper-2);
+  border-right: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 4px 16px;
+  padding: 4px 2px;
+  font-family: var(--f-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--purple-deep);
+  text-decoration: none;
+}
+
+.brand svg {
+  width: 32px;
+  height: 32px;
+}
+
+.label {
+  padding: 12px 12px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: var(--tap-min);
+  padding: 10px 12px;
+  border-radius: 13px;
+  color: var(--ink-2);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.nav > svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.navText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav[aria-current='page'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .nav:not([aria-current='page']):hover {
+    background: var(--purple-tint);
+    color: var(--ink);
+  }
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 4px;
+  background: #6b3fa0;
+}
+
+.dot[data-tone='1'] {
+  background: #8a5bc2;
+}
+
+.dot[data-tone='2'] {
+  background: #b99bdd;
+}
+
+.dot[data-tone='3'] {
+  background: #8c63be;
+}
+
+.dot[data-tone='4'] {
+  background: #7650a8;
+}
+
+.foot {
+  margin-top: auto;
+  padding: 14px 12px 4px;
+  font-size: 0.78125rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.adminBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: #fbebc4;
+  color: #5e3f0b;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #efd79a;
+}
+
+.adminBar > svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.adminBar b {
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.adminExit {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: #5e3f0b;
+  color: #fff6e0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .adminExit {
+    min-height: var(--tap-min);
+  }
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  border-bottom: 1px solid var(--line);
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.crumbs svg {
+  width: 16px;
+  height: 16px;
+}
+
+.crumbs a {
+  padding: 4px 2px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .crumbs a:hover {
+    color: var(--purple);
+    text-decoration: underline;
+  }
+}
+
+.crumbs b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.who {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap-min);
+  padding: 4px 10px 4px 4px;
+  border-radius: 14px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .who:hover {
+    background: var(--purple-tint);
+  }
+}
+
+.who:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.whoName {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 600;
+}
+
+.body {
+  padding: 26px;
+  display: grid;
+  gap: 22px;
+  align-content: start;
+}
+
+/* ลูกของ grid ไม่ขยายตามเนื้อหากว้าง (เช่นตาราง) — ให้ส่วนนั้นเลื่อนในกรอบของตัวเองแทน */
+.body > * {
+  min-width: 0;
+}
+
+.alert {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.alert svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  .desk {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .side {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    scrollbar-width: none;
+  }
+
+  .brand,
+  .label,
+  .foot {
+    display: none;
+  }
+
+  .nav {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .top {
+    padding: 12px 16px;
+  }
+
+  .whoName {
+    display: none;
+  }
+
+  .body {
+    padding: 18px 16px;
+  }
+}

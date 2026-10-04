@@ -1,0 +1,537 @@
+/* T01 / T08 / T09 — แบบ v2 .page-head / .cls-cards / .nc-grid / .form-card / .how / .tc-hero / .tc-tools /
+   .code-chip / .tabs / .members / .m-row / .empty */
+
+/* ---------- ทั่วไป ---------- */
+.head {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px 20px;
+  flex-wrap: wrap;
+}
+
+.head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.head h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.head p {
+  color: var(--ink-2);
+}
+
+.head > a {
+  margin-left: auto;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.small {
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}
+
+.muted {
+  color: var(--ink-2);
+  font-size: 0.84375rem;
+}
+
+.primaryLink,
+.submit {
+  composes: btn primary from '../../ui/Button.module.css';
+  text-decoration: none;
+}
+
+.softLink {
+  composes: btn soft sm from '../../ui/Button.module.css';
+  text-decoration: none;
+}
+
+.ghostLink {
+  composes: btn ghost from '../../ui/Button.module.css';
+  text-decoration: none;
+}
+
+.primaryLink svg,
+.submit svg,
+.softLink svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.alert {
+  flex-basis: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.alert svg,
+.note > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.note[data-tone='purple'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.note[data-tone='plain'] {
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+.note a {
+  color: var(--purple);
+  font-weight: 600;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 36px 20px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: var(--r-lg);
+  background: var(--purple-tint);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.empty > svg {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+  color: var(--purple);
+}
+
+.empty b {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.empty > a,
+.empty > button {
+  margin-top: 8px;
+}
+
+/* ---------- T01 การ์ดชั้นเรียน ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 1180px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardBody {
+  flex: 1;
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.cardBody h3 {
+  font-family: var(--f-body);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.cardFoot > a {
+  margin-left: auto;
+}
+
+/* ---------- T09 ---------- */
+.createGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .createGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.form {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+}
+
+.termGroup {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.groupLabel {
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.formFoot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.howPanel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
+}
+
+.howPanel h2 {
+  font-size: 1.0625rem;
+}
+
+.how {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.hn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 700;
+}
+
+.how b {
+  display: block;
+  font-weight: 600;
+}
+
+.how span span {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+/* ---------- T08 ---------- */
+.hero {
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.teacherLine {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.875rem;
+  color: rgba(255, 249, 240, 0.92);
+}
+
+.bannerAvatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 249, 240, 0.9);
+  color: var(--purple-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.tools {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.codeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 5px 10px 5px 12px;
+  border: 1px solid rgba(255, 249, 240, 0.38);
+  border-radius: 12px;
+  background: rgba(255, 249, 240, 0.14);
+  color: #fff9f0;
+  font: inherit;
+  font-size: 0.78125rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.codeChip b {
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 1.125rem;
+  letter-spacing: 0.14em;
+}
+
+.codeChip svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (hover: hover) {
+  .codeChip:hover {
+    background: rgba(255, 249, 240, 0.26);
+  }
+}
+
+.codeOff {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 5px 12px;
+  border: 1px dashed rgba(255, 249, 240, 0.38);
+  border-radius: 12px;
+  background: rgba(30, 19, 49, 0.28);
+  color: #fff9f0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+
+.codeOff svg {
+  width: 16px;
+  height: 16px;
+}
+
+.toolBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 249, 240, 0.38);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: #fff9f0;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.toolBtn[data-solid='true'] {
+  border-color: transparent;
+  background: #fff9f0;
+  color: var(--purple-deep);
+}
+
+.toolBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.toolBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (hover: hover) {
+  .toolBtn:not([data-solid='true']):hover {
+    background: rgba(255, 249, 240, 0.16);
+  }
+}
+
+@media (pointer: coarse) {
+  .codeChip,
+  .codeOff,
+  .toolBtn {
+    min-height: var(--tap-min);
+  }
+}
+
+.codeChip:focus-visible,
+.toolBtn:focus-visible {
+  outline: 3px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+
+.panelTitle {
+  font-size: 1.1875rem;
+}
+
+.members {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.mGroup {
+  padding: 14px 18px 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.mRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px 10px 6px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.mGroup + .mRow {
+  border-top: 0;
+}
+
+.memGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mNo {
+  width: 26px;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mAvatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 600;
+}
+
+.codeChipSm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font: inherit;
+  cursor: pointer;
+}
+
+.codeChipSm b {
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: 0.14em;
+}
+
+.codeChipSm svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (pointer: coarse) {
+  .codeChipSm {
+    min-height: var(--tap-min);
+  }
+}

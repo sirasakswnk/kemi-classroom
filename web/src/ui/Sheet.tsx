@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useId, type ReactNode, type RefObject } from 'react'
+import { useId, type ReactNode, type Ref, type RefObject } from 'react'
 import { th } from '../copy/th'
 import { cx } from '../lib/cx'
 import { DialogBase } from './DialogBase'
@@ -9,6 +9,10 @@ export interface SheetProps {
   open: boolean
   onClose: () => void
   title: ReactNode
+  /** ข้อความเล็กเหนือหัวเรื่อง เช่น “ขั้นที่ 1 จาก 2” (แบบ v2 .step-tag) */
+  eyebrow?: ReactNode
+  /** ใช้ย้ายโฟกัสไปหัวเรื่องเมื่อเนื้อหาในแผ่นเปลี่ยนขั้น (หัวเรื่องรับโฟกัสได้ด้วยโค้ดเท่านั้น) */
+  titleRef?: Ref<HTMLHeadingElement>
   description?: ReactNode
   /** false = ปิดเองไม่ได้ ไม่มีปุ่ม X (A02: ยังไม่ปิดจนผูกชื่อสำเร็จ — UX 4) */
   dismissible?: boolean
@@ -23,6 +27,8 @@ export function Sheet({
   open,
   onClose,
   title,
+  eyebrow,
+  titleRef,
   description,
   dismissible = true,
   align = 'center',
@@ -51,7 +57,13 @@ export function Sheet({
           <X aria-hidden="true" />
         </button>
       )}
-      <h2 id={`${id}title`} className={styles.sheetTitle}>
+      {eyebrow && <p className={styles.sheetEyebrow}>{eyebrow}</p>}
+      <h2
+        id={`${id}title`}
+        ref={titleRef}
+        tabIndex={titleRef ? -1 : undefined}
+        className={styles.sheetTitle}
+      >
         {title}
       </h2>
       {description && (

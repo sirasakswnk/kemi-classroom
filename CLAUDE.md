@@ -4,6 +4,8 @@
 บริการฟรีแผน A: Cloudflare Pages + Supabase (สิงคโปร์) + Backblaze B2 + สำรองลง Google Drive · หน้าเว็บ React + TypeScript (Vite)
 ผู้ใช้ (ผู้พัฒนา) ใช้ Windows และคุยภาษาไทย
 
+> **ภาษา (กฎบนสุด):** ตอบผู้ใช้เป็น**ภาษาไทยทุกครั้ง** รวมถึง**รายงานจบงาน** สรุปผล คำถาม และข้อความระหว่างทำงาน — ชื่อไฟล์ คำสั่ง ชื่อฟังก์ชัน/ตาราง และศัพท์เทคนิคใช้ภาษาอังกฤษได้; ข้อความ commit ใช้ภาษาอังกฤษตามเดิมได้
+
 ## 1. วิธีทำงาน: ทีละขั้น (กฎสำคัญที่สุด)
 
 ผู้ใช้มีโควตาการใช้งานจำกัด งานต้องเดินทีละขั้นเล็ก และหยุดได้ทุกเมื่อโดยไม่เสียงาน
@@ -54,7 +56,7 @@
 - ห้าม commit ความลับ (`.env*`, key, token, รหัสผ่าน) และห้ามมี service role key หรือ B2 key ในโค้ดใต้ `web/`
 - ห้ามขอให้ผู้ใช้วางความลับในแชท ให้บอกชื่อตัวแปรและที่ตั้ง (dashboard ของบริการ, `supabase secrets`, GitHub Secrets) แล้วให้ผู้ใช้ใส่เอง
 - ห้าม commit ข้อมูลนักเรียนจริง (Excel รายชื่อ, CSV คะแนน, dump, รูปงาน) ใช้ข้อมูลสมมติในการทดสอบและ seed
-- ฐานข้อมูล: RLS ทุกตาราง ไม่มี policy ให้ `anon` เขียนผ่าน RPC เท่านั้น; RPC เป็น `SECURITY DEFINER` + `SET search_path = ''` อ้างชื่อเต็ม ตรวจสิทธิ์เองทุกครั้ง REVOKE จาก `PUBLIC`/`anon`; ห้ามใช้ `user_metadata` ตัดสินสิทธิ์ (TECHNICAL_DESIGN 3.1, BUILD_PLAN 4.1)
+- ฐานข้อมูล: RLS ทุกตาราง ไม่มี policy ให้ `anon` เขียนผ่าน RPC เท่านั้น; RPC เป็น `SECURITY DEFINER` + `SET search_path = ''` อ้างชื่อเต็ม ตรวจสิทธิ์เองทุกครั้ง REVOKE จาก `PUBLIC`/`anon`; ห้ามใช้ `user_metadata` ตัดสินสิทธิ์ (TECHNICAL_DESIGN 3.1, BUILD_PLAN 4.1); ฟังก์ชันที่ GRANT ให้ `authenticated` ต้องอยู่ในรายการของ `supabase/tests/function_privileges.test.sql` (ส่วน 6)
 - เวลา: ตัดสินฝั่งเซิร์ฟเวอร์ด้วย `clock_timestamp()` หลังล็อกแถว เก็บ UTC แสดง Asia/Bangkok; คะแนนและโทเคนเป็นจำนวนเต็ม หักสายด้วย `(raw * (100 - pct) + 99) / 100`
 - ไฟล์: อัปโหลดเข้า `staging/` แล้วคัดลอกไป `files/` ตาม TECHNICAL_DESIGN ส่วน 9; ลบใน B2 ต้องระบุ `version_id`
 
@@ -75,6 +77,7 @@
   - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/*.test.sql` คู่กับ migration ทุกไฟล์ — ขั้นตอน: `db:reset` → `db:test` (ในเครื่อง) ผ่านแล้วค่อย `db:push` → `db:test:dev`
     - รูปแบบไฟล์: `begin; set local role postgres; create extension if not exists pgtap with schema extensions; set local search_path = extensions, public; select plan(N); … select * from finish(); rollback;` (บน cloud CLI ต่อด้วย role ชั่วคราวที่ไม่สืบทอดสิทธิ์ postgres จึงต้อง `set local role postgres`; CLI ลบ pgtap ทิ้งเองหลังรัน)
     - เทสต์ที่พึ่งของเฉพาะ cloud (เช่น `public.rls_auto_enable()`) ใช้ `skip()` เมื่อไม่มีในเครื่อง
+    - **รายชื่อฟังก์ชันที่เรียกได้:** `supabase/tests/function_privileges.test.sql` เทียบทุกฟังก์ชันใน `public`/`private` ทุก overload — **ทุก RPC หรือฟังก์ชันใหม่ที่ GRANT EXECUTE ให้ `authenticated` ต้องเพิ่ม signature เต็ม (เช่น `public.commit_roster_import(text,jsonb,uuid,boolean)`) ในรายการนี้ใน commit เดียวกับ migration**; `anon` และ `PUBLIC` ต้องเรียกฟังก์ชันใน `public`/`private` ไม่ได้เลย
 
 ## 7. เกณฑ์ “งานเสร็จ”
 
@@ -86,6 +89,6 @@
 
 ## 8. การสื่อสาร
 
-- ตอบภาษาไทย สั้น ตรง ใช้ศัพท์เทคนิคภาษาอังกฤษได้
+- สั้น ตรง (ภาษาไทยทุกข้อความรวมรายงานจบงาน — ดูกฎบนสุด)
 - ไม่อ้างว่าทดสอบผ่านถ้ายังไม่ได้รันจริง; ถ้าทดสอบไม่ได้เพราะยังไม่มีบริการ ให้บอกตรง ๆ และจดไว้ใน `PROGRESS.md`
 - ท้ายทุกงานบอก: งานถัดไปคืออะไร และต้องการอะไรจากผู้ใช้ (ถ้ามี)

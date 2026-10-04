@@ -17,6 +17,39 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   forbidden: { message: 'คุณไม่มีสิทธิ์ทำรายการนี้', action: 'go_home_reload_role' },
   admin_mode_required: { message: 'ต้องเข้าหน้าครูในโหมดผู้ดูแลก่อน', action: 'enter_admin_mode' },
   rate_limited: { message: 'ทำรายการถี่เกินไป รอสักครู่แล้วลองใหม่', action: 'retry_later' },
+  already_bound: { message: 'บัญชีนี้เลือกชื่อเรียบร้อยแล้ว', action: 'reload' },
+  teacher_required: { message: 'เลือกครูเจ้าของชั้นเรียนก่อน', action: 'field' },
+  name_invalid: { message: 'ใส่ชื่อชั้นเรียน ไม่เกิน 80 ตัวอักษร', action: 'focus_field' },
+  not_member: {
+    message: 'คุณไม่ได้อยู่ในชั้นเรียนนี้แล้ว ถ้าคิดว่าผิดพลาดให้แจ้งคุณครู',
+    action: 'go_home_reload_role',
+  },
+  identity_required: { message: 'เลือกชื่อของคุณก่อน แล้วกลับมาเข้าชั้นเรียน', action: 'reload' },
+  account_not_found: {
+    message: 'ไม่พบบัญชีนี้ ให้นักเรียนเข้าสู่ระบบด้วยบัญชีนี้ก่อนแล้วลองอีกครั้ง',
+    action: 'field',
+  },
+  account_bound_elsewhere: {
+    message: 'บัญชีนี้เชื่อมกับนักเรียนคนอื่นอยู่ ให้แก้การผูกของคนนั้นก่อน',
+    action: 'field',
+  },
+  account_not_student: {
+    message: 'บัญชีนี้เป็นบัญชีครูหรือผู้ดูแล ผูกกับนักเรียนไม่ได้',
+    action: 'field',
+  },
+  rebind_same_account: { message: 'บัญชีนี้ผูกกับนักเรียนคนนี้อยู่แล้ว', action: 'field' },
+  account_ambiguous: { message: 'พบหลายบัญชีที่ใช้อีเมลนี้ แจ้งผู้ดูแลระบบ', action: 'field' },
+  student_not_found: {
+    message: 'ไม่พบนักเรียนคนนี้ โหลดรายชื่อใหม่แล้วลองอีกครั้ง',
+    action: 'reload',
+  },
+  email_invalid: { message: 'ใส่อีเมลบัญชี Google ให้ถูกต้อง', action: 'focus_field' },
+  teacher_email_exists: { message: 'อีเมลนี้อยู่ในรายการบัญชีครูแล้ว', action: 'field' },
+  teacher_name_invalid: { message: 'ใส่ชื่อครู ไม่เกิน 60 ตัวอักษร', action: 'focus_field' },
+  last_teacher: {
+    message: 'ต้องมีบัญชีครูอย่างน้อย 1 บัญชี เพิ่มบัญชีใหม่ก่อนแล้วค่อยเอาบัญชีนี้ออก',
+    action: 'field',
+  },
   storage_full: {
     message:
       'ตอนนี้ยังอัปโหลดไฟล์ไม่ได้ · พื้นที่เก็บไฟล์ของระบบเต็มชั่วคราว ไม่ใช่ปัญหาจากเครื่องหรืออินเทอร์เน็ตของคุณ',

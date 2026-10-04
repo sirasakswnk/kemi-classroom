@@ -1,0 +1,235 @@
+/* D01 — แบบ v2 .admin-wrap / .page-head / .two-col / .panel / .list-row / .add-teacher */
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px clamp(16px, 3vw, 32px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: auto;
+  font-family: var(--f-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--purple-deep);
+}
+
+.brand svg {
+  width: 32px;
+  height: 32px;
+}
+
+.page {
+  width: min(100%, 1100px);
+  margin-inline: auto;
+  padding: 26px clamp(16px, 3vw, 32px) 40px;
+  display: grid;
+  gap: 22px;
+  align-content: start;
+}
+
+.page > * {
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px 20px;
+  flex-wrap: wrap;
+}
+
+.head > div {
+  display: grid;
+  gap: 4px;
+  margin-right: auto;
+}
+
+.head h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.head p {
+  color: var(--ink-2);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.later {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: var(--r-lg);
+  background: var(--purple-tint);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.later > svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--purple);
+}
+
+.later b {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
+}
+
+.panel h2 {
+  font-size: 1.125rem;
+}
+
+.panel h3 {
+  font-size: 1rem;
+}
+
+.hint {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.rowIcon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.rowIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowText b {
+  display: block;
+  font-weight: 600;
+}
+
+.rowText span {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  word-break: break-all;
+}
+
+.addForm {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.start {
+  justify-self: start;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.note[data-tone='amber'] {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.alert {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.alert > svg,
+.note > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
