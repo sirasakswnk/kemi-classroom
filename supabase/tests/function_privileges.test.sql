@@ -47,7 +47,9 @@ insert into expected_authenticated values
   ('public.unbind_student(uuid,boolean)'),
   ('public.admin_teachers()'),
   ('public.admin_add_teacher(text,uuid,text)'),
-  ('public.admin_remove_teacher(uuid)');
+  ('public.admin_remove_teacher(uuid)'),
+  -- 0010_posts
+  ('private.post_access(uuid)');                                    -- ใช้ใน RLS policy
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
