@@ -162,10 +162,12 @@ export async function presignGet(
 }
 
 /**
- * B2 ปฏิเสธเพราะเกินเพดานรายวัน/พื้นที่ (Caps & Alerts): HTTP 403, Code AccessDenied
- * ข้อความลงท้าย "cap exceeded" เช่น "Cannot download file, download bandwidth or transaction (Class B) cap exceeded."
- * (TECHNICAL_DESIGN 9.3 ข้อ 5–6; ห้ามทดสอบด้วยการใช้จนเกินจริง)
+ * B2 ปฏิเสธเพราะเกินเพดานรายวัน/พื้นที่ (Caps & Alerts) — เอกสาร B2 (Integration Checklist):
+ * "403 Forbidden, cap_exceeded"; Native API ตอบ code เช่น cap_exceeded / download_cap_exceeded พร้อมข้อความ
+ * "Cannot download file, download bandwidth or transaction (Class B) cap exceeded. …" — S3 API ตอบ XML <Error>
+ * (Code ไม่ระบุในเอกสาร) ข้อความเดียวกัน จึงตรวจทั้งรหัสแบบขีดล่างและข้อความ
+ * เพดานดาวน์โหลดกัน CopyObject (คัดลอกฝั่งเซิร์ฟเวอร์) ด้วย (TECHNICAL_DESIGN 9.3 ข้อ 5–6; ห้ามทดสอบด้วยการใช้จนเกินจริง)
  */
 export function isCapExceeded(status: number, body: string): boolean {
-  return status === 403 && /cap exceeded/i.test(body)
+  return status === 403 && /cap[ _]exceeded/i.test(body)
 }

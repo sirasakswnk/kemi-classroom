@@ -210,7 +210,7 @@ test('presignGet: versionId + response-* อยู่ในลายเซ็น
   await assert.rejects(presignGet(config, { key: 'other/x' }), /b2_key_invalid/)
 })
 
-test('isCapExceeded: 403 ที่ข้อความลงท้าย cap exceeded เท่านั้น', () => {
+test('isCapExceeded: 403 ที่มี cap exceeded หรือรหัส *_cap_exceeded เท่านั้น', () => {
   const body = (m: string) =>
     `<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>${m}</Message></Error>`
   assert.equal(
@@ -221,6 +221,12 @@ test('isCapExceeded: 403 ที่ข้อความลงท้าย cap ex
     true,
   )
   assert.equal(isCapExceeded(403, body('Cannot upload files, storage cap exceeded.')), true)
+  // Native API (JSON)
+  const native = (code: string) =>
+    JSON.stringify({ status: 403, code, message: 'See the Caps & Alerts page' })
+  assert.equal(isCapExceeded(403, native('download_cap_exceeded')), true)
+  assert.equal(isCapExceeded(403, native('cap_exceeded')), true)
+  assert.equal(isCapExceeded(403, native('access_denied')), false)
   assert.equal(isCapExceeded(403, body('Signature validation failed')), false)
   assert.equal(isCapExceeded(500, body('cap exceeded')), false)
 })
