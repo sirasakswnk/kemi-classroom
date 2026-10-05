@@ -223,6 +223,33 @@ export type Database = {
           },
         ]
       }
+      b2_daily_usage: {
+        Row: {
+          class_b_requests: number
+          copy_bytes: number
+          day: string
+          download_bytes: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          class_b_requests?: number
+          copy_bytes?: number
+          day: string
+          download_bytes?: number
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          class_b_requests?: number
+          copy_bytes?: number
+          day?: string
+          download_bytes?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       backup_runs: {
         Row: {
           detail: string | null
@@ -470,6 +497,8 @@ export type Database = {
       storage_settings: {
         Row: {
           admin_warn_pct: number
+          daily_view_budget_bytes: number
+          daily_view_budget_requests: number
           hard_stop_margin_bytes: number
           quota_bytes: number
           singleton: boolean
@@ -478,6 +507,8 @@ export type Database = {
         }
         Insert: {
           admin_warn_pct?: number
+          daily_view_budget_bytes?: number
+          daily_view_budget_requests?: number
           hard_stop_margin_bytes: number
           quota_bytes: number
           singleton?: boolean
@@ -486,6 +517,8 @@ export type Database = {
         }
         Update: {
           admin_warn_pct?: number
+          daily_view_budget_bytes?: number
+          daily_view_budget_requests?: number
           hard_stop_margin_bytes?: number
           quota_bytes?: number
           singleton?: boolean
@@ -755,6 +788,15 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_email: string; p_student_id: string }
         Returns: Json
       }
+      record_b2_usage: {
+        Args: {
+          p_bytes: number
+          p_copy_bytes?: number
+          p_requests: number
+          p_source: string
+        }
+        Returns: undefined
+      }
       remove_member: {
         Args: {
           p_admin_mode?: boolean
@@ -785,6 +827,27 @@ export type Database = {
           p_post_id: string
           p_request_key: string
         }
+        Returns: Json
+      }
+      upload_complete_abort: { Args: { p_asset_id: string }; Returns: boolean }
+      upload_complete_begin: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_detected_type: string
+          p_item: number
+          p_read_bytes: number
+          p_staging_version_id: string
+          p_total_bytes: number
+        }
+        Returns: Json
+      }
+      upload_complete_finish: {
+        Args: { p_asset_id: string; p_checksum: string; p_version_id: string }
+        Returns: Json
+      }
+      upload_complete_target: {
+        Args: { p_batch_id: string; p_item: number }
         Returns: Json
       }
     }
