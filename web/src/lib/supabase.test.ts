@@ -84,6 +84,25 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   due_at_invalid: { message: 'วันเวลาไม่ถูกต้อง เลือกใหม่อีกครั้ง', action: 'field' },
   close_at_invalid: { message: 'วันเวลาไม่ถูกต้อง เลือกใหม่อีกครั้ง', action: 'field' },
   close_before_due: { message: 'วันปิดรับต้องไม่ก่อนกำหนดส่ง', action: 'field' },
+  too_many_files: { message: 'แนบได้สูงสุด 10 ไฟล์', action: 'field' },
+  file_too_large: {
+    message: 'ไฟล์นี้ใหญ่เกินกำหนด · รูปหลังย่อไม่เกิน 2 MB · PDF ไม่เกิน 10 MB',
+    action: 'field',
+  },
+  file_type_not_allowed: { message: 'รับเฉพาะไฟล์ JPG · PNG · HEIC · PDF', action: 'field' },
+  batch_too_large: { message: 'ไฟล์รวมเกิน 20 MB นำบางไฟล์ออกก่อน', action: 'field' },
+  upload_not_found: { message: 'ยังไม่พบไฟล์ที่อัปโหลด ลองอัปโหลดใหม่อีกครั้ง', action: 'field' },
+  upload_in_progress: { message: 'ระบบกำลังบันทึกไฟล์นี้ รอสักครู่แล้วลองใหม่', action: 'field' },
+  upload_expired: { message: 'การอัปโหลดนี้หมดเวลาแล้ว กรุณาเลือกไฟล์อีกครั้ง', action: 'field' },
+  upload_size_mismatch: {
+    message: 'ไฟล์ที่อัปโหลดไม่ครบหรือขนาดไม่ตรง กรุณาอัปโหลดใหม่',
+    action: 'field',
+  },
+  upload_type_mismatch: {
+    message: 'ไฟล์นี้ไม่ใช่รูป JPG/PNG หรือ PDF จริง กรุณาเลือกไฟล์อื่น',
+    action: 'field',
+  },
+  upload_failed: { message: 'บันทึกไฟล์ไม่สำเร็จ กรุณาอัปโหลดไฟล์นี้ใหม่', action: 'field' },
   download_budget_reached: {
     message:
       'วันนี้เปิดไฟล์ครบโควตาของระบบแล้ว เปิดได้อีกครั้งเวลา 07:00 น. ไม่ใช่ปัญหาจากเครื่องของคุณ',

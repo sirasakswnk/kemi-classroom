@@ -19,6 +19,8 @@ import { initialOf } from '../../lib/initial'
 import { appErrorOf } from '../../lib/request'
 import { bangkokToUtcIso, thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Card, Chip, Field, Input, Stepper, Textarea, useToast } from '../../ui'
+import { FileField } from '../uploads/FileField'
+import { FILE_FIELD_ENABLED } from '../uploads/flags'
 import type { Classroom } from '../classrooms/api'
 import { createPost, updatePost } from './api'
 import {
@@ -325,6 +327,19 @@ export function PostEditor({
               required={!homework}
             />
           </Field>
+
+          {FILE_FIELD_ENABLED && (
+            <FileField
+              kind={shown.kind}
+              target={{
+                purpose: 'post',
+                classroomId: c.id,
+                postId: base?.id ?? null,
+                adminMode,
+              }}
+              note={th.uploads.devOnly}
+            />
+          )}
 
           {homework ? (
             <>

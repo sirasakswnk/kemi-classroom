@@ -66,6 +66,16 @@ export const ERROR_CODES = [
   'close_at_invalid',
   'close_before_due',
   'download_budget_reached',
+  'too_many_files',
+  'file_too_large',
+  'file_type_not_allowed',
+  'batch_too_large',
+  'upload_not_found',
+  'upload_in_progress',
+  'upload_expired',
+  'upload_size_mismatch',
+  'upload_type_mismatch',
+  'upload_failed',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -143,6 +153,17 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   close_before_due: 'field',
   // ตัวดูไฟล์ (P3-05; ตัวดูมากับ P3-08/P3-09): ครบงบเปิดดูของวัน/B2 เกินเพดาน — เปิดได้อีกครั้ง 07:00 น.
   download_budget_reached: 'retry_later',
+  // ช่องไฟล์ (P3-06a): แสดงที่แถวไฟล์นั้น พร้อมปุ่มลองใหม่/นำออก (UX 7.1)
+  too_many_files: 'field',
+  file_too_large: 'field',
+  file_type_not_allowed: 'field',
+  batch_too_large: 'field',
+  upload_not_found: 'field',
+  upload_in_progress: 'field',
+  upload_expired: 'field',
+  upload_size_mismatch: 'field',
+  upload_type_mismatch: 'field',
+  upload_failed: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>
