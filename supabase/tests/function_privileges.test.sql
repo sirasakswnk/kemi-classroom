@@ -61,7 +61,9 @@ insert into expected_authenticated values
   -- 0016_upload_batch
   ('public.create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)'),
   -- 0017_upload_complete (ยืนยันเจ้าของ batch ด้วย JWT ของผู้ใช้ — อ่านอย่างเดียว)
-  ('public.upload_complete_target(uuid,integer)');
+  ('public.upload_complete_target(uuid,integer)'),
+  -- 0018_files_sign (คืนเฉพาะ id ที่เปิดได้ + เพดานครั้ง — ไม่คืน key/เวอร์ชัน)
+  ('public.authorize_files(uuid[])');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
@@ -73,7 +75,9 @@ insert into expected_service_only values
   ('public.upload_complete_begin(uuid,uuid,integer,text,bigint,text,integer)'),
   ('public.upload_complete_finish(uuid,text,text)'),
   ('public.upload_complete_abort(uuid)'),
-  ('public.record_b2_usage(text,integer,bigint,bigint)');
+  ('public.record_b2_usage(text,integer,bigint,bigint)'),
+  -- 0018_files_sign (ข้อมูลลงลายเซ็น + ตรวจและนับงบเปิดดูรายวัน)
+  ('public.files_sign_begin(uuid[])');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);
