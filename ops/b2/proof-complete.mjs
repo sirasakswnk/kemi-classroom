@@ -1,6 +1,6 @@
 // พิสูจน์ขั้น complete กับ bucket kemi-dev-files (P3-04 ข้อ ฉ.) — รันด้วยมือ ไม่อยู่ใน CI
 //   node ops/b2/proof-complete.mjs
-// ใช้กุญแจ kemi-edge-dev (ถามแบบซ่อนตัวอักษร หรืออ่าน B2_KEY_ID / B2_APP_KEY จาก env ของ session)
+// ใช้กุญแจชั่วคราว (เช่น kemi-proof-tmp — ห้ามลบ/สร้าง kemi-edge-dev แทน; ถามแบบซ่อนตัวอักษร หรืออ่าน B2_KEY_ID / B2_APP_KEY จาก env ของ session)
 // ใช้ฟังก์ชันชุดเดียวกับ Edge Function (supabase/functions/_shared/b2.ts, filetype.ts)
 // ขั้นตอน — ลิงก์ PUT เดียวกันใช้ซ้ำสามครั้ง (เหมือนนักเรียนอัปทับด้วยลิงก์เดิม):
 //   1. PUT V1 = PDF ถูกต้อง  2. PUT V2 = ขนาดเท่ากันแต่ไม่ใช่ PDF (อัปทับก่อน complete)
@@ -41,8 +41,8 @@ const sized = (text, n) => {
 }
 
 async function main() {
-  const keyId = await secretFromEnvOrAsk('B2_KEY_ID', 'keyID ของ kemi-edge-dev')
-  const appKey = await secretFromEnvOrAsk('B2_APP_KEY', 'applicationKey ของ kemi-edge-dev')
+  const keyId = await secretFromEnvOrAsk('B2_KEY_ID', 'keyID ของกุญแจชั่วคราว (เช่น kemi-proof-tmp)')
+  const appKey = await secretFromEnvOrAsk('B2_APP_KEY', 'applicationKey ของกุญแจชั่วคราว')
   const env = {
     B2_KEY_ID: keyId,
     B2_APP_KEY: appKey,

@@ -62,13 +62,21 @@ node ops/b2/apply-settings.mjs
 | `B2_BUCKET` | `kemi-dev-files` |
 | `B2_ENDPOINT` | `https://s3.eu-central-003.backblazeb2.com` |
 
+> **สร้างกุญแจ `kemi-edge-dev` ใหม่เมื่อไร ต้องอัปเดต `B2_KEY_ID` และ `B2_APP_KEY` ใน secrets ทันที** (ก่อนปิดกล่อง applicationKey)
+> ฟังก์ชันที่ deploy แล้วอ่าน secrets ใหม่เองในคำขอถัดไป ไม่ต้อง deploy ซ้ำ
+> อาการเมื่อ secrets ยังเป็นกุญแจที่ลบไปแล้ว: ขอ batch ได้ (ลายเซ็นคำนวณในฟังก์ชัน) แต่ **PUT ถูก B2 ปฏิเสธ 403**
+> และเบราว์เซอร์เห็นเป็น network error เพราะคำตอบ error ของ B2 ไม่มี header CORS (preflight ยังผ่าน) — เกิดจริง 5 ต.ค. 2026
+
 ## 5. พิสูจน์พฤติกรรมของ B2 (สคริปต์ รันด้วยมือ)
 
 ```powershell
 node ops/b2/proof.mjs
 ```
 
-1. วาง keyID และ applicationKey ของ `kemi-edge-dev` ในช่องที่ซ่อนตัวอักษร
+1. วาง keyID และ applicationKey ของ**กุญแจชั่วคราว**ในช่องที่ซ่อนตัวอักษร (ใช้กับ `proof.mjs` และ `proof-complete.mjs`)
+   - **ห้ามลบหรือสร้าง `kemi-edge-dev` แทนเพื่อรันสคริปต์** — Edge Function ใช้กุญแจนั้นอยู่ (ดูกรอบในขั้น 4)
+   - สร้างกุญแจใหม่ชื่อเช่น `kemi-proof-tmp`: เฉพาะ bucket `kemi-dev-files`, Read and Write, Duration 1 ชั่วโมง
+   - รันเสร็จแล้วกด Delete ที่ `kemi-proof-tmp` (หมดอายุเองถ้าลืม)
 2. สคริปต์ใช้คำขอประมาณนี้:
    - PUT 3 ครั้งและ DELETE 1 ครั้ง (Class A ไม่นับเพดาน)
    - GET 1 ครั้งขนาด 16 ไบต์ (Class B)
@@ -86,9 +94,11 @@ node ops/b2/proof.mjs
 ## หมายเหตุ
 
 - **สิทธิ์ของกุญแจ:**
-  - ตัวเลือก Read and Write ในหน้าเว็บให้สิทธิ์อ่าน เขียน ลบ และ list ไฟล์ใน bucket นี้ (รวม `shareFiles` และการอ่าน/เขียนค่าเข้ารหัสของ bucket)
-  - ไม่มี `writeBuckets` หรือ `deleteBuckets` และไม่มีสิทธิ์จัดการกุญแจ
-  - ถ้าต้องการให้แคบลงเหลือ `listBuckets, readFiles, writeFiles, deleteFiles` ต้องสร้างผ่าน API หรือ CLI (ทำได้ในระยะ 7)
+  - ตัวเลือก Read and Write ในหน้าเว็บกว้างกว่าที่ใช้มาก (ตรวจจากหน้า B2 5 ต.ค. 2026 — TECHNICAL_BUILD_PLAN ส่วน 7 ข้อ 5):
+    `readFiles`/`writeFiles`/`deleteFiles`/`listFiles`/`shareFiles` **และ `writeBuckets` กับ `write/readBucket*`**
+    (Encryption, LifecycleRules, Logging, Notifications, Replications) เฉพาะ bucket นี้
+  - ถ้ากุญแจรั่วจะเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS/lifecycle ได้ — ไม่มีสิทธิ์จัดการกุญแจ
+  - ของ prod (ระยะ 7) สร้างผ่าน API ให้เหลือ `readFiles, writeFiles, deleteFiles` (+ `listFiles` ถ้า sweeper ต้องใช้) เฉพาะ bucket
 - **เกินเพดาน:** B2 ตอบ HTTP 403 รหัส `cap_exceeded` หรือ `download_cap_exceeded` พร้อมข้อความ "… cap exceeded …"
   - เพดานดาวน์โหลดกันการคัดลอกฝั่งเซิร์ฟเวอร์ (CopyObject) ด้วย
   - ห้ามทดสอบด้วยการใช้จนเกินเพดานจริง

@@ -1,6 +1,6 @@
 // พิสูจน์พฤติกรรมของ B2 กับ bucket kemi-dev-files (P3-03 ข้อ จ.) — รันด้วยมือ ไม่อยู่ใน CI
 //   node ops/b2/proof.mjs
-// ใช้กุญแจของ Edge Function (kemi-edge-dev) ถามแบบซ่อนตัวอักษร หรืออ่าน B2_KEY_ID / B2_APP_KEY จาก env ของ session
+// ใช้กุญแจชั่วคราว (เช่น kemi-proof-tmp — ห้ามลบ/สร้าง kemi-edge-dev แทน) ถามแบบซ่อนตัวอักษร หรืออ่าน B2_KEY_ID / B2_APP_KEY จาก env ของ session
 // ใช้คำขอน้อยที่สุด: PUT 3 + DELETE 1 (Class A ไม่นับเพดาน) · GET แบบ Range 1 ครั้ง 16 ไบต์ (Class B) · OPTIONS 4
 // ไม่พิมพ์กุญแจหรือลิงก์ที่ลงลายเซ็น — พิมพ์เฉพาะสถานะและ header ที่ต้องดู ส่งผลส่วนนี้ให้ Claude ได้
 // ไม่ทดสอบการเกินเพดาน (ทำให้ทั้งบัญชีใช้ไม่ได้จนถึง 07:00 น.) — รูปแบบ 403 ยืนยันจากเอกสาร B2 แทน
@@ -31,8 +31,8 @@ const record = (name, pass, detail) => {
 const s3Code = async (res) => /<Code>([^<]+)<\/Code>/.exec(await res.text())?.[1] ?? '-'
 
 async function main() {
-  const keyId = await secretFromEnvOrAsk('B2_KEY_ID', 'keyID ของ kemi-edge-dev')
-  const appKey = await secretFromEnvOrAsk('B2_APP_KEY', 'applicationKey ของ kemi-edge-dev')
+  const keyId = await secretFromEnvOrAsk('B2_KEY_ID', 'keyID ของกุญแจชั่วคราว (เช่น kemi-proof-tmp)')
+  const appKey = await secretFromEnvOrAsk('B2_APP_KEY', 'applicationKey ของกุญแจชั่วคราว')
   const env = {
     B2_KEY_ID: keyId,
     B2_APP_KEY: appKey,

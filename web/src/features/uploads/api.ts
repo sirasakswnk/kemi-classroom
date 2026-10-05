@@ -129,7 +129,16 @@ export function putFile(
         if (isCapExceeded(xhr.status, body)) return reject(new PutError('cap', xhr.status))
         reject(new PutError(xhr.status === 403 ? 'expired' : 'failed', xhr.status))
       })
-    xhr.onerror = () => finish(() => reject(new PutError('network')))
+    xhr.onerror = () =>
+      finish(() => {
+        // คำตอบ error ของ B2 (เช่น 403 จากกุญแจที่ถูกลบ) ไม่มี header CORS เบราว์เซอร์จึงเห็นเป็นเน็ตหลุด
+        // จดไว้ให้ผู้พัฒนาเห็นสาเหตุที่เป็นไปได้ (ops/b2/README.md ขั้น 4) — build จริงไม่จด
+        if (import.meta.env.DEV)
+          console.warn(
+            `PUT ไป B2 ล้มแบบ network: B2 อาจปฏิเสธ (คำตอบ error ของ B2 ไม่มี header CORS) — ตรวจ B2_KEY_ID/B2_APP_KEY ใน secrets`,
+          )
+        reject(new PutError('network'))
+      })
     xhr.onabort = () => finish(() => reject(new PutError('aborted')))
     xhr.send(blob)
   })
