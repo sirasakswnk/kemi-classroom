@@ -730,6 +730,7 @@ export type Database = {
       }
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
+      authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
       claim_identity: { Args: { p_ref: string }; Returns: Json }
       classroom_view: { Args: { p_classroom_id: string }; Returns: Json }
       commit_roster_import: {
@@ -772,6 +773,7 @@ export type Database = {
         Returns: Json
       }
       ensure_account: { Args: never; Returns: Json }
+      files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
       my_classrooms: { Args: never; Returns: Json }
