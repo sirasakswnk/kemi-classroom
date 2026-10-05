@@ -14,7 +14,7 @@
 | ตรวจรูปแบบข้อมูล | zod | ใช้ทั้งหน้าเว็บและ Edge Function |
 | หน้าตา | CSS ธรรมดา + CSS variables ย้ายจาก `style.css` ของแบบ v2, CSS Modules รายคอมโพเนนต์, `lucide-react` | ไม่ใช้ UI framework เพื่อให้ตรงแบบ |
 | ฟอนต์ | Anuphan และ Mitr ผ่าน `@fontsource` | โฮสต์เอง ไม่เรียก Google Fonts ตอนใช้งาน (เร็วขึ้นและไม่ส่งข้อมูลผู้ใช้ออก); Mali ใช้เฉพาะภาพตัวอย่างในแบบ ไม่ใช้ในระบบจริง (UX_DESIGN ส่วน 13) |
-| รูปภาพ | `createImageBitmap` + canvas ย่อทีละขั้น; ตัวถอด HEIC (เช่น `heic2any` หรือ libheif) โหลดเมื่อพบ HEIC เท่านั้น | TECHNICAL_DESIGN ส่วน 9.2 ข้อ 7 |
+| รูปภาพ | `createImageBitmap` (หมุนตาม EXIF) + canvas ย่อทีละครึ่ง เริ่มด้านยาว 2560 px จนไม่เกิน 2 MB; JPEG/HEIC เข้ารหัสใหม่เป็น JPEG เสมอเพื่อตัด EXIF/GPS, PNG ที่ไม่เกินเพดานคงเดิม; ตัวถอด HEIC = `libheif-js` (LGPL-3.0) เป็นไฟล์ worker แยก same-origin (3.17 MB, gzip 776 KB) โหลดเมื่อพบ HEIC ที่เบราว์เซอร์ถอดเองไม่ได้เท่านั้น — ไม่ใช้ `heic2any`/`heic-to` เพราะสร้าง worker จาก `blob:` ซึ่ง CSP บล็อก (P3-06a) | ต้องมีไฟล์แจ้งสัญญาอนุญาตของไลบรารีภายนอก (รวม LGPL ของ libheif-js) เผยแพร่ไปกับเว็บ |
 | PDF | `pdfjs-dist` แสดงในหน้าตรวจ, `pdf-lib` รวมเป็นไฟล์ดาวน์โหลด | ส่วน 9 ของ TECHNICAL_DESIGN |
 | ZIP | `client-zip` แบบ stream + File System Access API บนคอมพิวเตอร์ | ถ้าเบราว์เซอร์ไม่รองรับ แบ่ง ZIP ตามห้อง/งาน **[ข้อเสนอ]** |
 | อ่าน Excel | ไลบรารีอ่าน .xlsx ฝั่งเบราว์เซอร์ เช่น SheetJS (ติดตั้งจากแหล่งทางการของ SheetJS เพราะรุ่นบน npm ไม่อัปเดต) | อ่านเลขประจำตัวเป็นข้อความเสมอ |
@@ -235,7 +235,7 @@ grant execute on function public.grade_submission to authenticated;
 ```
 
    ลายเซ็นอยู่ใน query string จึงไม่ต้องอนุญาต `authorization`/`x-amz-*`; bucket ใช้จริงควรเอา `localhost` และ preview ออกเมื่อเปิดใช้; **พิสูจน์แล้ว 5 ต.ค. 2026:** B2 รับ origin แบบ wildcard และ preflight ผ่านเฉพาะ production/preview/localhost (ตั้งด้วย `ops/b2/apply-settings.mjs` ใช้กุญแจชั่วคราว `listBuckets`+`writeBuckets` แล้วลบทิ้ง)
-5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (list/read เฉพาะ bucket) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง; dev ใช้ `kemi-edge-dev` ที่สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket (กว้างกว่าที่ใช้: มี `listFiles`, `shareFiles`) — **ของ prod ในระยะ 7 สร้างผ่าน API ให้เหลือเฉพาะสิทธิ์ที่ใช้จริง**
+5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (list/read เฉพาะ bucket) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง; dev ใช้ `kemi-edge-dev` ที่สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket — **ตรวจจากหน้า B2 5 ต.ค. 2026 กว้างกว่าที่ใช้มาก:** มี `writeBuckets` และ `write/readBucket*` (Encryption, LifecycleRules, Logging, Notifications, Replications) นอกจาก `readFiles`/`writeFiles`/`deleteFiles`/`listFiles`/`shareFiles` — ถ้ากุญแจนี้รั่วจะเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS/lifecycle ได้; **ของ prod ในระยะ 7 ต้องสร้างผ่าน API ให้เหลือ `readFiles`, `writeFiles`, `deleteFiles` (+ `listFiles` ถ้า sweeper ต้องใช้) เฉพาะ bucket** และพิจารณาเปลี่ยนกุญแจ dev แบบเดียวกันตอนนั้น
 
 **Cloudflare Pages**
 
