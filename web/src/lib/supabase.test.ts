@@ -84,6 +84,11 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   due_at_invalid: { message: 'วันเวลาไม่ถูกต้อง เลือกใหม่อีกครั้ง', action: 'field' },
   close_at_invalid: { message: 'วันเวลาไม่ถูกต้อง เลือกใหม่อีกครั้ง', action: 'field' },
   close_before_due: { message: 'วันปิดรับต้องไม่ก่อนกำหนดส่ง', action: 'field' },
+  download_budget_reached: {
+    message:
+      'วันนี้เปิดไฟล์ครบโควตาของระบบแล้ว เปิดได้อีกครั้งเวลา 07:00 น. ไม่ใช่ปัญหาจากเครื่องของคุณ',
+    action: 'retry_later',
+  },
   reason_required: { message: 'กรุณาใส่เหตุผล', action: 'focus_field' },
   stale_revision: { message: 'ข้อมูลนี้ถูกแก้จากหน้าจออื่นแล้ว', action: 'reload_latest' },
 }

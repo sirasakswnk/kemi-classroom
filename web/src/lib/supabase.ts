@@ -65,6 +65,7 @@ export const ERROR_CODES = [
   'due_at_invalid',
   'close_at_invalid',
   'close_before_due',
+  'download_budget_reached',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -140,6 +141,8 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   due_at_invalid: 'field',
   close_at_invalid: 'field',
   close_before_due: 'field',
+  // ตัวดูไฟล์ (P3-05; ตัวดูมากับ P3-08/P3-09): ครบงบเปิดดูของวัน/B2 เกินเพดาน — เปิดได้อีกครั้ง 07:00 น.
+  download_budget_reached: 'retry_later',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

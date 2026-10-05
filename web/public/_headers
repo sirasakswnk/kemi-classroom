@@ -1,9 +1,10 @@
 # Security headers ของ Cloudflare Pages — TECHNICAL_BUILD_PLAN ส่วน 6
 # __SUPABASE_ORIGIN__ ถูกแทนด้วย origin ของ VITE_SUPABASE_URL ตอน build (vite.config.ts)
 # เพื่อให้ connect-src อนุญาตเฉพาะ Supabase ของสภาพแวดล้อมนั้น (preview = kemi-dev, production = kemi-prod)
-# endpoint S3 ของ B2 (connect-src, img-src) เพิ่มในระยะ 3
+# endpoint S3 ของ B2 (dev และ prod ใช้ endpoint เดียวกัน) อยู่ใน connect-src: โหลดไฟล์ด้วย fetch แล้วแสดงเป็น blob: (P3-05)
+# และ PUT อัปโหลด (P3-06) — img-src ไม่ต้องเพิ่มเพราะตัวดูแสดงจาก blob:
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' blob: data:; connect-src 'self' __SUPABASE_ORIGIN__; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' blob: data:; connect-src 'self' __SUPABASE_ORIGIN__ https://s3.eu-central-003.backblazeb2.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
