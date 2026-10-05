@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: ปิด P3-03 บน branch `phase-3` — โค้ด, migration `0016` และฟังก์ชัน `uploads` บน kemi-dev เสร็จแล้ว **รอผู้ใช้:** ทำ `ops/b2/README.md` ขั้น 1–5 (สร้าง bucket, รัน `apply-settings.mjs`, สร้างกุญแจ `kemi-edge-dev`, ใส่ secrets 4 ตัวใน kemi-dev, รัน `proof.mjs`) แล้วส่งผลที่สคริปต์พิมพ์ → Claude จดผลพิสูจน์แล้วติ๊ก · ถัดไป P3-04 **[effort สูง]** · migration ถัดไปใช้ `0017_…`
+- งานถัดไป: ปิด P3-03 บน branch `phase-3` — โค้ด, migration `0016` และฟังก์ชัน `uploads` บน kemi-dev เสร็จแล้ว ขั้น 1–2 ของ `ops/b2/README.md` เสร็จแล้ว (bucket + CORS + lifecycle) **รอผู้ใช้:** ขั้น 3–5 (สร้างกุญแจ `kemi-edge-dev`, ใส่ secrets 4 ตัวใน kemi-dev, รัน `proof.mjs`) แล้วส่งผลที่สคริปต์พิมพ์ → Claude จดผลพิสูจน์แล้วติ๊ก · ถัดไป P3-04 **[effort สูง]** · migration ถัดไปใช้ `0017_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -16,7 +16,7 @@
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
 - รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
-- ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค eu-central-003 (S3 endpoint `https://s3.eu-central-003.backblazeb2.com`; bucket dev `kemi-dev-files` — รอยืนยันจาก `apply-settings.mjs`) · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
+- ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค eu-central-003 (S3 endpoint `https://s3.eu-central-003.backblazeb2.com`; bucket dev `kemi-dev-files` แบบ private ยืนยันแล้ว 5 ต.ค.) · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
 
 ## ระยะ 0 — เตรียมบริการ (ผู้ใช้เปิดบัญชีเอง Claude ช่วยเตรียม)
 
@@ -166,7 +166,14 @@
       - `isCapExceeded()` ตรวจ 403 + `cap exceeded`/`*_cap_exceeded`
       - มีรายงานว่าเพดานดาวน์โหลดกัน **CopyObject** ด้วย → ดูโน้ต P3-04
     - คำขอ B2 ที่ Claude ใช้: **0** (ทุกเทสต์ใช้ของจำลอง)
-    - เหลือ: ผู้ใช้ทำ `ops/b2/README.md` ขั้น 1–5 แล้วส่งผลที่ `apply-settings.mjs` และ `proof.mjs` พิมพ์ → Claude จดผลข้อ 18/9/10, PUT ไม่ตรงลายเซ็น, lifecycle แยก prefix (ข้อ 6), CORS wildcard แล้วติ๊กงานนี้
+    - **ผล `apply-settings.mjs` (ผู้ใช้รัน 5 ต.ค. 2026, Class C 6 คำขอ):**
+      - S3 endpoint ของบัญชี `https://s3.eu-central-003.backblazeb2.com` และ bucket `kemi-dev-files` เป็น `allPrivate` ✓
+      - B2 รับ CORS ที่มี origin แบบ `https://*.kemi-classroom.pages.dev` ✓ (พฤติกรรม preflight จริงพิสูจน์ใน `proof.mjs`)
+      - **BUILD_PLAN 13 ข้อ 6 พิสูจน์แล้ว:** lifecycle แยก `files/` กับ `staging/` ตั้งได้ตามแผน
+      - ค่าที่อ่านกลับ: B2 เติม `daysFromStartingToCancelingUnfinishedLargeFiles: null` เอง
+      - กุญแจชั่วคราว (`listBuckets`+`writeBuckets`) ลบแล้ว
+      - สคริปต์ขึ้นว่า CORS “ไม่ตรง” แต่เป็นการเตือนผิด: B2 เรียงลำดับใหม่และเก็บ exposeHeaders เป็นตัวเล็ก (`etag`) — แก้ตัวเทียบเป็น `ops/b2/rules.mjs` แล้ว (ไม่สนลำดับ/ตัวพิมพ์ เทียบเฉพาะคีย์ที่ส่ง) + เทสต์ด้วยค่าที่อ่านกลับจริง (`ops:test` ครอบโฟลเดอร์ย่อยแล้ว)
+    - เหลือ: ผู้ใช้ทำ `ops/b2/README.md` ขั้น 3–5 (กุญแจ `kemi-edge-dev`, secrets 4 ตัว, `proof.mjs`) แล้วส่งผล → Claude จดผลข้อ 18/9/10, PUT ไม่ตรงลายเซ็น, CORS preflight แล้วติ๊กงานนี้
 - [ ] P3-04 **[effort สูง]** `uploads` ขั้น complete (GET แบบ Range **ครั้งเดียว** ไม่ HEAD แยก: `staging_version_id` จาก `x-amz-version-id`, ขนาดจาก `Content-Range`, magic number จากไบต์ชุดเดียวกัน → CopyObject ระบุเวอร์ชัน → finalize) + ทดสอบกับ bucket dev
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** นับคำขอ Class B ของ complete ลงตัวนับรายวัน; B2 ปฏิเสธเพราะเกินเพดาน → `download_budget_reached` (ข้อความตอนส่งงานบอกให้ลองใหม่หลัง 07:00 น. ตาม UX 7.1)
     - จาก P3-03:

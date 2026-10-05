@@ -8,6 +8,7 @@
 // แตะเฉพาะ kemi-dev-files — bucket ใช้จริง (kemi-files) ตั้งในระยะ 7 ด้วยรายการ origin ของ production อย่างเดียว
 import { readFileSync } from 'node:fs'
 import { askSecret, authorize, call, DEV_BUCKET, printCounts } from './b2-native.mjs'
+import { sameRules } from './rules.mjs'
 
 const here = (name) => new URL(name, import.meta.url)
 const corsRules = JSON.parse(readFileSync(here('cors.json'), 'utf8'))
@@ -58,9 +59,11 @@ async function main() {
     console.log(JSON.stringify(updated.corsRules, null, 2))
     console.log('\nLifecycle ที่ตั้งแล้ว (อ่านกลับจาก B2):')
     console.log(JSON.stringify(updated.lifecycleRules, null, 2))
-    const sameCors = JSON.stringify(updated.corsRules) === JSON.stringify(corsRules)
+    const sameCors = sameRules(corsRules, updated.corsRules, 'corsRuleName')
+    const sameLifecycle = sameRules(lifecycleRules, updated.lifecycleRules, 'fileNamePrefix')
     const prefixes = (updated.lifecycleRules ?? []).map((r) => r.fileNamePrefix).sort()
     console.log(`\nCORS ตรงกับ cors.json: ${sameCors ? 'ใช่' : 'ไม่ตรง (ดูด้านบน)'}`)
+    console.log(`lifecycle ตรงกับ lifecycle.json: ${sameLifecycle ? 'ใช่' : 'ไม่ตรง (ดูด้านบน)'}`)
     console.log(`lifecycle แยก prefix: ${prefixes.join(' , ') || '-'}`)
   } finally {
     await call(master, 'b2_delete_key', { applicationKeyId: temp.applicationKeyId })
