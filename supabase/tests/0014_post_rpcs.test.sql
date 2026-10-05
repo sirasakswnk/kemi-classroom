@@ -77,7 +77,7 @@ insert into res values ('hw', public.create_post('7f000000-0000-4000-8000-000000
   pg_temp.hw('{"title": "  งานสมดุลเคมี  ", "body": "\n  ข้อ 1–5 H₂ + I₂ ⇌ 2HI \n\n"}'), 'a1000000-0000-4000-8000-000000000001'));
 select is((select body - 'post_id' - 'published_at' from res where label = 'hw'),
   '{"classroom_id": "7f000000-0000-4000-8000-000000000001", "kind": "homework", "title": "งานสมดุลเคมี",
-    "body": "ข้อ 1–5 H₂ + I₂ ⇌ 2HI", "version": 1,
+    "body": "ข้อ 1–5 H₂ + I₂ ⇌ 2HI", "version": 1, "files": [],
     "assignment": {"full_score": 10, "late_penalty_pct": 30, "reward_tokens": 2, "due_at": "2026-11-10T13:00:00+00:00",
                    "close_at": "2026-11-17T13:00:00+00:00", "accept_after_solution": true}}'::jsonb,
   'การบ้าน: ตัดช่องว่างหัวท้ายชื่อและรายละเอียด (ตัวห้อยเป็นอักขระ Unicode) เก็บกำหนดส่ง/ปิดรับเป็น UTC');
