@@ -61,7 +61,7 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
       # CSP ใน dist/_headers ต้องถูกแทนค่าแล้วและไม่เปิด inline/eval
       - run: |
-          grep -q "connect-src 'self' https://example.supabase.co;" dist/_headers
+          grep -q "connect-src 'self' https://example.supabase.co https://s3.eu-central-003.backblazeb2.com;" dist/_headers
           ! grep -qE "__SUPABASE_ORIGIN__|unsafe-inline|unsafe-eval" dist/_headers
 
   db:
