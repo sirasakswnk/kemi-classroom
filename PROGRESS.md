@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: P3-06 โมดูลอัปโหลดฝั่งเว็บ บน branch `phase-3` (P3-05 เสร็จ 5 ต.ค. 2026: `0018_files_sign` + ฟังก์ชัน `files` บน kemi-dev) · **รอผู้ใช้:** ให้ Claude app เพิ่มแถว 6h `0018_files_sign.sql` ใน BUILD_PLAN 4.2 และตัดสินเรื่องผู้ดูแลนอกโหมดผู้ดูแล (ดูโน้ต P3-05) · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0019_…`
+- งานถัดไป: P3-06a โมดูลอัปโหลดฝั่งเว็บ + ช่องไฟล์ T02 บน branch `phase-3` (P3-05 เสร็จ 5 ต.ค. 2026: `0018_files_sign` + ฟังก์ชัน `files` บน kemi-dev) · เอกสาร P3-04/P3-05 commit แล้ว (ผู้ดูแลเปิดไฟล์ไม่ต้องใช้โหมด — ผู้ใช้ตัดสิน 5 ต.ค.) · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0019_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -252,13 +252,14 @@
         - vitest 15 ข้อ (รวม 194) · lint/typecheck/format/build ผ่าน
     - ค่าที่เลือกเอง / ต่างจากเอกสาร:
       - ไม่เกิน 20 ไฟล์ต่อคำขอ และ 120 ครั้ง/10 นาทีต่อบัญชี (`private.files_sign_limits()`)
-      - ผู้ดูแลเปิดไฟล์ได้โดยไม่ต้องอยู่ในโหมดผู้ดูแล ตาม RLS อ่าน (`can_teach_classroom`) — TECHNICAL_DESIGN 10 แถว `/files/sign` เขียนว่า “เมื่ออยู่ในโหมดผู้ดูแล” **รอผู้ใช้ตัดสิน**
+      - ผู้ดูแลเปิดไฟล์ได้โดยไม่ต้องอยู่ในโหมดผู้ดูแล ตาม RLS อ่าน (`can_teach_classroom`) — ผู้ใช้ตัดสิน 5 ต.ค. 2026: ถูกต้อง (โหมดผู้ดูแลบังคับเฉพาะคำสั่งเขียน หน้าเว็บแสดงไฟล์ให้ผู้ดูแลเฉพาะในโหมดผู้ดูแล; TECHNICAL_DESIGN 10 แก้แล้ว)
       - เพดานครั้งนับก่อนตรวจสิทธิ์ (กันไล่เดา id); ไฟล์ copying/deleting ไม่มีใครเปิดได้ (ตอบเหมือนไม่มีสิทธิ์)
       - งบนับตอนออกลิงก์ทุกครั้ง แม้เบราว์เซอร์จะใช้แคช (นับเกินดีกว่านับขาด)
-      - BUILD_PLAN 4.2 ยังไม่มีแถว `0018_files_sign.sql` (Claude app เพิ่ม)
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ก่อนออกลิงก์เปิดดูทุกครั้งตรวจและนับงบดาวน์โหลดรายวัน (ไบต์จากขนาดใน assets + จำนวนคำขอ; ครบงบตอบ `download_budget_reached` — ค่าเริ่มต้นเสนอ 750 MB หรือ 1,800 คำขอ เหลือส่วนให้การส่งงานและสำรอง); ลิงก์ใส่ `response-cache-control: private, max-age=600`; หน้าเว็บแคชลิงก์ที่ลงลายเซ็นตลอดอายุลิงก์ (TanStack Query) และตัวดูโหลดเฉพาะไฟล์ที่กำลังดู ไม่โหลดล่วงหน้า; เพิ่ม `download_budget_reached` ใน `ERROR_CODES`/`th.errors`
     - ตัวนับรายวันทำแล้วใน P3-04: ตาราง `b2_daily_usage` (วัน UTC × แหล่ง) + ค่างบ `daily_view_budget_bytes` (750,000,000) / `daily_view_budget_requests` (1,800) ใน `storage_settings` — P3-05 เพิ่ม RPC ของ service_role ที่ “ตรวจงบ + นับ” แหล่ง `view` ในคำสั่งเดียว (ล็อกแถวตัวนับ) แล้วใช้กับ `files`; `record_b2_usage` ใช้นับเฉยๆ ไม่ตรวจงบ
-- [ ] P3-06 โมดูลอัปโหลดฝั่งเว็บ (ตรวจไฟล์, HEIC, ย่อรูป, PUT แสดงความคืบหน้า) + unit test
+- P3-06 อัปโหลดไฟล์โจทย์/ประกาศ (แตกเป็น 2 งาน 5 ต.ค. 2026 — โน้ตด้านล่างใช้ร่วมกัน)
+  - [ ] P3-06a โมดูลอัปโหลดฝั่งเว็บ (ตรวจไฟล์ J4–J6, HEIC → JPEG, ย่อรูป ≤ 2 MB, batch → PUT แสดงความคืบหน้า → complete) + ช่องไฟล์ใน T02 (ซ่อนหลัง flag โหมดพัฒนาจนกว่า P3-06b เสร็จ) + unit test + Playwright 390/768/1024 px
+  - [ ] P3-06b **[effort สูง]** `create_post`/`update_post` รับรายการ asset ผูกเป็นไฟล์โจทย์/ประกาศ: asset เป็นของผู้เรียก ready วัตถุประสงค์ตรง ยังไม่ผูกที่อื่น; J6 รวม ≤ 10 ไฟล์/20 MB; เอาไฟล์ออก = เลิกผูก (งานลบ asset ที่ไม่มีแถวผูกใน P3-10 จัดการ); เปลี่ยนไฟล์ขยับ `content_updated_at` (N1/N2); ประกาศต้องมีข้อความหรือไฟล์อย่างน้อยหนึ่งอย่าง; เปิดช่องไฟล์ใน T02 (เอา flag ออก)
     - จากเอกสาร 5 ต.ค. 2026 (UX 9): ไฟล์โจทย์/เฉลยรวมเกิน 5 MB แสดงคำแนะนำใต้รายการไฟล์ (ไม่บล็อก) เรื่องโควตาดาวน์โหลดรายวัน
     - จาก P3-03:
       - ~~เพิ่ม endpoint B2 ใน CSP `connect-src`~~ ทำแล้วใน P3-05 (PUT ใช้ connect-src เดียวกัน)
