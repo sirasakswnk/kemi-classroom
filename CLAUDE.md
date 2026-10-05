@@ -77,7 +77,7 @@
   - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/*.test.sql` คู่กับ migration ทุกไฟล์ — ขั้นตอน: `db:reset` → `db:test` (ในเครื่อง) ผ่านแล้วค่อย `db:push` → `db:test:dev`
     - รูปแบบไฟล์: `begin; set local role postgres; create extension if not exists pgtap with schema extensions; set local search_path = extensions, public; select plan(N); … select * from finish(); rollback;` (บน cloud CLI ต่อด้วย role ชั่วคราวที่ไม่สืบทอดสิทธิ์ postgres จึงต้อง `set local role postgres`; CLI ลบ pgtap ทิ้งเองหลังรัน)
     - เทสต์ที่พึ่งของเฉพาะ cloud (เช่น `public.rls_auto_enable()`) ใช้ `skip()` เมื่อไม่มีในเครื่อง
-    - **รายชื่อฟังก์ชันที่เรียกได้:** `supabase/tests/function_privileges.test.sql` เทียบทุกฟังก์ชันใน `public`/`private` ทุก overload — **ทุก RPC หรือฟังก์ชันใหม่ที่ GRANT EXECUTE ให้ `authenticated` ต้องเพิ่ม signature เต็ม (เช่น `public.commit_roster_import(text,jsonb,uuid,boolean)`) ในรายการนี้ใน commit เดียวกับ migration**; `anon` และ `PUBLIC` ต้องเรียกฟังก์ชันใน `public`/`private` ไม่ได้เลย
+    - **รายชื่อฟังก์ชันที่เรียกได้:** `supabase/tests/function_privileges.test.sql` เทียบทุกฟังก์ชันใน `public`/`private` ทุก overload — **ทุก RPC หรือฟังก์ชันใหม่ที่ GRANT EXECUTE ให้ `authenticated` ต้องเพิ่ม signature เต็ม (เช่น `public.commit_roster_import(text,jsonb,uuid,boolean)`) ในรายการนี้ใน commit เดียวกับ migration**; RPC ที่ GRANT ให้เฉพาะ `service_role` (Edge Function เขียนข้อมูลที่ระบบเชื่อ) ต้องเพิ่มในรายการของ `service_role` ในไฟล์เดียวกันเช่นกัน; `anon` และ `PUBLIC` ต้องเรียกฟังก์ชันใน `public`/`private` ไม่ได้เลย
 
 ## 7. เกณฑ์ “งานเสร็จ”
 
