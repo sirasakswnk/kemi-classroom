@@ -1,5 +1,5 @@
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+import { queryOptions, useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { RequestError } from './request'
 import { supabase, toAppError, type AppError } from './supabase'
 import { z } from './zod'
@@ -97,6 +97,22 @@ const retryUnknownOnce = (count: number, error: unknown) =>
   count < 1 && error instanceof RequestError && error.appError.code === 'unknown'
 
 /**
+ * ตัวเลือก query ของลิงก์ไฟล์หนึ่งไฟล์ในโหมดหนึ่ง — ใช้ทั้ง useSignedFile และ queryClient.fetchQuery (ขอเมื่อกดปุ่ม)
+ * จึงใช้แคชเดียวกัน: กดเปิดซ้ำภายในอายุลิงก์ไม่ขอใหม่และไม่นับงบเพิ่ม
+ */
+export const signedFileOptions = (assetId: string, mode: FileMode) =>
+  queryOptions<SignedFile, RequestError, SignedFile, ReturnType<typeof signedFileKey>>({
+    queryKey: signedFileKey(assetId, mode),
+    queryFn: async () => (await signFiles([assetId], mode))[0],
+    staleTime: (query) => linkFreshMs(query.state.data, Date.now()),
+    // ลบจากแคชเมื่อพ้นอายุลิงก์ (ลิงก์ใช้ไม่ได้แล้ว)
+    gcTime: 600_000,
+    retry: retryUnknownOnce,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
+
+/**
  * ลิงก์ของไฟล์หนึ่งไฟล์ในโหมดหนึ่ง — ส่ง enabled = false จนกว่าจะเปิดไฟล์นั้นจริง (ไม่โหลดล่วงหน้า)
  * ข้อผิดพลาดเป็น RequestError (เช่น download_budget_reached, forbidden)
  */
@@ -105,17 +121,7 @@ export function useSignedFile(
   mode: FileMode,
   enabled = true,
 ): UseQueryResult<SignedFile, RequestError> {
-  return useQuery<SignedFile, RequestError>({
-    queryKey: signedFileKey(assetId, mode),
-    queryFn: async () => (await signFiles([assetId], mode))[0],
-    enabled,
-    staleTime: (query) => linkFreshMs(query.state.data, Date.now()),
-    // ลบจากแคชเมื่อพ้นอายุลิงก์ (ลิงก์ใช้ไม่ได้แล้ว)
-    gcTime: 600_000,
-    retry: retryUnknownOnce,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  })
+  return useQuery({ ...signedFileOptions(assetId, mode), enabled })
 }
 
 // ---------------------------------------------------------------------------

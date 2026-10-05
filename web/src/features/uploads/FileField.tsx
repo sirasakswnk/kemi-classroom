@@ -1,10 +1,25 @@
-import { FileText, Image as ImageIcon, Paperclip, RotateCcw, TriangleAlert, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  FileText,
+  Image as ImageIcon,
+  Paperclip,
+  RotateCcw,
+  TriangleAlert,
+  X,
+} from 'lucide-react'
 import { useId, useRef, useState, type ChangeEvent } from 'react'
 import { th } from '../../copy/th'
 import { cx } from '../../lib/cx'
 import { Button, Modal } from '../../ui'
 import { ACCEPT, formatBytes } from './rules'
-import { useFileField, type FileFieldTarget, type FileItem } from './useFileField'
+import type { AttachmentRef } from './AttachmentList'
+import {
+  useFileField,
+  type FileFieldState,
+  type FileFieldTarget,
+  type FileItem,
+} from './useFileField'
 import styles from './uploads.module.css'
 
 // ช่องไฟล์ของ T02 (ไฟล์โจทย์/ไฟล์แนบ) — UX_DESIGN 9 และแบบ v2 (.file-chip): ป้ายจำนวน/เพดาน, แถวไฟล์
@@ -13,17 +28,21 @@ import styles from './uploads.module.css'
 export function FileField({
   kind,
   target,
-  onAssetsChange,
-  note,
+  initial,
+  onChange,
+  error,
 }: {
   kind: 'homework' | 'announcement'
   target: FileFieldTarget
-  onAssetsChange?: (assetIds: string[]) => void
-  /** ข้อความเล็กใต้ป้าย (เช่นบอกว่าเป็นช่องทดลอง) */
-  note?: string
+  /** ไฟล์เดิมของโพสต์ (โหมดแก้ไข) — เปลี่ยนชุดเริ่มต้นให้ remount ด้วย key */
+  initial?: AttachmentRef[]
+  onChange?: (state: FileFieldState) => void
+  /** ข้อความผิดพลาดจากเซิร์ฟเวอร์ของทั้งช่อง (post_file_unavailable, too_many_files, batch_too_large) */
+  error?: string
 }) {
   const copy = th.uploads
-  const field = useFileField(target, onAssetsChange)
+  const field = useFileField(target, { initial, onChange })
+  const errorId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const labelId = useId()
   const [preview, setPreview] = useState<FileItem | null>(null)
@@ -36,23 +55,36 @@ export function FileField({
   }
 
   return (
-    <div className={styles.group} role="group" aria-labelledby={labelId}>
+    <div
+      className={styles.group}
+      role="group"
+      aria-labelledby={labelId}
+      aria-describedby={error ? errorId : undefined}
+    >
       <span id={labelId} className={styles.label}>
         {copy.label[kind]} <span className={styles.meta}>{copy.meta(field.count)}</span>
       </span>
-      {note && <p className={styles.note}>{note}</p>}
       {field.items.length > 0 && (
         <ul className={styles.rows}>
-          {field.items.map((item) => (
+          {field.items.map((item, index) => (
             <FileRow
               key={item.id}
               item={item}
+              first={index === 0}
+              last={index === field.items.length - 1}
               onPreview={() => setPreview(item)}
               onRetry={() => field.retry(item.id)}
               onRemove={() => field.remove(item.id)}
+              onMove={(delta) => field.move(item.id, delta)}
             />
           ))}
         </ul>
+      )}
+      {error && (
+        <p id={errorId} className={styles.error} role="alert">
+          <TriangleAlert aria-hidden="true" />
+          <span>{error}</span>
+        </p>
       )}
       {field.largeSet && (
         <p className={styles.hint} role="note">
@@ -119,19 +151,25 @@ function statusText(item: FileItem): string {
 
 function FileRow({
   item,
+  first,
+  last,
   onPreview,
   onRetry,
   onRemove,
+  onMove,
 }: {
   item: FileItem
+  first: boolean
+  last: boolean
   onPreview: () => void
   onRetry: () => void
   onRemove: () => void
+  onMove: (delta: -1 | 1) => void
 }) {
   const copy = th.uploads
   const pdf = item.kind === 'pdf'
-  const size = item.prepared?.blob.size ?? item.original.size
-  const resized = item.prepared?.converted && item.original.size !== item.prepared.blob.size
+  const size = item.prepared?.blob.size ?? item.sizeBytes
+  const resized = item.prepared?.converted && item.sizeBytes !== item.prepared.blob.size
   const status = statusText(item)
   const errorId = useId()
   return (
@@ -154,7 +192,7 @@ function FileRow({
         <b>{item.name}</b>
         <small>
           {pdf ? copy.kindPdf : copy.kindImage} · {formatBytes(size)}
-          {resized && ` (${copy.resized(formatBytes(item.original.size))})`}
+          {resized && ` (${copy.resized(formatBytes(item.sizeBytes))})`}
           {status && (
             <span className={styles.status} aria-live="polite">
               {' · '}
@@ -175,6 +213,28 @@ function FileRow({
         )}
       </span>
       <span className={styles.rowActions}>
+        {!(first && last) && (
+          <span className={styles.moveBtns}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              disabled={first}
+              onClick={() => onMove(-1)}
+              aria-label={copy.moveUp(item.name)}
+            >
+              <ArrowUp aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              disabled={last}
+              onClick={() => onMove(1)}
+              aria-label={copy.moveDown(item.name)}
+            >
+              <ArrowDown aria-hidden="true" />
+            </button>
+          </span>
+        )}
         {item.status === 'error' && item.retryable && (
           <Button variant="soft" size="sm" icon={<RotateCcw />} onClick={onRetry}>
             {copy.retry}

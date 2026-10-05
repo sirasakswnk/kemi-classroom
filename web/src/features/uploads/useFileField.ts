@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { th } from '../../copy/th'
 import type { AppError } from '../../lib/supabase'
+import type { AttachmentRef } from './AttachmentList'
 import { completeUpload, putFile, requestBatch, type UploadPurpose } from './api'
 import { PrepareError, prepareFile, type PreparedFile } from './image'
 import {
@@ -19,8 +20,11 @@ export type FileStatus = 'preparing' | 'waiting' | 'uploading' | 'completing' | 
 
 export interface FileItem {
   id: string
-  original: File
+  /** ไฟล์ที่เลือกจากเครื่อง — null = ไฟล์เดิมของโพสต์ (โหมดแก้ไข) */
+  original: File | null
   kind: SourceKind | null
+  /** ขนาดที่แสดง: ไฟล์ต้นฉบับ/ไฟล์เดิม (ขนาดหลังเตรียมอยู่ใน prepared) */
+  sizeBytes: number
   /** ชื่อที่แสดง: ชื่อที่จะส่ง (หลังเปลี่ยนนามสกุล) เมื่อเตรียมแล้ว */
   name: string
   status: FileStatus
@@ -67,14 +71,49 @@ function uploadMessage(error: AppError): { text: string; retryable: boolean } {
 
 /** ไฟล์ที่นับรวมในชุด (ไม่นับไฟล์ที่ผิดพลาดตอนตรวจ/เตรียม) */
 const counted = (item: FileItem) => item.status !== 'error' || item.retryable
-const bytesOf = (item: FileItem) => item.prepared?.blob.size ?? 0
+const bytesOf = (item: FileItem) => item.prepared?.blob.size ?? (item.original ? 0 : item.sizeBytes)
+
+/** สถานะที่ฟอร์มใช้: ไฟล์ที่พร้อมผูกตามลำดับ และยังมีไฟล์ที่ทำไม่เสร็จ/ผิดพลาดหรือไม่ */
+export interface FileFieldState {
+  assetIds: string[]
+  busy: boolean
+  hasErrors: boolean
+}
+
+const kindOfType = (type: string): SourceKind =>
+  type === 'application/pdf' ? 'pdf' : type === 'image/png' ? 'png' : 'jpeg'
+
+/** ไฟล์เดิมของโพสต์ (โหมดแก้ไข) เป็นแถวที่อัปโหลดเสร็จแล้ว */
+export function existingItems(files: AttachmentRef[]): FileItem[] {
+  return files.map((f) => ({
+    id: f.asset_id,
+    original: null,
+    kind: kindOfType(f.content_type),
+    sizeBytes: f.size_bytes,
+    name: f.file_name,
+    status: 'done',
+    progress: 1,
+    retryable: false,
+    assetId: f.asset_id,
+  }))
+}
+
+/** ย้ายแถวขึ้น/ลงหนึ่งตำแหน่ง (ไม่มีที่ไปให้คืนรายการเดิม) */
+export function moveItem<T extends { id: string }>(list: T[], id: string, delta: -1 | 1): T[] {
+  const from = list.findIndex((x) => x.id === id)
+  const to = from + delta
+  if (from < 0 || to < 0 || to >= list.length) return list
+  const next = [...list]
+  ;[next[from], next[to]] = [next[to], next[from]]
+  return next
+}
 
 export function useFileField(
   target: FileFieldTarget,
-  onAssetsChange?: (assetIds: string[]) => void,
+  options: { initial?: AttachmentRef[]; onChange?: (state: FileFieldState) => void } = {},
   deps: UploadDeps = defaultUploadDeps,
 ) {
-  const [items, setItems] = useState<FileItem[]>([])
+  const [items, setItems] = useState<FileItem[]>(() => existingItems(options.initial ?? []))
   const itemsRef = useRef(items)
   const controllers = useRef(new Map<string, AbortController>())
   const targetRef = useRef(target)
@@ -108,14 +147,23 @@ export function useFileField(
   const doneIds = items
     .filter((x) => x.status === 'done' && x.assetId)
     .map((x) => x.assetId as string)
-  const doneKey = doneIds.join(',')
-  const onChangeRef = useRef(onAssetsChange)
+  const busy = items.some((x) =>
+    ['preparing', 'waiting', 'uploading', 'completing'].includes(x.status),
+  )
+  const hasErrors = items.some((x) => x.status === 'error')
+  const stateKey = `${doneIds.join(',')}|${busy}|${hasErrors}`
+  const onChangeRef = useRef(options.onChange)
   useEffect(() => {
-    onChangeRef.current = onAssetsChange
+    onChangeRef.current = options.onChange
   })
   useEffect(() => {
-    onChangeRef.current?.(doneKey ? doneKey.split(',') : [])
-  }, [doneKey])
+    const [ids, b, e] = stateKey.split('|')
+    onChangeRef.current?.({
+      assetIds: ids ? ids.split(',') : [],
+      busy: b === 'true',
+      hasErrors: e === 'true',
+    })
+  }, [stateKey])
 
   const upload = useCallback(
     async (ids: string[]) => {
@@ -184,6 +232,7 @@ export function useFileField(
           id: crypto.randomUUID(),
           original: file,
           kind,
+          sizeBytes: file.size,
           name: file.name,
           status: 'preparing',
           progress: 0,
@@ -208,7 +257,7 @@ export function useFileField(
       // เตรียมทีละไฟล์ (รูปใหญ่หลายรูปพร้อมกันทำให้หน่วยความจำมือถือเต็ม)
       const ready: string[] = []
       for (const item of added) {
-        if (item.status !== 'preparing' || !item.kind) continue
+        if (item.status !== 'preparing' || !item.kind || !item.original) continue
         if (!itemsRef.current.some((x) => x.id === item.id)) continue
         let prepared: PreparedFile
         try {
@@ -268,6 +317,11 @@ export function useFileField(
     [upload],
   )
 
+  const move = useCallback(
+    (id: string, delta: -1 | 1) => commit((list) => moveItem(list, id, delta)),
+    [commit],
+  )
+
   const cancelAll = useCallback(() => {
     // ยกเลิกเฉพาะไฟล์ที่ยังส่งไม่จบ — ไฟล์ที่ขึ้นไปแล้วกำลังบันทึก (complete) ปล่อยให้จบ
     for (const item of itemsRef.current) {
@@ -286,12 +340,14 @@ export function useFileField(
     totalBytes,
     full: activeItems.length >= UPLOAD_LIMITS.maxFiles,
     largeSet: totalBytes > UPLOAD_LIMITS.largeSetHintBytes,
-    busy: items.some((x) => ['preparing', 'waiting', 'uploading', 'completing'].includes(x.status)),
+    busy,
+    hasErrors,
     uploading: items.some((x) => x.status === 'uploading'),
     assetIds: doneIds,
     add,
     remove,
     retry,
+    move,
     cancelAll,
   }
 }

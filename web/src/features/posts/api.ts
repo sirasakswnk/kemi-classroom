@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { run } from '../../lib/request'
 import { supabase } from '../../lib/supabase'
 import { z } from '../../lib/zod'
+import type { AttachmentRef } from '../uploads/AttachmentList'
 import type { EditablePost, PostPayload, UpdatePayload } from './postForm'
 
 // โพสต์ของห้อง (T08/S02) อ่านตาราง posts + assignments ผ่าน RLS (0010_posts): ครูเจ้าของห้อง/ผู้ดูแล หรือสมาชิกขณะนี้
@@ -18,6 +19,37 @@ const AssignmentSchema = z.object({
 
 export type Assignment = z.infer<typeof AssignmentSchema>
 
+// ไฟล์โจทย์/ไฟล์แนบ (0019_post_files) — RLS: attachments ตามสิทธิ์อ่านโพสต์, assets เปิดเฉพาะชื่อ/ชนิด/ขนาด
+const AttachmentRowSchema = z.object({
+  position: z.number().int(),
+  assets: z
+    .object({
+      id: z.uuid(),
+      file_name: z.string(),
+      content_type: z.string(),
+      size_bytes: z.number().int(),
+    })
+    .nullable(),
+})
+const ATTACHMENTS_SELECT = 'attachments(position, assets(id, file_name, content_type, size_bytes))'
+
+function filesOf(rows: z.infer<typeof AttachmentRowSchema>[]): AttachmentRef[] {
+  return [...rows]
+    .sort((a, b) => a.position - b.position)
+    .flatMap((r) =>
+      r.assets
+        ? [
+            {
+              asset_id: r.assets.id,
+              file_name: r.assets.file_name,
+              content_type: r.assets.content_type,
+              size_bytes: r.assets.size_bytes,
+            },
+          ]
+        : [],
+    )
+}
+
 const PostRowSchema = z
   .object({
     id: z.uuid(),
@@ -28,8 +60,13 @@ const PostRowSchema = z
     content_updated_at: z.string().nullable(),
     // assignments.post_id เป็นทั้ง PK และ FK → PostgREST คืนเป็นวัตถุเดียว (หรือ null สำหรับประกาศ)
     assignments: AssignmentSchema.nullable(),
+    attachments: z.array(AttachmentRowSchema),
   })
-  .transform(({ assignments, ...post }) => ({ ...post, assignment: assignments }))
+  .transform(({ assignments, attachments, ...post }) => ({
+    ...post,
+    assignment: assignments,
+    files: filesOf(attachments),
+  }))
 
 export type Post = z.infer<typeof PostRowSchema>
 
@@ -42,10 +79,11 @@ export const postsQuery = (classroomId: string) =>
         supabase
           .from('posts')
           .select(
-            'id, kind, title, body, published_at, content_updated_at, assignments(full_score, late_penalty_pct, reward_tokens, due_at, close_at, accept_after_solution)',
+            `id, kind, title, body, published_at, content_updated_at, assignments(full_score, late_penalty_pct, reward_tokens, due_at, close_at, accept_after_solution), ${ATTACHMENTS_SELECT}`,
           )
           .eq('classroom_id', classroomId)
-          .order('published_at', { ascending: false }),
+          .order('published_at', { ascending: false })
+          .order('position', { referencedTable: 'attachments' }),
         z.array(PostRowSchema),
       ),
   })
@@ -91,9 +129,11 @@ const EditableRowSchema = z
       // solutions.assignment_id เป็นทั้ง PK และ FK → วัตถุเดียวหรือ null (RLS: ครูเห็นเฉลยทุกสถานะ)
       solutions: z.object({ published_at: z.string().nullable() }).nullable(),
     }).nullable(),
+    attachments: z.array(AttachmentRowSchema),
   })
-  .transform(({ assignments, ...post }): EditablePost => ({
+  .transform(({ assignments, attachments, ...post }): EditablePost => ({
     ...post,
+    files: filesOf(attachments),
     assignment: assignments && {
       full_score: assignments.full_score,
       late_penalty_pct: assignments.late_penalty_pct,
@@ -116,7 +156,7 @@ export const editablePostQuery = (postId: string) =>
         supabase
           .from('posts')
           .select(
-            'id, classroom_id, kind, title, body, version, published_at, content_updated_at, assignments(full_score, late_penalty_pct, reward_tokens, due_at, close_at, accept_after_solution, reward_locked_at, full_score_locked_at, solutions(published_at))',
+            `id, classroom_id, kind, title, body, version, published_at, content_updated_at, assignments(full_score, late_penalty_pct, reward_tokens, due_at, close_at, accept_after_solution, reward_locked_at, full_score_locked_at, solutions(published_at)), ${ATTACHMENTS_SELECT}`,
           )
           .eq('id', postId)
           .maybeSingle(),

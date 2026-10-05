@@ -20,7 +20,7 @@ import { appErrorOf } from '../../lib/request'
 import { bangkokToUtcIso, thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Card, Chip, Field, Input, Stepper, Textarea, useToast } from '../../ui'
 import { FileField } from '../uploads/FileField'
-import { FILE_FIELD_ENABLED } from '../uploads/flags'
+import type { FileFieldState } from '../uploads/useFileField'
 import type { Classroom } from '../classrooms/api'
 import { createPost, updatePost } from './api'
 import {
@@ -81,6 +81,12 @@ export function PostEditor({
   const [formError, setFormError] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
   const [staleDraft, setStaleDraft] = useState<string | null>(null)
+  // ช่องไฟล์: asset ที่อัปโหลดเสร็จตามลำดับ + ยังอัปโหลดอยู่/มีแถวผิดพลาดหรือไม่ (โพสต์ได้เมื่อเสร็จทุกแถว)
+  const [files, setFiles] = useState<FileFieldState>(() => ({
+    assetIds: mode.kind === 'edit' ? mode.post.files.map((f) => f.asset_id) : [],
+    busy: false,
+    hasErrors: false,
+  }))
   const titleRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const fullScoreRef = useRef<HTMLInputElement>(null)
@@ -202,7 +208,13 @@ export function PostEditor({
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (pending) return
-    const result = validatePostForm(shown)
+    if (files.busy) return
+    if (files.hasErrors) {
+      setErrors((x) => ({ ...x, files: th.uploads.fixErrors }))
+      setFormError(null)
+      return
+    }
+    const result = validatePostForm(shown, files.assetIds)
     const messages = Object.fromEntries(
       Object.entries(result.errors).map(([field, code]) => [field, th.errors[code]]),
     ) as Partial<Record<PostField, string>>
@@ -328,18 +340,26 @@ export function PostEditor({
             />
           </Field>
 
-          {FILE_FIELD_ENABLED && (
-            <FileField
-              kind={shown.kind}
-              target={{
-                purpose: 'post',
-                classroomId: c.id,
-                postId: base?.id ?? null,
-                adminMode,
-              }}
-              note={th.uploads.devOnly}
-            />
-          )}
+          <FileField
+            // โหลดข้อมูลล่าสุด (stale) = เริ่มชุดไฟล์ใหม่จากเซิร์ฟเวอร์
+            key={base ? `${base.id}:${base.version}` : 'new'}
+            kind={shown.kind}
+            target={{
+              purpose: 'post',
+              classroomId: c.id,
+              postId: base?.id ?? null,
+              adminMode,
+            }}
+            initial={base?.files}
+            onChange={(state) => {
+              setFiles(state)
+              if (errors.files) setErrors((x) => ({ ...x, files: undefined }))
+              // ประกาศ: แนบไฟล์แล้วข้อความว่างได้
+              if (errors.body && state.assetIds.length > 0)
+                setErrors((x) => ({ ...x, body: undefined }))
+            }}
+            error={errors.files}
+          />
 
           {homework ? (
             <>
@@ -533,15 +553,17 @@ export function PostEditor({
             <Link to={roomTab(shown.kind)} className={styles.ghostLink}>
               {copy.cancel}
             </Link>
-            <button type="submit" className={styles.submit} disabled={pending}>
+            <button type="submit" className={styles.submit} disabled={pending || files.busy}>
               {editing ? <Check aria-hidden="true" /> : <Send aria-hidden="true" />}
-              {editing
-                ? updateMutation.isPending
-                  ? editCopy.submitting
-                  : editCopy.submit
-                : createMutation.isPending
-                  ? copy.submitting
-                  : copy.submit[shown.kind]}
+              {files.busy
+                ? th.uploads.waitUpload
+                : editing
+                  ? updateMutation.isPending
+                    ? editCopy.submitting
+                    : editCopy.submit
+                  : createMutation.isPending
+                    ? copy.submitting
+                    : copy.submit[shown.kind]}
             </button>
           </div>
         </form>

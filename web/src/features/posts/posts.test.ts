@@ -113,6 +113,7 @@ describe('ตรวจฟอร์ม T02', () => {
         kind: 'homework',
         title: 'การคำนวณ Kc',
         body: null,
+        files: [],
         full_score: 10,
         late_penalty_pct: 50,
         reward_tokens: 1,
@@ -131,8 +132,18 @@ describe('ตรวจฟอร์ม T02', () => {
     }
     expect(validatePostForm(form)).toEqual({
       errors: {},
-      payload: { kind: 'announcement', title: 'นัดสอบ', body: 'วันศุกร์\nคาบ 3' },
+      payload: { kind: 'announcement', title: 'นัดสอบ', body: 'วันศุกร์\nคาบ 3', files: [] },
     })
+  })
+
+  it('ไฟล์ส่งเป็นรายการ asset id ตามลำดับ · ประกาศมีแต่ไฟล์ไม่มีข้อความได้ (0019)', () => {
+    const ann = { ...defaultPostForm('announcement', now), title: 'ใบงาน', body: '  ' }
+    expect(validatePostForm(ann, ['a2', 'a1'])).toEqual({
+      errors: {},
+      payload: { kind: 'announcement', title: 'ใบงาน', body: null, files: ['a2', 'a1'] },
+    })
+    expect(validatePostForm(ann, []).errors.body).toBe('post_body_required')
+    expect(validatePostForm(homework({}), ['a1']).payload).toMatchObject({ files: ['a1'] })
   })
 
   it('ชื่อว่าง/ยาวเกิน และประกาศไม่มีข้อความ', () => {
@@ -229,6 +240,7 @@ describe('โหมดแก้ไข (N2)', () => {
     id: 'p1',
     classroom_id: 'c1',
     kind: 'homework',
+    files: [],
     title: 'การคำนวณ Kc',
     body: 'H₂O',
     version: 3,
@@ -312,6 +324,7 @@ describe('โหมดแก้ไข (N2)', () => {
       late_penalty_pct: 30,
       reward_tokens: 2,
       accept_after_solution: true,
+      files: [],
     })
     const ann = validatePostForm({
       ...defaultPostForm('announcement'),
@@ -322,10 +335,13 @@ describe('โหมดแก้ไข (N2)', () => {
       kind: 'announcement',
       title: 'ประกาศ',
       body: 'ข้อความ',
+      files: [],
     })
   })
 
   it('รหัสจากเซิร์ฟเวอร์ชี้ไปช่องที่ถูกต้อง', () => {
+    expect(SERVER_FIELD.post_file_unavailable).toBe('files')
+    expect(SERVER_FIELD.batch_too_large).toBe('files')
     expect(SERVER_FIELD.full_score_locked).toBe('fullScore')
     expect(SERVER_FIELD.reward_locked).toBe('reward')
     expect(SERVER_FIELD.after_solution_locked).toBe('afterSolution')

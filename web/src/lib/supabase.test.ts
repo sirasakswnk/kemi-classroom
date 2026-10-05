@@ -70,7 +70,14 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
     action: 'field',
   },
   post_title_invalid: { message: 'ใส่ชื่อ 1–120 ตัวอักษร', action: 'focus_field' },
-  post_body_required: { message: 'ใส่ข้อความประกาศก่อนโพสต์', action: 'field' },
+  post_body_required: {
+    message: 'ใส่ข้อความหรือแนบไฟล์อย่างน้อยหนึ่งอย่างก่อนโพสต์',
+    action: 'field',
+  },
+  post_file_unavailable: {
+    message: 'ไฟล์บางไฟล์ใช้ไม่ได้แล้ว นำไฟล์นั้นออกแล้วแนบใหม่',
+    action: 'field',
+  },
   post_body_too_long: { message: 'ข้อความยาวเกิน 10,000 ตัวอักษร ตัดให้สั้นลง', action: 'field' },
   full_score_invalid: {
     message: 'คะแนนเต็มต้องเป็นจำนวนเต็มตั้งแต่ 1 ถึง 1,000,000',

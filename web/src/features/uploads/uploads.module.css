@@ -211,3 +211,26 @@
   border-radius: var(--r-md);
   object-fit: contain;
 }
+
+/* รายการไฟล์แนบที่เปิดดู/ดาวน์โหลดได้ (การ์ดประกาศ, หน้าโจทย์) */
+.attachments {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.listHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.moveBtns {
+  display: flex;
+  gap: 2px;
+}
+
+.iconBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

@@ -1,15 +1,17 @@
-import { Award, CalendarX, FilePen, PenLine, Sparkles } from 'lucide-react'
+import { Award, CalendarX, FilePen, Paperclip, PenLine, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { initialOf } from '../../lib/initial'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Chip } from '../../ui'
+import { AttachmentList } from '../uploads/AttachmentList'
 import type { Post } from './api'
 import styles from './posts.module.css'
 
 // รายการโพสต์ของห้อง ใช้ร่วมกันใน S02 (นักเรียน) และ T08 (ครู) — แบบ v2 .work-card / .post
 // ยังไม่มีหน้างาน S03/T03 (P3-08/P3-09) การ์ดจึงยังไม่เป็นลิงก์ และยังไม่มีสถานะส่ง/ตรวจจริง
 // ครู: ปุ่มแก้ไขบนการ์ด (ประกาศ = ถาวรตาม UX 9; การบ้าน = ชั่วคราว ย้ายไปการ์ดโจทย์ของ T03 ใน P3-09)
+// ไฟล์ (P3-06b): ประกาศแสดงรายการไฟล์แนบที่เปิดดู/ดาวน์โหลดได้ · การบ้านบอกแค่จำนวนไฟล์โจทย์ (ไฟล์อยู่หน้า S03/T03)
 
 type Heading = 'h2' | 'h3'
 
@@ -57,6 +59,11 @@ export function HomeworkList({
                         {copy.fullScore(a.full_score)}
                       </Chip>
                     )
+                  )}
+                  {post.files.length > 0 && (
+                    <Chip tone="plain" icon={<Paperclip />}>
+                      {th.files.homeworkCount(post.files.length)}
+                    </Chip>
                   )}
                   {a && a.reward_tokens > 0 && (
                     <Chip tone="gold" icon={<Sparkles />}>
@@ -133,6 +140,7 @@ export function AnnouncementList({
             </div>
             <Title className={styles.postTitle}>{post.title}</Title>
             {post.body && <p className={styles.postBody}>{post.body}</p>}
+            {post.files.length > 0 && <AttachmentList files={post.files} />}
           </article>
         </li>
       ))}

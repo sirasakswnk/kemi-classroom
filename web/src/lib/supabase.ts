@@ -58,6 +58,7 @@ export const ERROR_CODES = [
   'last_teacher',
   'post_title_invalid',
   'post_body_required',
+  'post_file_unavailable',
   'post_body_too_long',
   'full_score_invalid',
   'late_penalty_invalid',
@@ -144,6 +145,8 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   // T02 สร้าง/แก้โพสต์ (P3-02/P3-02b): ด่านหลังของการตรวจฝั่งหน้าเว็บ — แสดงใต้ช่องที่เกี่ยวข้อง
   post_title_invalid: 'focus_field',
   post_body_required: 'field',
+  // T02 ช่องไฟล์ (P3-06b): asset ไม่ ready/ไม่ใช่ของผู้เรียก/ผูกที่อื่นแล้ว — แสดงใต้ช่องไฟล์
+  post_file_unavailable: 'field',
   post_body_too_long: 'field',
   full_score_invalid: 'field',
   late_penalty_invalid: 'field',

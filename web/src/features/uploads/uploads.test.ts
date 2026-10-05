@@ -22,6 +22,7 @@ import {
   type UploadEntry,
   type UploadEvent,
 } from './uploader'
+import { existingItems, moveItem } from './useFileField'
 
 const MIB = 1024 * 1024
 const CLASSROOM = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d'
@@ -417,5 +418,26 @@ describe('เรียก Edge Function uploads', () => {
     })
     await expect(completeUpload(BATCH, 2)).resolves.toMatchObject({ asset_id: 'a1' })
     expect(invoke).toHaveBeenCalledWith(`uploads/${BATCH}/complete`, { body: { item: 2 } })
+  })
+})
+
+describe('ช่องไฟล์โหมดแก้ไข (P3-06b)', () => {
+  it('ไฟล์เดิมของโพสต์เป็นแถวที่อัปโหลดเสร็จแล้ว ไม่มีไฟล์ต้นฉบับ', () => {
+    const items = existingItems([
+      { asset_id: 'a1', file_name: 'โจทย์.pdf', content_type: 'application/pdf', size_bytes: 1200 },
+      { asset_id: 'a2', file_name: 'ภาพ.jpg', content_type: 'image/jpeg', size_bytes: 3400 },
+    ])
+    expect(items.map((x) => [x.id, x.assetId, x.status, x.kind, x.sizeBytes, x.original])).toEqual([
+      ['a1', 'a1', 'done', 'pdf', 1200, null],
+      ['a2', 'a2', 'done', 'jpeg', 3400, null],
+    ])
+  })
+  it('เลื่อนขึ้น/ลงทีละตำแหน่ง ขอบรายการไม่เปลี่ยน', () => {
+    const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+    expect(moveItem(list, 'c', -1).map((x) => x.id)).toEqual(['a', 'c', 'b'])
+    expect(moveItem(list, 'a', 1).map((x) => x.id)).toEqual(['b', 'a', 'c'])
+    expect(moveItem(list, 'a', -1)).toBe(list)
+    expect(moveItem(list, 'c', 1)).toBe(list)
+    expect(moveItem(list, 'x', 1)).toBe(list)
   })
 })

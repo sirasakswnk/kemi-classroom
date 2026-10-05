@@ -1,4 +1,5 @@
 import { addDays, bangkokParts, bangkokToUtcIso } from '../../lib/thaiTime'
+import type { AttachmentRef } from '../uploads/AttachmentList'
 
 // ฟอร์ม T02 (UX_DESIGN ส่วน 9): ค่าเริ่มต้น ตรวจก่อนส่ง และแปลงเป็นก้อน p_post ของ RPC create_post / update_post
 // เพดานต้องตรงกับฐานข้อมูล (0010_posts check + 0014_post_rpcs) — ตรวจฝั่งหน้าเว็บก่อนส่ง แล้วเซิร์ฟเวอร์ตรวจซ้ำ
@@ -34,7 +35,15 @@ export interface PostFormValues {
 }
 
 export type PostField =
-  'title' | 'body' | 'fullScore' | 'latePct' | 'reward' | 'due' | 'close' | 'afterSolution'
+  | 'title'
+  | 'body'
+  | 'files'
+  | 'fullScore'
+  | 'latePct'
+  | 'reward'
+  | 'due'
+  | 'close'
+  | 'afterSolution'
 
 export type PostFormError =
   | 'post_title_invalid'
@@ -49,11 +58,13 @@ export type PostFormError =
 
 /** ก้อน p_post ของ create_post (การบ้านมีช่องคะแนน เวลา และรางวัล ประกาศไม่มี) */
 export type PostPayload =
-  | { kind: 'announcement'; title: string; body: string }
+  | { kind: 'announcement'; title: string; body: string | null; files: string[] }
   | {
       kind: 'homework'
       title: string
       body: string | null
+      /** asset id ของไฟล์โจทย์ตามลำดับ (0019_post_files) */
+      files: string[]
       full_score: number
       late_penalty_pct: number
       reward_tokens: number
@@ -66,6 +77,7 @@ export type PostPayload =
 export const FIELD_ORDER: readonly PostField[] = [
   'title',
   'body',
+  'files',
   'fullScore',
   'latePct',
   'due',
@@ -107,7 +119,11 @@ export function parseWholeNumber(text: string): number | null {
 /** ความยาวแบบนับตัวอักษร (code point) ให้ตรงกับ length() ของ Postgres */
 const charLength = (text: string) => [...text].length
 
-export function validatePostForm(values: PostFormValues): {
+/** files = asset id ของไฟล์ที่อัปโหลดเสร็จแล้วตามลำดับ (ช่องไฟล์ T02) */
+export function validatePostForm(
+  values: PostFormValues,
+  files: string[] = [],
+): {
   errors: Partial<Record<PostField, PostFormError>>
   payload: PostPayload | null
 } {
@@ -116,12 +132,14 @@ export function validatePostForm(values: PostFormValues): {
   const body = values.body.trim()
   if (!title || charLength(title) > POST_LIMITS.titleMax) errors.title = 'post_title_invalid'
   if (charLength(body) > POST_LIMITS.bodyMax) errors.body = 'post_body_too_long'
-  else if (values.kind === 'announcement' && !body) errors.body = 'post_body_required'
+  // ประกาศต้องมีข้อความหรือไฟล์อย่างน้อยหนึ่งอย่าง (0019_post_files)
+  else if (values.kind === 'announcement' && !body && files.length === 0)
+    errors.body = 'post_body_required'
 
   if (values.kind === 'announcement') {
     return Object.keys(errors).length
       ? { errors, payload: null }
-      : { errors, payload: { kind: 'announcement', title, body } }
+      : { errors, payload: { kind: 'announcement', title, body: body || null, files } }
   }
 
   const fullScore = parseWholeNumber(values.fullScore)
@@ -161,6 +179,7 @@ export function validatePostForm(values: PostFormValues): {
       kind: 'homework',
       title,
       body: body || null,
+      files,
       full_score: fullScore,
       late_penalty_pct: latePct,
       reward_tokens: values.reward,
@@ -196,6 +215,8 @@ export interface EditablePost {
   version: number
   published_at: string
   content_updated_at: string | null
+  /** ไฟล์โจทย์/ไฟล์แนบตามลำดับ (0019_post_files) */
+  files: AttachmentRef[]
   assignment: {
     full_score: number
     late_penalty_pct: number
@@ -279,6 +300,9 @@ export const SERVER_FIELD: Partial<Record<string, PostField>> = {
   post_title_invalid: 'title',
   post_body_required: 'body',
   post_body_too_long: 'body',
+  post_file_unavailable: 'files',
+  too_many_files: 'files',
+  batch_too_large: 'files',
   full_score_invalid: 'fullScore',
   full_score_locked: 'fullScore',
   late_penalty_invalid: 'latePct',
