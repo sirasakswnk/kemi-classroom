@@ -53,7 +53,7 @@ Classroom/                     # root ของ repo
       uploads/                 # create batch, complete
       files/                   # sign GET, ไฟล์ของการส่ง, รายการส่งออก
       process-jobs/            # งานเบื้องหลัง
-      _shared/                 # b2.ts (aws4fetch), auth.ts, errors.ts
+      _shared/                 # b2.ts (aws4fetch), http.ts (CORS/คำตอบ/ข้อผิดพลาด), rpc.ts (เรียก RPC ด้วย JWT ของผู้ใช้)
     tests/                     # pgTAP *.test.sql
     seed.sql                   # ระดับ 60/25/10/5, เครื่องราง 12 ชิ้น, ค่าพื้นที่, ข้อมูลทดสอบ (เฉพาะ dev)
   ops/
@@ -140,6 +140,7 @@ grant execute on function public.grade_submission to authenticated;
 | 6c | `0013_backup_manifest.sql` (P3-01d, push แล้ว 4 ต.ค. 2026) | `private.backup_manifests` เป็นไฟล์ละแถว (`final_key` PK, `version_id`, ขนาด, checksum, รอบสำเร็จแรกและล่าสุดที่เห็นไฟล์) + `private.backup_run_files` รายการชั่วคราวของรอบที่กำลังทำ (ล้างเมื่อจบรอบไม่ว่าผลใด); รวมเข้าตารางถาวรเฉพาะรอบสำเร็จ; `backup_run_file_list`, `backup_new_files`, `backup_prune_candidates` → `backup_prune_confirm` (แทน `backup_prune_manifests`); ไม่ล้างไฟล์ของรอบสำเร็จล่าสุด; ตามที่ตัดสินในส่วน 8 | 3 |
 | 6d | `0014_post_rpcs.sql` (push แล้ว 4 ต.ค. 2026) | `create_post(p_classroom_id, p_post jsonb, p_request_key, p_admin_mode)` — เนื้อหาเป็น jsonb ก้อนเดียวเพื่อเพิ่มคีย์ไฟล์ภายหลังโดยไม่เปลี่ยน signature; กติกา K5 (ภาคเรียน ended: การบ้านไม่ได้ ประกาศได้; ห้องเทอมก่อน: ไม่ได้ทั้งคู่); `close_at` ≥ `due_at`; เวลาต้องระบุเขตเวลา | 3 |
 | 6e | `0015_post_update.sql` (push แล้ว 5 ต.ค. 2026) | `update_post(p_post_id, p_post jsonb, p_expected_version, p_request_key, p_admin_mode)` — ตรวจ request key ก่อนเทียบ version (ส่งซ้ำได้ผลเดิม) แล้ว `stale_revision`; แก้ชื่อ/รายละเอียดได้ตลอด ช่องงานแก้ได้จนล็อก; `due_at`/`close_at` รับเฉพาะค่าเดิม (เปลี่ยนผ่าน M1/M2 ใน P4-03) ต่างตอบ `invalid_request`; `content_updated_at` ขยับเฉพาะชื่อ/รายละเอียดเปลี่ยนจริง บันทึกโดยไม่เปลี่ยนไม่ขยับ version; ไม่จำกัดตามภาคเรียน; โพสต์ที่ไม่มีหรือไม่มีสิทธิ์ตอบ `forbidden` | 3 |
+| 6f | `0016_upload_batch.sql` (push แล้ว 5 ต.ค. 2026) | `create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)` — ครูเจ้าของห้อง/ผู้ดูแลในโหมดผู้ดูแล, วัตถุประสงค์ post/solution (submission มากับกลุ่ม submissions, charm ระยะ 5), J4–J6 (10 ไฟล์, รูป ≤ 2 MiB, PDF ≤ 10 MiB, รวม ≤ 20 MiB ต่อชุด), request key, เพดาน 30 ครั้ง/10 นาที/บัญชี, `reserve_storage` + batch ใน transaction เดียว, key `staging/{batch_id}/{uuid}`, batch อายุ 120 นาที | 3 |
 | 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
 | 9 | `…_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
@@ -225,13 +226,13 @@ grant execute on function public.grade_submission to authenticated;
 [{"corsRuleName": "web",
   "allowedOrigins": ["https://<ชื่อ>.pages.dev", "https://*.<ชื่อ>.pages.dev", "http://localhost:5173"],
   "allowedOperations": ["s3_get", "s3_head", "s3_put"],
-  "allowedHeaders": ["content-type", "authorization", "x-amz-*"],
+  "allowedHeaders": ["content-type", "content-length"],
   "exposeHeaders": ["ETag", "x-amz-version-id"],
   "maxAgeSeconds": 3600}]
 ```
 
-   bucket ใช้จริงควรเอา `localhost` และ preview ออกเมื่อเปิดใช้; ตรวจรูปแบบ wildcard กับเอกสาร B2 **[ต้องพิสูจน์]**
-5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (list/read เฉพาะ bucket) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง
+   ลายเซ็นอยู่ใน query string จึงไม่ต้องอนุญาต `authorization`/`x-amz-*`; bucket ใช้จริงควรเอา `localhost` และ preview ออกเมื่อเปิดใช้; **พิสูจน์แล้ว 5 ต.ค. 2026:** B2 รับ origin แบบ wildcard และ preflight ผ่านเฉพาะ production/preview/localhost (ตั้งด้วย `ops/b2/apply-settings.mjs` ใช้กุญแจชั่วคราว `listBuckets`+`writeBuckets` แล้วลบทิ้ง)
+5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (list/read เฉพาะ bucket) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง; dev ใช้ `kemi-edge-dev` ที่สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket (กว้างกว่าที่ใช้: มี `listFiles`, `shareFiles`) — **ของ prod ในระยะ 7 สร้างผ่าน API ให้เหลือเฉพาะสิทธิ์ที่ใช้จริง**
 
 **Cloudflare Pages**
 
@@ -394,7 +395,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, bucket `kemi-files` + กุญแจ B2 ของ prod แบบสิทธิ์แคบผ่าน API, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io
@@ -437,24 +438,24 @@ grant execute on function public.grade_submission to authenticated;
 
 | # | เรื่อง | ทดสอบในระยะ | ถ้าไม่ผ่าน |
 | --- | --- | --- | --- |
-| 1 | B2 ต้องผูกบัตรไหม และ caps ตั้งที่ปริมาณฟรีได้ (ตรวจตอนสมัครข้อ 1) | 0 | ทบทวนแผนเก็บไฟล์กับผู้ใช้ก่อนทำต่อ |
+| 1 | B2 ต้องผูกบัตรไหม และ caps ตั้งที่ปริมาณฟรีได้ (ตรวจตอนสมัครข้อ 1) — **ตั้งแล้ว 5 ต.ค. 2026:** caps ทั้ง 4 ชนิดเป็น $0 (ผู้ใช้ไม่ได้แจ้งว่าถูกขอบัตร); ปริมาณฟรีจริงเป็นรายวัน ดูข้อ 19 และ TECHNICAL_DESIGN 9.3 | 0 | ทบทวนแผนเก็บไฟล์กับผู้ใช้ก่อนทำต่อ |
 | 2 | `pg_cron` + `pg_net` ใช้ในแผนฟรีได้ (ข้อ 2, 8) | 0 | ให้ GitHub Actions เรียก `process-jobs` แทน |
 | 3 | บัญชี Google ของโรงเรียนล็อกอินได้ (ข้อ 3) | 1 | ใช้บัญชีส่วนตัว หรือขอโรงเรียนอนุญาต |
 | 4 | Supabase ใช้ฟรีโดยไม่ผูกบัตร (ข้อ 4) | 0 | — |
 | 5 | Healthchecks.io ส่งอีเมลจริง (ข้อ 5) | 3, 7 | เปลี่ยนช่องทางแจ้ง |
-| 6 | Lifecycle rules แยก `files/` กับ `staging/` ได้ตามส่วน 7 (ข้อ 6) | 0, 3 | ใช้งานลบตามรอบใน `process-jobs` เป็นหลัก |
-| 7 | CORS, ลายเซ็น `content-length`, CopyObject ระบุเวอร์ชันต้นทาง, เพดานดาวน์โหลดเดือนแรก (ข้อ 7) | 3 | ตรวจขนาดตอน complete อย่างเดียว / ดาวน์โหลดแล้วอัปโหลดแทนการคัดลอก / ปรับเพดาน |
+| 6 | Lifecycle rules แยก `files/` กับ `staging/` ได้ตามส่วน 7 (ข้อ 6) — **พิสูจน์แล้ว 5 ต.ค. 2026** (`apply-settings.mjs` อ่านกลับตรง) | 0, 3 | ใช้งานลบตามรอบใน `process-jobs` เป็นหลัก |
+| 7 | CORS, ลายเซ็น `content-length`, CopyObject ระบุเวอร์ชันต้นทาง, เพดานดาวน์โหลดเดือนแรก (ข้อ 7) — **พิสูจน์แล้วบางส่วน 5 ต.ค. 2026:** CORS และลายเซ็น `content-length`/`content-type` (ขนาดเกิน 1 ไบต์ หรือชนิดต่าง → 403) ผ่าน; CopyObject ระบุเวอร์ชันต้นทางรอ P3-04; เรื่องเพดานดาวน์โหลดย้ายไปข้อ 19 | 3 | ตรวจขนาดตอน complete อย่างเดียว / ดาวน์โหลดแล้วอัปโหลดแทนการคัดลอก / ปรับเพดาน |
 | 8 | เวอร์ชัน Postgres, ต่อ Session pooler จาก Actions, rate limit ของ Auth (ข้อ 8) | 1, 3, 7 | ปรับวิธี dump / ปรับค่าใน Dashboard |
-| 9 | ชนิดของ ETag ที่ B2 ส่งกลับ (ใช้เป็น checksum) | 3 | ใช้ขนาด + `cryptcheck` เป็นหลัก |
-| 10 | `response-content-type` / `response-content-disposition` บน presigned GET ของ B2 | 3–4 | ตั้งชื่อไฟล์ฝั่งหน้าเว็บด้วย Blob |
+| 9 | ชนิดของ ETag ที่ B2 ส่งกลับ (ใช้เป็น checksum) — **พิสูจน์แล้ว 5 ต.ค. 2026:** PUT ชิ้นเดียวได้ ETag = MD5 hex ของเนื้อไฟล์ (ในเครื่องหมายคำพูด) GET ส่งค่าเดียวกัน; ETag ของ CopyObject รอ P3-04 | 3 | ใช้ขนาด + `cryptcheck` เป็นหลัก |
+| 10 | `response-content-type` / `response-content-disposition` บน presigned GET ของ B2 — **พิสูจน์แล้ว 5 ต.ค. 2026** รวมชื่อไฟล์ไทยแบบ `filename*=UTF-8''…` | 3–4 | ตั้งชื่อไฟล์ฝั่งหน้าเว็บด้วย Blob |
 | 11 | Safari บน iPhone แปลง HEIC เป็น JPEG เองเมื่อเลือกไฟล์ | 3 | โหลดตัวถอด HEIC ตามแผน |
 | 12 | `pg_dump --snapshot` ผ่าน Session pooler | 3, 7 | dump ก่อนแล้วสร้าง manifest จาก dump ที่ restore ชั่วคราว หรืออาศัย `maintenance_locks` |
 | 13 | การต่อฐานข้อมูลผ่าน pooler อย่างเดียวกันโปรเจกต์หลับได้ไหม | 7–8 (สังเกตช่วงปิดเทอม) | `ping()` ผ่าน Data API ทุกรอบสำรองอยู่แล้ว |
 | 14 | token ของ rclone (`drive.file`, consent production) ไม่หมดอายุ 7 วัน | 0, 7 | ตรวจสถานะ consent screen และสร้าง token ใหม่; Healthchecks.io จะเตือนถ้าสำรองล้มเหลว |
 | 15 | สร้าง ZIP ภาคเรียนขนาดหลาย GB ในเบราว์เซอร์ของครู | 6 | แบ่ง ZIP ตามห้อง/งาน |
 | 16 | `supabase start` ใน runner ของ GitHub Actions ใช้ restore dump ของ prod ได้ (roles/ส่วนขยายตรงกัน) | 7 | ใช้ Postgres container รุ่นเดียวกันพร้อมสร้าง role ที่ต้องใช้เอง |
-| 17 | ความเร็วจากประเทศไทยไปแต่ละภูมิภาคของ B2 | 0 (ก่อนสมัคร) | เลือกภูมิภาคที่เร็วรองลงมาที่ผ่านการวัด |
-| 18 | B2 รับ GET แบบ Range แล้วส่ง `x-amz-version-id` + `Content-Range`; presigned GET รับ `response-cache-control`; ข้อความ 403 เมื่อเกินเพดานรายวัน | 3 | HEAD + GET แบบเดิม (2 คำขอ); แคชลิงก์ฝั่งหน้าเว็บอย่างเดียว |
+| 17 | ความเร็วจากประเทศไทยไปแต่ละภูมิภาคของ B2 — **วัดแล้ว 4 ต.ค. 2026:** เลือก EU Central (ส่วน 3) | 0 (ก่อนสมัคร) | เลือกภูมิภาคที่เร็วรองลงมาที่ผ่านการวัด |
+| 18 | B2 รับ GET แบบ Range แล้วส่ง `x-amz-version-id` + `Content-Range`; presigned GET รับ `response-cache-control`; ข้อความ 403 เมื่อเกินเพดานรายวัน — **พิสูจน์แล้ว 5 ต.ค. 2026:** Range GET ได้ 206 + `x-amz-version-id` ตรงกับตอน PUT + `Content-Range: bytes 0-15/<ขนาดเต็ม>`; `response-cache-control` ใช้ได้; รูปแบบ 403 ยืนยันจากเอกสาร B2 (ไม่ทดลองจริงตามข้อห้าม) — Native `download_cap_exceeded`/`transaction_cap_exceeded`, S3 เป็น XML ข้อความ “cap exceeded” | 3 | HEAD + GET แบบเดิม (2 คำขอ); แคชลิงก์ฝั่งหน้าเว็บอย่างเดียว |
 | 19 | ดาวน์โหลด 1 GB / Class B 2,500 ต่อวันพอสำหรับวันใช้งานจริง (TECHNICAL_DESIGN 9.3) | 3 (จุดสาธิต 2), 7 | ลดงบเปิดดู, ให้ครูใช้ไฟล์โจทย์เล็กลง, ลดความละเอียดภาพหลังย่อ |
 
 ผลการพิสูจน์แต่ละข้อให้บันทึกกลับใน SYSTEM_SPEC ส่วน 12 หรือ TECHNICAL_DESIGN ส่วนที่เกี่ยวข้องพร้อมวันที่
