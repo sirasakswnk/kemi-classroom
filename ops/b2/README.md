@@ -46,7 +46,10 @@ node ops/b2/apply-settings.mjs
    - Type of Access: **Read and Write**
    - Allow List All Bucket Names: ไม่ติ๊ก
    - File name prefix และ Duration: เว้นว่าง
-2. B2 จะแสดง `keyID` และ `applicationKey` **ครั้งเดียว** ให้เปิดหน้านั้นค้างไว้จนจบขั้น 4–5
+2. หลังกด Create New Key ให้ดูกล่อง **“Success! Your new application key has been created…”** ที่**บนสุดของหน้า** (อาจต้องเลื่อนขึ้น)
+   - `applicationKey` อยู่ในกล่องนี้เท่านั้น และแสดง**ครั้งเดียว** ให้เปิดหน้านี้ค้างไว้จนจบขั้น 4–5
+   - รายการกุญแจด้านล่าง (keyID, keyName, bucketName, capabilities, expiration, namePrefix) ไม่มี `applicationKey`
+   - ถ้ากล่องหายไปแล้ว (รีเฟรชหรือออกจากหน้า) จะดูค่าเดิมไม่ได้อีก ให้กด Delete ที่กุญแจนั้นแล้วสร้างใหม่
 
 ## 4. ใส่ค่าใน Supabase Edge Function secrets (kemi-dev)
 
