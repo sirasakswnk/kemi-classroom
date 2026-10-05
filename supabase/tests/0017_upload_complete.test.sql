@@ -143,8 +143,11 @@ select is(public.upload_complete_begin('3f000000-0000-4000-8000-000000000001', '
 select is(public.upload_complete_begin('3f000000-0000-4000-8000-000000000001', '9f000000-0000-4000-8000-000000000001', 1, 'v-type2', 1000, 'image/png', 16),
   '{"code": "upload_type_mismatch"}'::jsonb, 'เนื้อไฟล์เป็น PNG แต่ประกาศ PDF → upload_type_mismatch');
 select is(pg_temp.usage_delta(), '3 req / 48 B / copy 0 B', 'ผลที่ถูกปฏิเสธยังนับคำขอ GET และไบต์ที่อ่าน (3 ครั้ง × 16 ไบต์)');
+-- อ่านตารางตรงในนาม postgres: บน cloud service_role ไม่ได้สิทธิ์ตารางใหม่อัตโนมัติ (ในเครื่องได้) — RPC รันในนามเจ้าของอยู่แล้ว
+set local role postgres;
 select is((select count(*)::integer from public.assets where upload_batch_id = '9f000000-0000-4000-8000-000000000001'), 0,
   'ผลที่ถูกปฏิเสธไม่สร้าง asset');
+set local role service_role;
 select throws_ok($$ select public.upload_complete_begin('3f000000-0000-4000-8000-000000000002', '9f000000-0000-4000-8000-000000000001', 1, 'v', 1000, 'application/pdf', 16) $$,
   'P0001', 'forbidden', 'บัญชีที่ส่งมาไม่ใช่เจ้าของ batch → forbidden');
 select throws_ok($$ select public.upload_complete_begin('3f000000-0000-4000-8000-000000000001', '9f000000-0000-4000-8000-000000000001', 3, 'v', 1000, 'application/pdf', 16) $$,
