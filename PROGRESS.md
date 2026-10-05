@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: P3-05 **[effort สูง]** บน branch `phase-3` (P3-04 เสร็จ 5 ต.ค. 2026 พิสูจน์ B2 ผ่าน 16/16) · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0018_…`
+- งานถัดไป: P3-06 โมดูลอัปโหลดฝั่งเว็บ บน branch `phase-3` (P3-05 เสร็จ 5 ต.ค. 2026: `0018_files_sign` + ฟังก์ชัน `files` บน kemi-dev) · **รอผู้ใช้:** ให้ Claude app เพิ่มแถว 6h `0018_files_sign.sql` ใน BUILD_PLAN 4.2 และตัดสินเรื่องผู้ดูแลนอกโหมดผู้ดูแล (ดูโน้ต P3-05) · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0019_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -230,13 +230,38 @@
       - `upload_not_found` 404 · `upload_in_progress` 409 · `upload_expired` 410
       - `upload_size_mismatch` 422 · `upload_type_mismatch` 422
       - `upload_failed` 502 · `download_budget_reached` 503
-- [ ] P3-05 **[effort สูง]** `files` (sign GET โหมดเปิดดู/ดาวน์โหลด ชื่อไฟล์ไทย) + `authorize_files` + ทดสอบข้ามคน
+- [x] P3-05 **[effort สูง]** `files` (sign GET โหมดเปิดดู/ดาวน์โหลด ชื่อไฟล์ไทย) + `authorize_files` + ทดสอบข้ามคน → 5 ต.ค. 2026: เสร็จ (ใช้คำขอ B2 0 ครั้ง — การลงลายเซ็นไม่เรียก B2)
+    - ทำแล้ว:
+      - `0018_files_sign`:
+        - `authorize_files(uuid[])` ให้ authenticated: คืนเฉพาะ id ที่ ready และมีสิทธิ์ตามลำดับที่ขอ (ไม่คืน key/เวอร์ชัน/checksum); โจทย์ = `post_access`, เฉลย = `can_read_solution`, ยังไม่ผูก = เจ้าของ; นับ `rate_limits` (`files_sign` 120 ครั้ง/10 นาที) ก่อนตรวจ; 1–20 id ไม่มี null ตัดตัวซ้ำ
+        - `files_sign_begin(uuid[])` ให้ service_role เท่านั้น: คืน final_key/version_id/ชนิด/ขนาด/ชื่อ; ไฟล์ไม่ ready → `forbidden`; ล็อกแถว `b2_daily_usage` (วันนี้, view) FOR UPDATE แล้วเทียบ `daily_view_budget_requests`/`_bytes` → เกิน = `download_budget_reached` ทั้งชุด ไม่นับ; ผ่าน = นับ 1 คำขอ + ขนาดเต็มต่อไฟล์ (เปิดดู/ดาวน์โหลดนับเหมือนกัน)
+        - pgTAP 50 ข้อ (รวม 856 ผ่านทั้งในเครื่องและ kemi-dev): สมาชิก/ห้องอื่น/ถูกเอาออก (ก่อน-หลัง)/คนนอก/ยังไม่มีบัญชี/เฉลยก่อน-หลังเผยแพร่/asset ไม่ผูกของคนอื่น/copying-deleting/ครูห้องอื่น/ผู้ดูแล, รูปแบบคำขอ, เพดานครั้ง, งบคำขอและงบไบต์ที่ขอบพอดี, ชุดที่เกินงบปฏิเสธทั้งชุด, งบไม่กันขั้น complete
+        - ทำโค้ดผิด 7 แบบ (ไม่เช็กเจ้าของ, ไม่เช็ก ready ×2, เฉลยใช้สิทธิ์โพสต์, งบไม่รวมคำขอนี้, ไม่ล็อกแถว, ไม่นับเพดานครั้ง) เทสต์จับได้ทั้งหมด
+        - **สองการเชื่อมต่อพร้อมกันจริงบน DB ในเครื่อง** (งบเหลือ 1 คำขอ): รายแรกถือล็อก 3 วินาที รายที่สองรอแล้วได้ `download_budget_reached` ยอดนับ = 1
+        - advisor: มีแค่ WARN ที่ตั้งใจของ `authorize_files` (+ leaked password เดิม) · types สร้างใหม่
+      - Edge Function `files` (`POST /files/sign` body `{ asset_ids, mode: view|download }`) deploy บน kemi-dev แล้ว (deploy `uploads` ซ้ำด้วยเพราะย้าย `context.ts` ไป `_shared/`):
+        - ได้สิทธิ์ไม่ครบทุก id → `forbidden` ทั้งชุดโดยไม่เรียก begin
+        - ลิงก์ GET 600 วินาที: `versionId` + `response-content-type` + `response-content-disposition` (`inline`/`attachment`; `filename="<ASCII>"; filename*=UTF-8''…`) + `response-cache-control: private,max-age=600`
+        - คำตอบ `{ mode, expires_at, files: [{ asset_id, url, file_name, content_type, size_bytes }] }` ตามลำดับที่ขอ
+        - node:test 14 ข้อ (รวม 52) · ลองเรียกบน dev: ไม่ล็อกอิน 401, body ผิด 400, publishable key 401 · **ยังไม่ได้ออกลิงก์จริงด้วย JWT** → P3-08/P3-09
+      - เว็บ `web/src/lib/files.ts`:
+        - `useSignedFile(assetId, mode, enabled)` (query key `['signed-file', id, mode]`, ใช้ลิงก์เดิมจนเหลือ 60 วินาทีก่อนหมดอายุ, ไม่ขอใหม่ตอนกลับมาที่แท็บ/เน็ตกลับ, ลองซ้ำเฉพาะข้อผิดพลาดไม่ทราบสาเหตุ 1 ครั้ง)
+        - `loadSignedFile(file)` → Blob; 403 cap exceeded จาก B2 → `download_budget_reached`; 403 อื่นได้ข้อความสำรอง `b2_403`
+        - รหัส `download_budget_reached` ใน `ERROR_CODES`/`th.errors` (ถ้อยคำตัวดูไฟล์ UX 7.1, action `retry_later`)
+        - CSP `connect-src` เพิ่ม `https://s3.eu-central-003.backblazeb2.com` (ตัวดูแสดงจาก `blob:` จึงไม่แก้ img-src)
+        - vitest 15 ข้อ (รวม 194) · lint/typecheck/format/build ผ่าน
+    - ค่าที่เลือกเอง / ต่างจากเอกสาร:
+      - ไม่เกิน 20 ไฟล์ต่อคำขอ และ 120 ครั้ง/10 นาทีต่อบัญชี (`private.files_sign_limits()`)
+      - ผู้ดูแลเปิดไฟล์ได้โดยไม่ต้องอยู่ในโหมดผู้ดูแล ตาม RLS อ่าน (`can_teach_classroom`) — TECHNICAL_DESIGN 10 แถว `/files/sign` เขียนว่า “เมื่ออยู่ในโหมดผู้ดูแล” **รอผู้ใช้ตัดสิน**
+      - เพดานครั้งนับก่อนตรวจสิทธิ์ (กันไล่เดา id); ไฟล์ copying/deleting ไม่มีใครเปิดได้ (ตอบเหมือนไม่มีสิทธิ์)
+      - งบนับตอนออกลิงก์ทุกครั้ง แม้เบราว์เซอร์จะใช้แคช (นับเกินดีกว่านับขาด)
+      - BUILD_PLAN 4.2 ยังไม่มีแถว `0018_files_sign.sql` (Claude app เพิ่ม)
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ก่อนออกลิงก์เปิดดูทุกครั้งตรวจและนับงบดาวน์โหลดรายวัน (ไบต์จากขนาดใน assets + จำนวนคำขอ; ครบงบตอบ `download_budget_reached` — ค่าเริ่มต้นเสนอ 750 MB หรือ 1,800 คำขอ เหลือส่วนให้การส่งงานและสำรอง); ลิงก์ใส่ `response-cache-control: private, max-age=600`; หน้าเว็บแคชลิงก์ที่ลงลายเซ็นตลอดอายุลิงก์ (TanStack Query) และตัวดูโหลดเฉพาะไฟล์ที่กำลังดู ไม่โหลดล่วงหน้า; เพิ่ม `download_budget_reached` ใน `ERROR_CODES`/`th.errors`
     - ตัวนับรายวันทำแล้วใน P3-04: ตาราง `b2_daily_usage` (วัน UTC × แหล่ง) + ค่างบ `daily_view_budget_bytes` (750,000,000) / `daily_view_budget_requests` (1,800) ใน `storage_settings` — P3-05 เพิ่ม RPC ของ service_role ที่ “ตรวจงบ + นับ” แหล่ง `view` ในคำสั่งเดียว (ล็อกแถวตัวนับ) แล้วใช้กับ `files`; `record_b2_usage` ใช้นับเฉยๆ ไม่ตรวจงบ
 - [ ] P3-06 โมดูลอัปโหลดฝั่งเว็บ (ตรวจไฟล์, HEIC, ย่อรูป, PUT แสดงความคืบหน้า) + unit test
     - จากเอกสาร 5 ต.ค. 2026 (UX 9): ไฟล์โจทย์/เฉลยรวมเกิน 5 MB แสดงคำแนะนำใต้รายการไฟล์ (ไม่บล็อก) เรื่องโควตาดาวน์โหลดรายวัน
     - จาก P3-03:
-      - เพิ่ม endpoint B2 (`https://s3.eu-central-003.backblazeb2.com`) ใน CSP `connect-src` (และ `img-src` ถ้าแสดงรูปจากลิงก์ตรง) ใน `web/public/_headers`
+      - ~~เพิ่ม endpoint B2 ใน CSP `connect-src`~~ ทำแล้วใน P3-05 (PUT ใช้ connect-src เดียวกัน)
       - เพิ่ม `too_many_files`, `file_too_large`, `file_type_not_allowed`, `batch_too_large` ใน `ERROR_CODES`/`th.errors`
       - PUT ต้องส่ง `content-type` ตรงกับที่ขอ batch และขนาดไฟล์ตรง `size_bytes` (ลายเซ็นผูกทั้งคู่)
       - ลิงก์หมดอายุใน 5 นาที: ถ้าอัปโหลดไม่ทันให้เรียก `POST /uploads` ซ้ำด้วย request key เดิม → ได้ batch เดิมพร้อมลิงก์ใหม่
@@ -245,12 +270,15 @@
       - หลัง PUT แต่ละไฟล์สำเร็จ เรียก `POST /uploads/{batch_id}/complete` ด้วย `{ item }` (ลำดับไฟล์เริ่ม 1) → ได้ `asset_id` สำหรับผูกกับโพสต์/เฉลย
       - เรียกซ้ำได้ผลเดิม; ได้ `upload_in_progress` ให้รอแล้วลองใหม่ (เช่น 20 วินาที)
       - ได้ `upload_failed` / `upload_expired` / `upload_size_mismatch` / `upload_type_mismatch` → ให้ผู้ใช้อัปโหลดไฟล์นั้นใหม่ใน batch ใหม่
-      - เพิ่มรหัส `upload_*` และ `download_budget_reached` ใน `ERROR_CODES`/`th.errors` (ถ้อยคำเสนอในรายงาน P3-04 — รอ UX 7.1)
+      - เพิ่มรหัส `upload_*` ใน `ERROR_CODES`/`th.errors` ตามถ้อยคำ UX 7.1 (แสดงที่แถวไฟล์นั้น) — `download_budget_reached` มีแล้วจาก P3-05 แต่ข้อความตอนส่งงานต่างจากตัวดู
       - ทดสอบ complete จริงด้วยบัญชีครูบน preview ครั้งแรกในงานนี้
 - [ ] P3-07 **[effort สูง]** migration กลุ่ม submissions + ตารางรับการส่ง 7 แถว + ทดสอบ
 - [ ] P3-08 S03 ไฟล์โจทย์ (เปิดดู/ดาวน์โหลด) + ส่ง/ส่งแก้/สถานะ
+    - จาก P3-05: ใช้ `useSignedFile(id, 'view', เปิดอยู่)` + `loadSignedFile` เฉพาะไฟล์ที่กำลังดู; ปุ่มดาวน์โหลดใช้ mode `download` (ลิงก์ attachment) — `<a href>` ไปที่ลิงก์ตรงได้; ได้ข้อผิดพลาด `b2_403` (ลิงก์หมดอายุ) ให้ `invalidateQueries(signedFileKey(...))` แล้วลองใหม่ 1 ครั้ง; ไฟล์งานส่งต้องเพิ่มเงื่อนไขใน `authorize_files` (นักเรียนเจ้าของ + ครูของห้อง) เมื่อมีตารางผูกใน P3-07; ข้อความ `download_budget_reached` ตอนส่งงานต่างจากที่ตัวดู (UX 7.1)
+    - ทดสอบออกลิงก์จริงด้วยบัญชีนักเรียน/ครูบน preview ครั้งแรก (P3-05 ยังไม่ได้ลอง)
     - จาก P3-02b (N1): หน้างาน S03 แสดง “ครูแก้ไขโจทย์ล่าสุด …” ใต้โจทย์เมื่อ `posts.content_updated_at` ไม่ว่าง (ไม่มีรายการในกระดิ่ง)
 - [ ] P3-09 T08 รายการงาน + T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น
+    - จาก P3-05: ตัวดูใช้ `useSignedFile`/`loadSignedFile` (`web/src/lib/files.ts`) โหลดเฉพาะไฟล์ที่เปิดอยู่ แสดงจาก object URL ของ Blob (CSP อนุญาต `blob:` แล้ว) และคืน object URL เมื่อปิด; ครูดูตัวอย่างไฟล์ที่ยังไม่ผูกของตนได้
     - จาก P3-02b: ย้ายปุ่ม “แก้ไขงาน” จากการ์ดการบ้านใน T08 (ชั่วคราว) ไปการ์ด “โจทย์และไฟล์” ของ T03 ตาม UX 9 และให้ยกเลิก/บันทึกในโหมดแก้ไขการบ้านกลับ T03; ปุ่ม “แก้ไข” บนการ์ดประกาศใน T08 คงไว้
 - [ ] P3-10 **[effort สูง]** `process-jobs` ขั้นต่ำ + `pg_cron` (ลบไฟล์ที่ถูกแทน, sweeper `copying` ค้าง, batch ที่ทิ้งไว้, **asset ที่ไม่มีแถวผูกแล้วและไม่อยู่ใน batch ที่ยังเปิด** เช่นจากการลบโพสต์/เฉลย — เข้าคิวลบ B2 แบบระบุ `version_id` ตามเงื่อนไข backup manifest ใน TECHNICAL_DESIGN ส่วน 9 ไม่อย่างนั้นนับพื้นที่ค้างตลอด) + นับพื้นที่ + หน้าจอพื้นที่เต็ม
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ใช้ตัวนับ `b2_daily_usage` และค่างบใน `storage_settings` (ทำใน P3-04) — ล้างแถววันเก่า และแสดงยอดใช้วันนี้ในหน้าพื้นที่ของผู้ดูแลถ้าทำทัน (ตอนนี้ไม่มีใครอ่านตารางนี้ได้ ต้องเพิ่มสิทธิ์อ่านให้ผู้ดูแล)
