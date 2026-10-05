@@ -17,7 +17,7 @@ set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
 
-select plan(9);
+select plan(11);
 
 -- รายการที่ตั้งใจให้ authenticated เรียกได้ (เรียงตาม migration)
 create temp table expected_authenticated (fn text primary key);
@@ -59,7 +59,21 @@ insert into expected_authenticated values
   -- 0015_post_update
   ('public.update_post(uuid,jsonb,integer,uuid,boolean)'),
   -- 0016_upload_batch
-  ('public.create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)');
+  ('public.create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)'),
+  -- 0017_upload_complete (ยืนยันเจ้าของ batch ด้วย JWT ของผู้ใช้ — อ่านอย่างเดียว)
+  ('public.upload_complete_target(uuid,integer)');
+
+-- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
+-- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
+create temp table expected_service_only (fn text primary key);
+insert into expected_service_only values
+  -- 0001_base (keep-alive ของ GitHub Actions)
+  ('public.ping()'),
+  -- 0017_upload_complete
+  ('public.upload_complete_begin(uuid,uuid,integer,text,bigint,text,integer)'),
+  ('public.upload_complete_finish(uuid,text,text)'),
+  ('public.upload_complete_abort(uuid)'),
+  ('public.record_b2_usage(text,integer,bigint,bigint)');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);
@@ -129,6 +143,25 @@ select is_empty(
 select is_empty(
   $$ select fn from expected_authenticated where to_regprocedure(fn) is null $$,
   'ทุกชื่อในรายการเป็น signature ที่มีอยู่จริง'
+);
+
+select is_empty(
+  $$ select p.oid::regprocedure::text
+       from pg_proc p
+      where p.pronamespace = 'public'::regnamespace
+        and has_function_privilege('service_role', p.oid, 'EXECUTE')
+        and not has_function_privilege('authenticated', p.oid, 'EXECUTE')
+        and not exists (select 1 from expected_service_only e where to_regprocedure(e.fn) = p.oid) $$,
+  'ฟังก์ชันใน public ที่ service_role เรียกได้แต่ผู้ใช้เรียกไม่ได้ อยู่ในรายการ service_role ทั้งหมด'
+);
+select is_empty(
+  $$ select format('%s %s', r, e.fn)
+       from expected_service_only e
+       cross join unnest(array['public', 'anon', 'authenticated']) r
+      where to_regprocedure(e.fn) is null
+         or has_function_privilege(r, to_regprocedure(e.fn), 'EXECUTE')
+         or not has_function_privilege('service_role', to_regprocedure(e.fn), 'EXECUTE') $$,
+  'RPC ของ service_role มีอยู่จริง service_role เรียกได้ และ PUBLIC/anon/authenticated เรียกไม่ได้'
 );
 
 -- SECURITY DEFINER ทุกตัวต้องตั้ง search_path (กันการแทรกวัตถุใน schema ที่ค้นหา)
