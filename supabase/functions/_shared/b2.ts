@@ -1,7 +1,8 @@
 // ลงลายเซ็น S3 ของ Backblaze B2 — TECHNICAL_DESIGN 9 และ 9.2, TECHNICAL_BUILD_PLAN 5
 // ใช้ได้ทั้ง Deno (Edge Function, import map ใน deno.json) และ Node (unit test, ops/b2/proof.mjs)
-// ไม่อ่าน env และไม่เรียกเครือข่ายเอง: ผู้เรียกส่งค่าตั้งเข้ามา (b2ConfigFrom) แล้วได้ URL กลับไป
-import { AwsV4Signer } from 'aws4fetch'
+// ไม่อ่าน env และไม่เรียกเครือข่ายเอง: ผู้เรียกส่งค่าตั้งเข้ามา (b2ConfigFrom) แล้วได้ URL หรือ Request ที่ลงลายเซ็นแล้ว
+// กลับไป (ผู้เรียก fetch เอง — ทดสอบด้วย B2 จำลองได้)
+import { AwsClient, AwsV4Signer } from 'aws4fetch'
 
 export interface B2Config {
   keyId: string
@@ -23,7 +24,8 @@ const ENDPOINT_HOST = /^s3\.([a-z0-9-]+)\.backblazeb2\.com$/
 const BUCKET_NAME = /^[a-z0-9-]{6,63}$/
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 const STAGING_KEY = new RegExp(`^staging/(${UUID})/${UUID}$`)
-const FINAL_KEY = /^files\/[A-Za-z0-9/_.-]+$/
+// ไฟล์จริง: files/{asset_id}.{jpg|png|pdf} (0017_upload_complete) — ไม่มีโฟลเดอร์ย่อยหรือ ..
+const FINAL_KEY = new RegExp(`^files/${UUID}\\.(jpg|png|pdf)$`)
 
 /** ภูมิภาคจากชื่อ endpoint ของ B2 (s3.<region>.backblazeb2.com) */
 export function regionOf(endpoint: string): string {
@@ -170,4 +172,104 @@ export async function presignGet(
  */
 export function isCapExceeded(status: number, body: string): boolean {
   return status === 403 && /cap[ _]exceeded/i.test(body)
+}
+
+// ---------------------------------------------------------------------------
+// คำขอฝั่งเซิร์ฟเวอร์ (ลงลายเซ็นใน header) — ขั้น complete (P3-04)
+// ---------------------------------------------------------------------------
+/** ขั้น complete อ่านไฟล์พักครั้งเดียว 16 ไบต์แรก (TECHNICAL_DESIGN 9 ข้อ 2) */
+export const RANGE_BYTES = 16
+
+/** ไม่ลองซ้ำเอง: GET ที่ลองซ้ำ = นับ Class B เพิ่ม และ CopyObject ที่ลองซ้ำหลังหมดเวลาอาจคัดลอกสองครั้ง */
+function client(config: B2Config): AwsClient {
+  return new AwsClient({
+    accessKeyId: config.keyId,
+    secretAccessKey: config.appKey,
+    service: 's3',
+    region: config.region,
+    retries: 0,
+  })
+}
+
+/** GET แบบ Range 0–15 ของเวอร์ชันล่าสุดของไฟล์พัก */
+export async function rangeGetRequest(config: B2Config, key: string): Promise<Request> {
+  if (!STAGING_KEY.test(key)) throw new Error('b2_key_not_staging')
+  return client(config).sign(objectUrl(config, key).toString(), {
+    method: 'GET',
+    headers: { Range: `bytes=0-${RANGE_BYTES - 1}` },
+  })
+}
+
+/** "bytes 0-15/1000" หรือ "bytes *\/0" → ขนาดเต็ม */
+export function parseContentRange(value: string | null): number | null {
+  const match = /^bytes (?:\d+-\d+|\*)\/(\d{1,15})$/.exec(value ?? '')
+  return match ? Number(match[1]) : null
+}
+
+/** ETag ไม่เอาเครื่องหมายคำพูด (และ W/ ถ้ามี) — รูปแบบที่บันทึกเป็น checksum */
+export function stripEtag(value: string | null | undefined): string | null {
+  const v = (value ?? '').trim().replace(/^W\//, '').replace(/^"|"$/g, '')
+  return v === '' ? null : v
+}
+
+export interface RangeRead {
+  versionId: string
+  totalBytes: number
+  etag: string | null
+  bytes: Uint8Array
+}
+
+/** ผล GET แบบ Range ที่ใช้ได้: 206 + x-amz-version-id + Content-Range + ไม่เกิน 16 ไบต์ — ไม่ตรงนี้คืน null */
+export async function readRange(res: Response): Promise<RangeRead | null> {
+  if (res.status !== 206) {
+    await res.body?.cancel()
+    return null
+  }
+  const versionId = res.headers.get('x-amz-version-id')
+  const totalBytes = parseContentRange(res.headers.get('content-range'))
+  const bytes = new Uint8Array(await res.arrayBuffer())
+  if (!versionId || totalBytes === null || bytes.length > RANGE_BYTES) return null
+  return { versionId, totalBytes, etag: stripEtag(res.headers.get('etag')), bytes }
+}
+
+/**
+ * CopyObject ฝั่งเซิร์ฟเวอร์ระบุเวอร์ชันต้นทาง (ไฟล์ที่ถูกอัปทับหลังตรวจจะไม่ถูกคัดลอก) และตั้งชนิดที่ตรวจแล้ว
+ * (x-amz-metadata-directive: REPLACE — TECHNICAL_DESIGN 9.2 ข้อ 4)
+ */
+export async function copyObjectRequest(
+  config: B2Config,
+  copy: { sourceKey: string; sourceVersionId: string; destKey: string; contentType: string },
+): Promise<Request> {
+  if (!STAGING_KEY.test(copy.sourceKey)) throw new Error('b2_key_not_staging')
+  if (!FINAL_KEY.test(copy.destKey)) throw new Error('b2_key_invalid')
+  if (!copy.sourceVersionId) throw new Error('b2_version_required')
+  const source = `/${config.bucket}/${copy.sourceKey}?versionId=${encodeURIComponent(copy.sourceVersionId)}`
+  return client(config).sign(objectUrl(config, copy.destKey).toString(), {
+    method: 'PUT',
+    headers: {
+      'x-amz-copy-source': source,
+      'x-amz-metadata-directive': 'REPLACE',
+      'content-type': copy.contentType,
+    },
+  })
+}
+
+/** ผล CopyObject ที่สำเร็จ: 200 และเนื้อคำตอบไม่มี <Error> (S3 อาจตอบ 200 แล้วล้มกลางทาง) — ไม่มี ETag ให้เป็น null */
+export function parseCopyResult(status: number, body: string): { etag: string | null } | null {
+  if (status !== 200 || /<Error>/.test(body)) return null
+  const match = /<ETag>([^<]*)<\/ETag>/.exec(body)
+  return { etag: match ? stripEtag(match[1].replace(/&quot;|&#34;/g, '"')) : null }
+}
+
+/** ลบแบบระบุเวอร์ชัน (ลบจริง ไม่ใช่ซ่อน — TECHNICAL_DESIGN 9 “ลบแล้วต้องคืนพื้นที่จริง”) */
+export async function deleteVersionRequest(
+  config: B2Config,
+  key: string,
+  versionId: string,
+): Promise<Request> {
+  if (!STAGING_KEY.test(key) && !FINAL_KEY.test(key)) throw new Error('b2_key_invalid')
+  if (!versionId) throw new Error('b2_version_required')
+  const url = objectUrl(config, key)
+  url.searchParams.set('versionId', versionId)
+  return client(config).sign(url.toString(), { method: 'DELETE' })
 }

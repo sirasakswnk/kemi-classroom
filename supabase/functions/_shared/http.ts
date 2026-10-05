@@ -70,6 +70,14 @@ const STATUS: Record<string, number> = {
   rate_limited: 429,
   storage_full: 507,
   internal_error: 500,
+  // ขั้น complete (P3-04)
+  upload_not_found: 404,
+  upload_in_progress: 409,
+  upload_expired: 410,
+  upload_size_mismatch: 422,
+  upload_type_mismatch: 422,
+  upload_failed: 502,
+  download_budget_reached: 503,
 }
 
 export function errorResponse(code: string, base: Headers): Response {
