@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: P3-04 **[effort สูง]** `uploads` ขั้น complete บน branch `phase-3` (ดูโน้ต “จาก P3-03” ใต้ P3-04) · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจ `kemi-edge-dev` ใน secrets ของ kemi-dev · migration ถัดไปใช้ `0017_…`
+- งานถัดไป: ปิด P3-04 บน branch `phase-3` — โค้ด, migration `0017` และฟังก์ชัน `uploads` (complete) บน kemi-dev เสร็จแล้ว **รอผู้ใช้:** รัน `node ops/b2/proof-complete.mjs` ใน PowerShell (กุญแจ `kemi-edge-dev`) แล้วส่งผล → Claude จดผลข้อ 7/9 แล้วติ๊ก · ถัดไป P3-05 **[effort สูง]** · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0018_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -183,15 +183,47 @@
       - DELETE ระบุ `versionId` ได้ 204 ไม่มี delete marker (ลบจริง)
     - หลังใส่ secrets ฟังก์ชัน `uploads` บน kemi-dev ผ่านขั้นตรวจค่าตั้งแล้ว (เรียกด้วย publishable key → RPC ปฏิเสธเป็น 401 `not_authenticated`); การขอ batch จริงด้วย JWT ของครูทดสอบใน P3-06
     - ยังไม่ได้จด capabilities จริงของกุญแจ `kemi-edge-dev` (หน้าเว็บ Read and Write) — ดูจากรายการกุญแจใน B2 ได้ตอนทำระยะ 7
-- [ ] P3-04 **[effort สูง]** `uploads` ขั้น complete (GET แบบ Range **ครั้งเดียว** ไม่ HEAD แยก: `staging_version_id` จาก `x-amz-version-id`, ขนาดจาก `Content-Range`, magic number จากไบต์ชุดเดียวกัน → CopyObject ระบุเวอร์ชัน → finalize) + ทดสอบกับ bucket dev
+- [ ] P3-04 **[effort สูง]** `uploads` ขั้น complete (GET แบบ Range **ครั้งเดียว** ไม่ HEAD แยก: `staging_version_id` จาก `x-amz-version-id`, ขนาดจาก `Content-Range`, magic number จากไบต์ชุดเดียวกัน → CopyObject ระบุเวอร์ชัน → finalize) + ทดสอบกับ bucket dev — **โค้ดเสร็จ 5 ต.ค. 2026 เหลือผล `ops/b2/proof-complete.mjs` (รอผู้ใช้รัน)**
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** นับคำขอ Class B ของ complete ลงตัวนับรายวัน; B2 ปฏิเสธเพราะเกินเพดาน → `download_budget_reached` (ข้อความตอนส่งงานบอกให้ลองใหม่หลัง 07:00 น. ตาม UX 7.1)
     - จาก P3-03:
       - เพดานดาวน์โหลดของ B2 กัน CopyObject ด้วย → ถ้า CopyObject ได้ 403 + `isCapExceeded()` ตอบ `download_budget_reached` เหมือนขั้น GET
       - ต่อจาก `handler.ts` เส้นทาง `/uploads/:id/complete`; ใช้ `staging_key` จากแถว batch (ห้ามรับ key จากหน้าเว็บ)
       - พิสูจน์ ETag ของ CopyObject ตอนนี้ (P3-03 พิสูจน์แค่ PUT ชิ้นเดียว)
+    - ทำแล้ว:
+      - `0017_upload_complete`:
+        - `upload_complete_target(uuid,integer)` ให้ authenticated: ยืนยันเจ้าของ batch ด้วย JWT ของผู้ใช้ แล้วคืน staging key/ชนิด/ขนาดจากแถว batch (อ่านอย่างเดียว)
+        - `upload_complete_begin/finish/abort` และ `record_b2_usage` GRANT ให้ `service_role` เท่านั้น (เพิ่มรายการ service_role ใน `function_privileges`)
+        - unique index `assets(staging_key)`
+        - ตัวนับ `b2_daily_usage` (วัน UTC × แหล่ง view/complete/backup: Class B, ไบต์ดาวน์โหลด, `copy_bytes`) + `private.b2_usage_add()`
+        - ค่างบ `daily_view_budget_bytes`/`_requests` ใน `storage_settings`
+        - pgTAP 49 (รวม 806 ในเครื่อง; 0017 + function_privileges ผ่านบน kemi-dev) · advisor มีแค่ WARN ที่ตั้งใจของ `upload_complete_target`
+      - `uploads` แยกเป็น `create.ts`/`complete.ts`/`context.ts` + `_shared/filetype.ts` (magic number) และตัวช่วย B2 ฝั่งเซิร์ฟเวอร์ใน `b2.ts`
+        - unit test 38 ข้อ (B2/PostgREST จำลอง) — ลองทำโค้ดผิด 3 จุด (ไม่ abort, คัดลอกเวอร์ชันล่าสุด, ข้ามการเช็ก asset เดิม) เทสต์จับได้ทั้งหมด
+      - deploy ขึ้น kemi-dev แล้ว: ไม่ล็อกอิน 401, body ผิดรูป 400, publishable key → RPC ปฏิเสธ 401 (ผ่านขั้นตรวจค่าตั้ง = มี `SUPABASE_SERVICE_ROLE_KEY`)
+      - **ยังไม่ได้ลอง complete จริงด้วย JWT ของครู** → ทำใน P3-06
+      - `ops/b2/proof-complete.mjs` (รันด้วยมือ ใช้ฟังก์ชันชุดเดียวกับ Edge Function)
+    - ตัดสินใจ:
+      - สิทธิ์ (ข้อ ก): ตรวจเจ้าของด้วย JWT ของผู้ใช้ในฐานข้อมูล แล้วค่อยใช้ service role เขียน; begin ตรวจเจ้าของซ้ำจาก `account_id` ที่ได้จากขั้นแรก
+      - กันซ้ำ/พร้อมกัน (ข้อ ค): begin ล็อกแถว batch (FOR UPDATE) + staging_key ไม่ซ้ำ → คำขอที่สองได้ `existing` ไม่คัดลอกซ้ำ
+        - เรียกซ้ำหลัง ready ตอบผลเดิมโดยไม่เรียก B2 แม้ batch หมดอายุ
+        - ถ้าสองคำขอ GET ก่อนถึง begin พร้อมกัน จะเสีย Class B เพิ่ม 1 ครั้ง (ยอมรับได้)
+      - ล้มหลังตั้ง copying (ข้อ จ):
+        - CopyObject 4xx (รวมเกินเพดาน) → `upload_complete_abort` ลบแถวทันที
+        - ผลไม่แน่นอน (5xx, 200 ที่มี `<Error>`, เน็ตหลุด, ไม่มี version ปลายทาง) → ปล่อยแถว copying ให้ sweeper P3-10; ระหว่างนั้นเรียกซ้ำได้ `upload_in_progress`
+        - finish ล้ม → `upload_failed`
+      - `final_key` = `files/{asset_id}.{jpg|png|pdf}` (ไม่ผูกโพสต์/งานส่ง; TECHNICAL_DESIGN 9 ข้อ 2 ยกตัวอย่าง `files/{submission_id}/…`)
+      - ขนาดต้องเท่าที่ประกาศพอดี จึงไม่ต้องจองพื้นที่เพิ่มตอน complete
+      - ไฟล์ที่ไม่ผ่าน (ขนาด/ชนิด) ลบไฟล์พักเวอร์ชันที่ตรวจทันที (Class A)
+      - checksum = ETag ของ CopyObject ไม่มีเครื่องหมายคำพูด (ถ้าไม่มีใช้ ETag ต้นทางจาก GET)
+      - นับงบ: complete นับ 1 คำขอ + ไบต์ที่อ่านจริง (≤ 16) ต่อไฟล์ รวมครั้งที่ถูกปฏิเสธ และ GET 404/416; copy_bytes นับตอน finish
+      - service role ใช้ `SUPABASE_SERVICE_ROLE_KEY` แบบ legacy JWT ที่ Edge Function ได้อัตโนมัติ — ถ้าปิดกุญแจ legacy ต้องเปลี่ยนเป็น secret key
+    - รหัสใหม่ที่หน้าเว็บอาจเจอ (HTTP):
+      - `upload_not_found` 404 · `upload_in_progress` 409 · `upload_expired` 410
+      - `upload_size_mismatch` 422 · `upload_type_mismatch` 422
+      - `upload_failed` 502 · `download_budget_reached` 503
 - [ ] P3-05 **[effort สูง]** `files` (sign GET โหมดเปิดดู/ดาวน์โหลด ชื่อไฟล์ไทย) + `authorize_files` + ทดสอบข้ามคน
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ก่อนออกลิงก์เปิดดูทุกครั้งตรวจและนับงบดาวน์โหลดรายวัน (ไบต์จากขนาดใน assets + จำนวนคำขอ; ครบงบตอบ `download_budget_reached` — ค่าเริ่มต้นเสนอ 750 MB หรือ 1,800 คำขอ เหลือส่วนให้การส่งงานและสำรอง); ลิงก์ใส่ `response-cache-control: private, max-age=600`; หน้าเว็บแคชลิงก์ที่ลงลายเซ็นตลอดอายุลิงก์ (TanStack Query) และตัวดูโหลดเฉพาะไฟล์ที่กำลังดู ไม่โหลดล่วงหน้า; เพิ่ม `download_budget_reached` ใน `ERROR_CODES`/`th.errors`
-    - ตัดสินที่เก็บตัวนับรายวัน (รอบวัน UTC = 07:00 น. ไทย; ไบต์/คำขอแยกตามแหล่ง: เปิดดู, complete, สำรอง) และค่างบ ใช้ร่วมกับ P3-04, P3-10, P3-11
+    - ตัวนับรายวันทำแล้วใน P3-04: ตาราง `b2_daily_usage` (วัน UTC × แหล่ง) + ค่างบ `daily_view_budget_bytes` (750,000,000) / `daily_view_budget_requests` (1,800) ใน `storage_settings` — P3-05 เพิ่ม RPC ของ service_role ที่ “ตรวจงบ + นับ” แหล่ง `view` ในคำสั่งเดียว (ล็อกแถวตัวนับ) แล้วใช้กับ `files`; `record_b2_usage` ใช้นับเฉยๆ ไม่ตรวจงบ
 - [ ] P3-06 โมดูลอัปโหลดฝั่งเว็บ (ตรวจไฟล์, HEIC, ย่อรูป, PUT แสดงความคืบหน้า) + unit test
     - จากเอกสาร 5 ต.ค. 2026 (UX 9): ไฟล์โจทย์/เฉลยรวมเกิน 5 MB แสดงคำแนะนำใต้รายการไฟล์ (ไม่บล็อก) เรื่องโควตาดาวน์โหลดรายวัน
     - จาก P3-03:
@@ -200,17 +232,24 @@
       - PUT ต้องส่ง `content-type` ตรงกับที่ขอ batch และขนาดไฟล์ตรง `size_bytes` (ลายเซ็นผูกทั้งคู่)
       - ลิงก์หมดอายุใน 5 นาที: ถ้าอัปโหลดไม่ทันให้เรียก `POST /uploads` ซ้ำด้วย request key เดิม → ได้ batch เดิมพร้อมลิงก์ใหม่
       - ทดสอบอัปโหลดจริงจาก preview ครั้งแรก (ฟังก์ชัน `uploads` บน kemi-dev ยังไม่เคยถูกเรียกด้วย JWT ของครู)
+    - จาก P3-04:
+      - หลัง PUT แต่ละไฟล์สำเร็จ เรียก `POST /uploads/{batch_id}/complete` ด้วย `{ item }` (ลำดับไฟล์เริ่ม 1) → ได้ `asset_id` สำหรับผูกกับโพสต์/เฉลย
+      - เรียกซ้ำได้ผลเดิม; ได้ `upload_in_progress` ให้รอแล้วลองใหม่ (เช่น 20 วินาที)
+      - ได้ `upload_failed` / `upload_expired` / `upload_size_mismatch` / `upload_type_mismatch` → ให้ผู้ใช้อัปโหลดไฟล์นั้นใหม่ใน batch ใหม่
+      - เพิ่มรหัส `upload_*` และ `download_budget_reached` ใน `ERROR_CODES`/`th.errors` (ถ้อยคำเสนอในรายงาน P3-04 — รอ UX 7.1)
+      - ทดสอบ complete จริงด้วยบัญชีครูบน preview ครั้งแรกในงานนี้
 - [ ] P3-07 **[effort สูง]** migration กลุ่ม submissions + ตารางรับการส่ง 7 แถว + ทดสอบ
 - [ ] P3-08 S03 ไฟล์โจทย์ (เปิดดู/ดาวน์โหลด) + ส่ง/ส่งแก้/สถานะ
     - จาก P3-02b (N1): หน้างาน S03 แสดง “ครูแก้ไขโจทย์ล่าสุด …” ใต้โจทย์เมื่อ `posts.content_updated_at` ไม่ว่าง (ไม่มีรายการในกระดิ่ง)
 - [ ] P3-09 T08 รายการงาน + T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น
     - จาก P3-02b: ย้ายปุ่ม “แก้ไขงาน” จากการ์ดการบ้านใน T08 (ชั่วคราว) ไปการ์ด “โจทย์และไฟล์” ของ T03 ตาม UX 9 และให้ยกเลิก/บันทึกในโหมดแก้ไขการบ้านกลับ T03; ปุ่ม “แก้ไข” บนการ์ดประกาศใน T08 คงไว้
 - [ ] P3-10 **[effort สูง]** `process-jobs` ขั้นต่ำ + `pg_cron` (ลบไฟล์ที่ถูกแทน, sweeper `copying` ค้าง, batch ที่ทิ้งไว้, **asset ที่ไม่มีแถวผูกแล้วและไม่อยู่ใน batch ที่ยังเปิด** เช่นจากการลบโพสต์/เฉลย — เข้าคิวลบ B2 แบบระบุ `version_id` ตามเงื่อนไข backup manifest ใน TECHNICAL_DESIGN ส่วน 9 ไม่อย่างนั้นนับพื้นที่ค้างตลอด) + นับพื้นที่ + หน้าจอพื้นที่เต็ม
-    - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ใช้ตัวนับรายวันและค่างบที่ตัดสินใน P3-05 (ล้างตัวนับวันเก่า และแสดงยอดใช้วันนี้ในหน้าพื้นที่ของผู้ดูแลถ้าทำทัน)
+    - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** ใช้ตัวนับ `b2_daily_usage` และค่างบใน `storage_settings` (ทำใน P3-04) — ล้างแถววันเก่า และแสดงยอดใช้วันนี้ในหน้าพื้นที่ของผู้ดูแลถ้าทำทัน (ตอนนี้ไม่มีใครอ่านตารางนี้ได้ ต้องเพิ่มสิทธิ์อ่านให้ผู้ดูแล)
+    - จาก P3-04: sweeper แถว `copying` เกิน 15 นาที — HEAD ไฟล์ปลายทาง (`final_key`, Class B นับแหล่ง complete) มี → บันทึก version_id แล้ว `deleting`; ไม่มี → ลบแถว (ผู้ใช้เรียก complete ใหม่ได้); ต้องเป็นฟังก์ชันของ service_role/postgres ไม่ใช่ RPC ของผู้ใช้
 - [ ] P3-11 `backup.yml` แบบพื้นฐานกับ dev · (ต้องมี: บัญชี Drive สำรอง, rclone config, Healthchecks.io)
-    - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** อ่านไฟล์ใหม่จาก B2 ครั้งเดียวลงเครื่อง runner (`rclone copy b2ro:… ./new --files-from new.txt`) ตรวจขนาด/ETag กับ manifest → `rclone copy ./new gcrypt:files` → `rclone cryptcheck ./new gcrypt:files` (ต้นทางเป็นสำเนาในเครื่อง ไม่อ่าน B2 ซ้ำ); บันทึกไบต์/คำขอที่อ่านลงตัวนับรายวันผ่าน psql; `backup_new_files`/`backup_run_file_list` เรียกก่อนจบรอบ
+    - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** อ่านไฟล์ใหม่จาก B2 ครั้งเดียวลงเครื่อง runner (`rclone copy b2ro:… ./new --files-from new.txt`) ตรวจขนาด/ETag กับ manifest → `rclone copy ./new gcrypt:files` → `rclone cryptcheck ./new gcrypt:files` (ต้นทางเป็นสำเนาในเครื่อง ไม่อ่าน B2 ซ้ำ); บันทึกไบต์/คำขอที่อ่านลงตัวนับรายวันผ่าน psql ด้วย `private.b2_usage_add('backup', คำขอ, ไบต์)` (มีแล้วจาก P3-04); `backup_new_files`/`backup_run_file_list` เรียกก่อนจบรอบ
 - [ ] P3-12 ทดสอบอุปกรณ์จริงและตรวจรับระยะ 3 (จุดสาธิต 2)
-    - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** หลังวันใช้งานจริง จดตัวเลขจากหน้า Caps & Alerts ของ B2 (ดาวน์โหลด, Class B, Class C) เทียบกับตัวนับในฐานข้อมูล แล้วปรับงบใน TECHNICAL_DESIGN 9.3 (ข้อพิสูจน์ 19); ตรวจรับ: งบเปิดดูต่ำบน dev หยุดการเปิดไฟล์แต่การส่งงานยังผ่าน, เปิดไฟล์เดิมซ้ำใน 10 นาทีไม่นับเพิ่ม, complete ใช้คำขอ B2 ครั้งเดียวต่อไฟล์
+    - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** หลังวันใช้งานจริง จดตัวเลขจากหน้า Caps & Alerts ของ B2 (ดาวน์โหลด, Class B, Class C) เทียบกับตัวนับในฐานข้อมูล แล้วปรับงบใน TECHNICAL_DESIGN 9.3 (ข้อพิสูจน์ 19) — รวม `copy_bytes` เพื่อตอบว่า CopyObject นับเป็นไบต์ดาวน์โหลดหรือไม่; ตรวจรับ: งบเปิดดูต่ำบน dev หยุดการเปิดไฟล์แต่การส่งงานยังผ่าน, เปิดไฟล์เดิมซ้ำใน 10 นาทีไม่นับเพิ่ม, complete ใช้คำขอ B2 ครั้งเดียวต่อไฟล์
 
 ## ระยะ 4 — ตรวจงานและคะแนน
 
