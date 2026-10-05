@@ -5,6 +5,12 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import {
   b2ConfigFrom,
+  copyObjectRequest,
+  deleteVersionRequest,
+  parseContentRange,
+  parseCopyResult,
+  rangeGetRequest,
+  stripEtag,
   contentDisposition,
   GET_CACHE_CONTROL,
   isCapExceeded,
@@ -229,4 +235,61 @@ test('isCapExceeded: 403 ที่มี cap exceeded หรือรหัส *
   assert.equal(isCapExceeded(403, native('access_denied')), false)
   assert.equal(isCapExceeded(403, body('Signature validation failed')), false)
   assert.equal(isCapExceeded(500, body('cap exceeded')), false)
+})
+
+test('ตัวช่วยขั้น complete: Content-Range, ETag, ผล CopyObject', () => {
+  assert.equal(parseContentRange('bytes 0-15/1000'), 1000)
+  assert.equal(parseContentRange('bytes 0-9/10'), 10)
+  assert.equal(parseContentRange('bytes */0'), 0)
+  assert.equal(parseContentRange('bytes 0-15/*'), null)
+  assert.equal(parseContentRange(null), null)
+  assert.equal(stripEtag('"0123abcd"'), '0123abcd')
+  assert.equal(stripEtag('W/"x"'), 'x')
+  assert.equal(stripEtag('""'), null)
+  assert.deepEqual(
+    parseCopyResult(200, '<CopyObjectResult><ETag>&quot;ab12&quot;</ETag></CopyObjectResult>'),
+    { etag: 'ab12' },
+  )
+  assert.deepEqual(
+    parseCopyResult(200, '<CopyObjectResult><ETag>"ab12"</ETag></CopyObjectResult>'),
+    { etag: 'ab12' },
+  )
+  assert.deepEqual(parseCopyResult(200, '<CopyObjectResult/>'), { etag: null })
+  assert.equal(parseCopyResult(200, '<Error><Code>InternalError</Code></Error>'), null)
+  assert.equal(parseCopyResult(403, '<CopyObjectResult/>'), null)
+})
+
+test('คำขอฝั่งเซิร์ฟเวอร์: key ต้องถูกชนิด และลบต้องระบุเวอร์ชัน', async () => {
+  const FINAL = 'files/a5500000-0000-4000-8000-000000000001.pdf'
+  await assert.rejects(rangeGetRequest(config, FINAL), /b2_key_not_staging/)
+  const copy = {
+    sourceKey: KEY,
+    sourceVersionId: 'v1',
+    destKey: FINAL,
+    contentType: 'application/pdf',
+  }
+  await assert.rejects(
+    copyObjectRequest(config, { ...copy, destKey: 'files/../staging/x.pdf' }),
+    /b2_key_invalid/,
+  )
+  await assert.rejects(
+    copyObjectRequest(config, { ...copy, destKey: `${KEY}.pdf` }),
+    /b2_key_invalid/,
+  )
+  await assert.rejects(
+    copyObjectRequest(config, { ...copy, sourceKey: FINAL }),
+    /b2_key_not_staging/,
+  )
+  await assert.rejects(
+    copyObjectRequest(config, { ...copy, sourceVersionId: '' }),
+    /b2_version_required/,
+  )
+  await assert.rejects(deleteVersionRequest(config, KEY, ''), /b2_version_required/)
+  await assert.rejects(presignGet(config, { key: 'files/../x.pdf' }), /b2_key_invalid/)
+  const del = await deleteVersionRequest(config, FINAL, '4_z+v/1')
+  assert.equal(del.method, 'DELETE')
+  assert.equal(new URL(del.url).searchParams.get('versionId'), '4_z+v/1')
+  assert.match(del.headers.get('authorization') ?? '', /^AWS4-HMAC-SHA256 /)
+  const req = await copyObjectRequest(config, { ...copy, sourceVersionId: '4_z+v/1' })
+  assert.equal(req.headers.get('x-amz-copy-source'), `/kemi-dev-files/${KEY}?versionId=4_z%2Bv%2F1`)
 })
