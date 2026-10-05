@@ -5,7 +5,7 @@
 //   กดซ้ำด้วย request key เดิมได้ batch เดิมและลิงก์ใหม่ (ใช้ตอนลิงก์หมดอายุก่อนอัปโหลดเสร็จ)
 import { isStagingKeyOf, presignPut, PUT_EXPIRES_SECONDS } from '../_shared/b2.ts'
 import { errorResponse, json } from '../_shared/http.ts'
-import { isUuid, readJson, userRpc, type Ctx } from './context.ts'
+import { isUuid, readJson, userRpc, type Ctx } from '../_shared/context.ts'
 
 interface BatchFile {
   staging_key: string

@@ -421,3 +421,10 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/uploads/deno.json"
 entrypoint = "./functions/uploads/index.ts"
+
+# Edge Function `files` (P3-05): แบบเดียวกับ uploads — authorize_files ตรวจสิทธิ์ด้วย JWT ของผู้ใช้
+[functions.files]
+enabled = true
+verify_jwt = false
+import_map = "./functions/files/deno.json"
+entrypoint = "./functions/files/index.ts"

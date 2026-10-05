@@ -5,10 +5,10 @@
 import { b2ConfigFrom, type B2Config } from '../_shared/b2.ts'
 import { corsHeaders, errorResponse, webOrigins } from '../_shared/http.ts'
 import { completeItem } from './complete.ts'
-import type { Ctx, Deps } from './context.ts'
+import type { Ctx, Deps } from '../_shared/context.ts'
 import { createBatch } from './create.ts'
 
-export type { Deps } from './context.ts'
+export type { Deps } from '../_shared/context.ts'
 
 type Route = { kind: 'create' } | { kind: 'complete'; batchId: string }
 

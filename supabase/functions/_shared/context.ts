@@ -1,6 +1,6 @@
-// ของที่ทุกเส้นทางของ `uploads` ใช้ร่วมกัน
-import type { B2Config } from '../_shared/b2.ts'
-import { callRpc, type RpcResult } from '../_shared/rpc.ts'
+// ของที่ทุกเส้นทางของ Edge Function (uploads, files) ใช้ร่วมกัน
+import type { B2Config } from './b2.ts'
+import { callRpc, type RpcResult } from './rpc.ts'
 
 export interface Deps {
   env: (name: string) => string | undefined
@@ -17,7 +17,7 @@ export interface Ctx {
   /** apikey + JWT ของผู้ใช้ — RPC ที่ตัดสินสิทธิ์ในฐานข้อมูล */
   apikey: string
   authorization: string
-  /** กุญแจ service role — เฉพาะเส้นทางที่ต้องเขียนข้อมูลที่ระบบเชื่อ (complete) */
+  /** กุญแจ service role — เฉพาะเส้นทางที่ต้องเขียนข้อมูลที่ระบบเชื่อ (complete, files/sign) */
   serviceKey: string | null
 }
 

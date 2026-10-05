@@ -20,7 +20,7 @@ import {
 } from '../_shared/b2.ts'
 import { detectType } from '../_shared/filetype.ts'
 import { errorResponse, json } from '../_shared/http.ts'
-import { isUuid, readJson, serviceRpc, userRpc, type Ctx } from './context.ts'
+import { isUuid, readJson, serviceRpc, userRpc, type Ctx } from '../_shared/context.ts'
 
 interface Target {
   account_id: string
