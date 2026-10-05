@@ -33,7 +33,12 @@ const record = (name, pass, detail) => {
   console.log(`${pass ? '✓' : '✗'} ${name}${detail ? ` — ${detail}` : ''}`)
 }
 const s3Code = (text) => /<Code>([^<]+)<\/Code>/.exec(text)?.[1] ?? '-'
-const sized = (text, n) => Buffer.from(text.padEnd(n, '.').slice(0, n), 'utf8')
+// ขนาดเป็นไบต์ (ไม่ใช่จำนวนตัวอักษร) — content-length อยู่ในลายเซ็นของลิงก์ PUT
+const sized = (text, n) => {
+  const buf = Buffer.alloc(n, '.')
+  Buffer.from(text, 'utf8').copy(buf, 0, 0, n)
+  return buf
+}
 
 async function main() {
   const keyId = await secretFromEnvOrAsk('B2_KEY_ID', 'keyID ของ kemi-edge-dev')
@@ -48,7 +53,7 @@ async function main() {
 
   const N = 64
   const v1 = sized(`%PDF-1.4\n% kemi complete proof V1 ${new Date().toISOString()}\n`, N)
-  const v2 = sized('<html>not a pdf — overwritten before complete</html>', N)
+  const v2 = sized('<html>not a pdf - overwritten before complete</html>', N)
   const v3 = sized('%PDF-1.4\n% V3 overwritten after complete\n', N)
   const md5 = (b) => createHash('md5').update(b).digest('hex')
   const staging = `staging/${randomUUID()}/${randomUUID()}`

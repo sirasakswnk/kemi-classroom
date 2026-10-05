@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: ปิด P3-04 บน branch `phase-3` — โค้ด, migration `0017` และฟังก์ชัน `uploads` (complete) บน kemi-dev เสร็จแล้ว **รอผู้ใช้:** รัน `node ops/b2/proof-complete.mjs` ใน PowerShell (กุญแจ `kemi-edge-dev`) แล้วส่งผล → Claude จดผลข้อ 7/9 แล้วติ๊ก · ถัดไป P3-05 **[effort สูง]** · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0018_…`
+- งานถัดไป: ปิด P3-04 บน branch `phase-3` — โค้ด, migration `0017` และฟังก์ชัน `uploads` (complete) บน kemi-dev เสร็จแล้ว **รอผู้ใช้:** รัน `node ops/b2/proof-complete.mjs` **รอบ 2** (รอบ 1 ล้มเพราะบั๊กขนาดไบต์ในสคริปต์ แก้แล้ว) แล้วส่งผล → Claude จดผลข้อ 7/9 + ตรวจรับข้ออัปทับ staging แล้วติ๊ก · เอกสาร P3-04 จาก Claude app commit แล้ว · ถัดไป P3-05 **[effort สูง]** · B2 dev พร้อมใช้: bucket `kemi-dev-files` + CORS + lifecycle + กุญแจใน secrets · migration ถัดไปใช้ `0018_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -184,6 +184,10 @@
     - หลังใส่ secrets ฟังก์ชัน `uploads` บน kemi-dev ผ่านขั้นตรวจค่าตั้งแล้ว (เรียกด้วย publishable key → RPC ปฏิเสธเป็น 401 `not_authenticated`); การขอ batch จริงด้วย JWT ของครูทดสอบใน P3-06
     - ยังไม่ได้จด capabilities จริงของกุญแจ `kemi-edge-dev` (หน้าเว็บ Read and Write) — ดูจากรายการกุญแจใน B2 ได้ตอนทำระยะ 7
 - [ ] P3-04 **[effort สูง]** `uploads` ขั้น complete (GET แบบ Range **ครั้งเดียว** ไม่ HEAD แยก: `staging_version_id` จาก `x-amz-version-id`, ขนาดจาก `Content-Range`, magic number จากไบต์ชุดเดียวกัน → CopyObject ระบุเวอร์ชัน → finalize) + ทดสอบกับ bucket dev — **โค้ดเสร็จ 5 ต.ค. 2026 เหลือผล `ops/b2/proof-complete.mjs` (รอผู้ใช้รัน)**
+    - **ผลพิสูจน์รอบ 1 (5 ต.ค. 2026): ผ่าน 2/3 — ยังไม่ใช่ผลของข้อ 7/9** ผู้ใช้ตรวจโค้ดแล้วยอมรับค่าที่เลือกเองทั้งหมด
+      - PUT V1 200 · PUT V2 403 `SignatureDoesNotMatch` · DELETE V1 ระบุ versionId 204 (สคริปต์หยุดก่อน GET/CopyObject) · คำขอ B2: Class A 3, Class B 0, Class C 0
+      - สาเหตุ: บั๊กในสคริปต์ — `sized()` ตัดตามจำนวนตัวอักษร V2 มี “—” (3 ไบต์) จึงยาว 66 ไบต์ ไม่ใช่ 64 ตามที่ลายเซ็นระบุ (ไม่ใช่บั๊กของ `uploads`; ยืนยันซ้ำว่า B2 กัน PUT ที่ขนาดต่างจากลายเซ็น)
+      - แก้แล้ว: `sized()` นับเป็นไบต์ + V2 เป็น ASCII ล้วน → **รอผู้ใช้รันรอบ 2** (คำขอตามแผน: Class A 8, Class B 2)
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** นับคำขอ Class B ของ complete ลงตัวนับรายวัน; B2 ปฏิเสธเพราะเกินเพดาน → `download_budget_reached` (ข้อความตอนส่งงานบอกให้ลองใหม่หลัง 07:00 น. ตาม UX 7.1)
     - จาก P3-03:
       - เพดานดาวน์โหลดของ B2 กัน CopyObject ด้วย → ถ้า CopyObject ได้ 403 + `isCapExceeded()` ตอบ `download_budget_reached` เหมือนขั้น GET
