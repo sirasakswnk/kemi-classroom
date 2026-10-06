@@ -22,7 +22,7 @@ import {
 } from './useFileField'
 import styles from './uploads.module.css'
 
-// ช่องไฟล์ของ T02 (ไฟล์โจทย์/ไฟล์แนบ) — UX_DESIGN 9 และแบบ v2 (.file-chip): ป้ายจำนวน/เพดาน, แถวไฟล์
+// ช่องไฟล์ของ T02 (ไฟล์โจทย์/ไฟล์แนบ) และ S03 (ไฟล์งาน — P3-08) — UX_DESIGN 6, 9 และแบบ v2 (.file-chip): ป้ายจำนวน/เพดาน, แถวไฟล์
 // พร้อมตัวอย่างรูปจากเครื่อง ความคืบหน้า ข้อความติดไฟล์ ลองใหม่/นำออก และคำแนะนำเมื่อรวมเกิน 5 MB
 // ทุกปุ่มกดได้ด้วยนิ้ว/คีย์บอร์ด ไม่มีปุ่มที่ต้อง hover (CLAUDE.md ส่วน 7)
 export function FileField({
@@ -32,7 +32,7 @@ export function FileField({
   onChange,
   error,
 }: {
-  kind: 'homework' | 'announcement'
+  kind: 'homework' | 'announcement' | 'submission'
   target: FileFieldTarget
   /** ไฟล์เดิมของโพสต์ (โหมดแก้ไข) — เปลี่ยนชุดเริ่มต้นให้ remount ด้วย key */
   initial?: AttachmentRef[]
@@ -45,6 +45,8 @@ export function FileField({
   const errorId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const labelId = useId()
+  const hintId = useId()
+  const submission = kind === 'submission'
   const [preview, setPreview] = useState<FileItem | null>(null)
 
   const pick = (e: ChangeEvent<HTMLInputElement>) => {
@@ -59,11 +61,23 @@ export function FileField({
       className={styles.group}
       role="group"
       aria-labelledby={labelId}
-      aria-describedby={error ? errorId : undefined}
+      aria-describedby={
+        [submission && hintId, error && errorId].filter(Boolean).join(' ') || undefined
+      }
     >
       <span id={labelId} className={styles.label}>
-        {copy.label[kind]} <span className={styles.meta}>{copy.meta(field.count)}</span>
+        {copy.label[kind]}{' '}
+        <span className={styles.meta}>
+          {submission ? copy.metaSubmission(field.count) : copy.meta(field.count)}
+        </span>
       </span>
+      {submission && (
+        <p id={hintId} className={styles.hint}>
+          {copy.submissionHint[0]}
+          <br />
+          {copy.submissionHint[1]}
+        </p>
+      )}
       {field.items.length > 0 && (
         <ul className={styles.rows}>
           {field.items.map((item, index) => (
@@ -86,7 +100,7 @@ export function FileField({
           <span>{error}</span>
         </p>
       )}
-      {field.largeSet && (
+      {field.largeSet && !submission && (
         <p className={styles.hint} role="note">
           {copy.largeSetHint}
         </p>

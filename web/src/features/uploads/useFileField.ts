@@ -60,9 +60,15 @@ const PREPARE_MESSAGE: Record<PrepareError['reason'], string> = {
 }
 
 /** ข้อความที่แถวไฟล์สำหรับข้อผิดพลาดตอนอัปโหลด (UX 7.1) */
-function uploadMessage(error: AppError): { text: string; retryable: boolean } {
+function uploadMessage(
+  error: AppError,
+  purpose: UploadPurpose,
+): { text: string; retryable: boolean } {
   if (error.code === 'download_budget_reached')
-    return { text: th.uploads.budgetReached, retryable: true }
+    return {
+      text: purpose === 'submission' ? th.uploads.budgetReachedStudent : th.uploads.budgetReached,
+      retryable: true,
+    }
   if (error.code === 'upload_type_mismatch' || error.code === 'file_type_not_allowed')
     return { text: error.message, retryable: false }
   const ref = error.ref ? ` (${th.errors.reference(error.ref)})` : ''
@@ -201,7 +207,7 @@ export function useFileField(
             break
           case 'failed': {
             controllers.current.delete(event.id)
-            const { text, retryable } = uploadMessage(event.error)
+            const { text, retryable } = uploadMessage(event.error, targetRef.current.purpose)
             patch(event.id, { status: 'error', error: text, retryable })
             break
           }

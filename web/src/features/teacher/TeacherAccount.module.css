@@ -185,3 +185,21 @@
 .dot[data-tone='4'] {
   background: #7650a8;
 }
+
+/* ลิงก์เล็ก “สัญญาอนุญาตซอฟต์แวร์” ท้ายหน้าโปรไฟล์ (UX 9) */
+.licenses {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding: 0 4px;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.licenses:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}

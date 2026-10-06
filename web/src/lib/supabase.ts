@@ -77,6 +77,10 @@ export const ERROR_CODES = [
   'upload_size_mismatch',
   'upload_type_mismatch',
   'upload_failed',
+  'submission_closed',
+  'resubmit_not_allowed',
+  'submission_files_required',
+  'submission_file_unavailable',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -167,6 +171,11 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   upload_size_mismatch: 'field',
   upload_type_mismatch: 'field',
   upload_failed: 'field',
+  // S03 ส่งงาน (P3-07/P3-08): สถานะเปลี่ยนระหว่างเปิดหน้า → โหลดสถานะใหม่ (หน้าแสดงเหตุผลแทนฟอร์ม)
+  submission_closed: 'reload',
+  resubmit_not_allowed: 'reload',
+  submission_files_required: 'field',
+  submission_file_unavailable: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

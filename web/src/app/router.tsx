@@ -9,6 +9,7 @@ import MyAccount from '../features/student/MyAccount'
 import StudentClassroom from '../features/student/StudentClassroom'
 import StudentHome from '../features/student/StudentHome'
 import { StudentLayout } from '../features/student/StudentLayout'
+import WorkPage from '../features/work/WorkPage'
 
 // เส้นทางระยะ 1 (TECHNICAL_BUILD_PLAN ส่วน 6) — หน้าแรกตามบทบาท: นักเรียน /, ครู /t, ผู้ดูแล /admin
 const devRoutes: RouteObject[] = import.meta.env.DEV
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
       { path: '/login', element: <LoginPage /> },
       { path: '/auth/callback', element: <AuthCallback /> },
       {
-        // หน้านักเรียน S01 / S02 / S06 และลิงก์เชิญ — ยังไม่ผูกชื่อ → A02 ก่อนทุกหน้า (UX 4)
+        // หน้านักเรียน S01 / S02 / S03 / S06 และลิงก์เชิญ — ยังไม่ผูกชื่อ → A02 ก่อนทุกหน้า (UX 4)
         // ยังไม่ล็อกอิน: RequireRole จำปลายทาง (ตัวกรอง path จาก P1-08) แล้วไป A01
         path: '/',
         element: (
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <StudentHome /> },
           { path: 'c/:classId', element: <StudentClassroom /> },
+          { path: 'w/:postId', element: <WorkPage /> },
           { path: 'me', element: <MyAccount /> },
           { path: 'join/:code', element: <JoinPage /> },
         ],

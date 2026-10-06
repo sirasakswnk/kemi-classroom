@@ -1,0 +1,117 @@
+import type { ChipTone } from '../../ui'
+import { th } from '../../copy/th'
+import { thaiDate, thaiTime } from '../../lib/thaiTime'
+import type { SubmissionStatus, WorkRow } from './api'
+
+// สถานะที่หน้าจอแสดง (UX 7) — คิดจากผลของเซิร์ฟเวอร์เท่านั้น (outcome/blocked/timing) ไม่คิดกติกาการรับงานเอง
+
+export interface Badge {
+  label: string
+  tone: ChipTone
+}
+
+const copy = th.work
+
+/** วันเวลาไทยแบบเต็ม เช่น “11 พ.ย. 20:00 น.” */
+export const when = (iso: string) => `${thaiDate(iso)} ${thaiTime(iso)} น.`
+
+/** ป้ายของการ์ดงานใน S02/S01 */
+export function workBadge(row: WorkRow): Badge {
+  if (!row.submitted) {
+    if (row.blocked === 'term_ended') return { label: copy.label.termEnded, tone: 'plain' }
+    if (row.blocked) return { label: copy.label.closed, tone: 'plain' }
+    return { label: copy.label.todo, tone: 'amber' }
+  }
+  if (row.permission_open) return { label: copy.label.permission, tone: 'purple' }
+  if (row.timing === 'late') return { label: copy.label.late, tone: 'red' }
+  if ((row.content_revision ?? 1) > 1) return { label: copy.label.revised, tone: 'purple' }
+  return { label: copy.label.onTime, tone: 'purple' }
+}
+
+/** งานที่ยังต้องทำ: ยังไม่ส่งและยังส่งได้ */
+export const isPending = (row: WorkRow) => !row.submitted && row.outcome !== null
+
+export type WorkFilter = 'all' | 'todo' | 'done'
+
+export function filterWork(rows: WorkRow[], filter: WorkFilter): WorkRow[] {
+  if (filter === 'todo') return rows.filter((r) => !r.submitted)
+  if (filter === 'done') return rows.filter((r) => r.submitted)
+  return rows
+}
+
+/** เรียงค้าง/ใกล้ส่งก่อน (UX 5): งานที่ยังต้องส่งตามกำหนดจากเร็วไปช้า แล้วงานอื่นจากกำหนดล่าสุด */
+export function sortWork(rows: WorkRow[]): WorkRow[] {
+  const due = (r: WorkRow) => Date.parse(r.due_at)
+  const pending = rows.filter(isPending).sort((a, b) => due(a) - due(b))
+  const rest = rows.filter((r) => !isPending(r)).sort((a, b) => due(b) - due(a))
+  return [...pending, ...rest]
+}
+
+/** S01 “ใกล้กำหนดส่ง”: งานที่ยังต้องส่ง เรียงตามกำหนด (สูงสุด limit ชิ้น) */
+export function dueSoon(rows: WorkRow[], limit = 5): WorkRow[] {
+  return sortWork(rows.filter(isPending)).slice(0, limit)
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** ป้ายเวลาใน S01: เลยกำหนด (ยังส่งได้แบบสาย) / เหลือไม่ถึง 24 ชม. / ไม่มี */
+export function dueHint(dueAt: string, now: number): 'overdue' | 'soon' | null {
+  const left = Date.parse(dueAt) - now
+  if (left < 0) return 'overdue'
+  if (left < DAY_MS) return 'soon'
+  return null
+}
+
+interface AnnouncementLike {
+  kind: string
+  published_at: string
+  content_updated_at: string | null
+}
+
+/** มีประกาศที่โพสต์หรือแก้ภายใน 7 วัน (UX 5 แท็บที่เปิดก่อนของ S02) */
+export function hasRecentAnnouncement(posts: AnnouncementLike[], now: number): boolean {
+  const since = now - 7 * DAY_MS
+  return posts.some(
+    (p) =>
+      p.kind === 'announcement' &&
+      Math.max(
+        Date.parse(p.published_at),
+        p.content_updated_at ? Date.parse(p.content_updated_at) : 0,
+      ) >= since,
+  )
+}
+
+export const sameFiles = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((id, i) => id === b[i])
+
+/** S03: ป้ายหัว “งานของฉัน” */
+export function mineBadge(
+  status: SubmissionStatus,
+  ui: { editing: boolean; attached: boolean },
+): Badge {
+  const sub = status.submission
+  if (sub && ui.editing) return { label: copy.label.editing, tone: 'amber' }
+  if (!sub) {
+    if (status.blocked === 'term_ended') return { label: copy.label.termEnded, tone: 'plain' }
+    if (status.blocked) return { label: copy.label.closed, tone: 'plain' }
+    if (ui.attached) return { label: copy.label.attached, tone: 'amber' }
+    return { label: copy.label.todo, tone: 'amber' }
+  }
+  if (status.permission_open) return { label: copy.label.permission, tone: 'purple' }
+  if (sub.timing === 'late') return { label: copy.label.late, tone: 'red' }
+  if (sub.content_revision > 1) return { label: copy.label.revised, tone: 'purple' }
+  return { label: copy.label.onTime, tone: 'purple' }
+}
+
+/** แถบขั้นตอน ส่งงาน → ครูตรวจ → งานครบถ้วน → ได้โทเคน (การตรวจมากับระยะ 4) */
+export function stepStates(status: SubmissionStatus): ('done' | 'now' | 'todo')[] {
+  return status.submission ? ['done', 'now', 'todo', 'todo'] : ['now', 'todo', 'todo', 'todo']
+}
+
+/** ข้อความแทนฟอร์มเมื่อส่ง/ส่งแก้ไม่ได้ตอนนี้ */
+export function blockedReason(code: string): string {
+  if (code === 'term_ended') return copy.lockedTermEnded
+  if (code === 'resubmit_not_allowed') return copy.lockedPastDue
+  if (code === 'submission_closed') return th.errors.submission_closed
+  return th.errors.fallback
+}

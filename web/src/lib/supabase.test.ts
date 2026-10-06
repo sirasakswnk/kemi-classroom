@@ -110,6 +110,21 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
     action: 'field',
   },
   upload_failed: { message: 'บันทึกไฟล์ไม่สำเร็จ กรุณาอัปโหลดไฟล์นี้ใหม่', action: 'field' },
+  // S03 ส่งงาน (UX 7.1, P3-07/P3-08)
+  submission_closed: {
+    message: 'งานนี้ปิดรับแล้ว ส่งงานไม่ได้ ถ้าจำเป็นให้แจ้งคุณครู',
+    action: 'reload',
+  },
+  resubmit_not_allowed: {
+    message:
+      'เลยกำหนดส่งหรือคุณครูตรวจแล้ว ส่งแก้ได้เมื่อคุณครูเปิดสิทธิ์แก้ไข งานชุดเดิมยังอยู่ครบ',
+    action: 'reload',
+  },
+  submission_files_required: { message: 'แนบไฟล์อย่างน้อย 1 ไฟล์ก่อนส่งงาน', action: 'field' },
+  submission_file_unavailable: {
+    message: 'มีไฟล์ที่ใช้ส่งไม่ได้แล้ว โหลดหน้าใหม่แล้วแนบไฟล์อีกครั้ง งานชุดเดิมยังอยู่ครบ',
+    action: 'field',
+  },
   download_budget_reached: {
     message:
       'วันนี้เปิดไฟล์ครบโควตาของระบบแล้ว เปิดได้อีกครั้งเวลา 07:00 น. ไม่ใช่ปัญหาจากเครื่องของคุณ',

@@ -8,7 +8,7 @@ import { supabase, toAppError } from '../../lib/supabase'
 import { z } from '../../lib/zod'
 import type { UploadType } from './rules'
 
-export type UploadPurpose = 'post' | 'solution'
+export type UploadPurpose = 'post' | 'solution' | 'submission'
 
 export interface BatchRequest {
   purpose: UploadPurpose

@@ -5,6 +5,8 @@ import styles from './Tabs.module.css'
 export interface TabItem<K extends string> {
   key: K
   label: string
+  /** ป้ายเล็กข้างชื่อแท็บ เช่น “ใหม่” — มีจุดพร้อมคำ ไม่ใช้สีอย่างเดียว (UX 5) */
+  badge?: string
 }
 
 export interface TabsProps<K extends string> {
@@ -75,6 +77,12 @@ export function Tabs<K extends string>({
             onClick={() => onSelect(t.key)}
           >
             {t.label}
+            {t.badge && (
+              <span className={styles.badge}>
+                <span className={styles.badgeDot} aria-hidden="true" />
+                {t.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>

@@ -53,6 +53,7 @@ function filesOf(rows: z.infer<typeof AttachmentRowSchema>[]): AttachmentRef[] {
 const PostRowSchema = z
   .object({
     id: z.uuid(),
+    classroom_id: z.uuid(),
     kind: z.enum(['homework', 'announcement']),
     title: z.string(),
     body: z.string().nullable(),
@@ -70,6 +71,8 @@ const PostRowSchema = z
 
 export type Post = z.infer<typeof PostRowSchema>
 
+const POST_SELECT = `id, classroom_id, kind, title, body, published_at, content_updated_at, assignments(full_score, late_penalty_pct, reward_tokens, due_at, close_at, accept_after_solution), ${ATTACHMENTS_SELECT}`
+
 /** โพสต์ทั้งหมดของห้อง เรียงจากโพสต์ล่าสุด (RLS ไม่คืนแถวถ้าไม่ใช่สมาชิก/ครูของห้อง) */
 export const postsQuery = (classroomId: string) =>
   queryOptions({
@@ -78,13 +81,27 @@ export const postsQuery = (classroomId: string) =>
       run(
         supabase
           .from('posts')
-          .select(
-            `id, kind, title, body, published_at, content_updated_at, assignments(full_score, late_penalty_pct, reward_tokens, due_at, close_at, accept_after_solution), ${ATTACHMENTS_SELECT}`,
-          )
+          .select(POST_SELECT)
           .eq('classroom_id', classroomId)
           .order('published_at', { ascending: false })
           .order('position', { referencedTable: 'attachments' }),
         z.array(PostRowSchema),
+      ),
+  })
+
+/** โพสต์เดียว (S03 หน้างาน) — null = ไม่มี หรือไม่มีสิทธิ์อ่าน (RLS: ไม่ใช่สมาชิกขณะนี้) */
+export const postQuery = (postId: string) =>
+  queryOptions({
+    queryKey: ['post', postId],
+    queryFn: () =>
+      run(
+        supabase
+          .from('posts')
+          .select(POST_SELECT)
+          .eq('id', postId)
+          .order('position', { referencedTable: 'attachments' })
+          .maybeSingle(),
+        PostRowSchema.nullable(),
       ),
   })
 
