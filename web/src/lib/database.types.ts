@@ -182,6 +182,7 @@ export type Database = {
           position: number
           post_id: string | null
           solution_id: string | null
+          submission_id: string | null
         }
         Insert: {
           asset_id: string
@@ -190,6 +191,7 @@ export type Database = {
           position: number
           post_id?: string | null
           solution_id?: string | null
+          submission_id?: string | null
         }
         Update: {
           asset_id?: string
@@ -198,6 +200,7 @@ export type Database = {
           position?: number
           post_id?: string | null
           solution_id?: string | null
+          submission_id?: string | null
         }
         Relationships: [
           {
@@ -220,6 +223,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "solutions"
             referencedColumns: ["assignment_id"]
+          },
+          {
+            foreignKeyName: "attachments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -414,6 +424,54 @@ export type Database = {
           },
         ]
       }
+      revision_permissions: {
+        Row: {
+          id: string
+          opened_at: string
+          opened_by_account_id: string
+          revoked_at: string | null
+          status: string
+          submission_id: string
+          used_at: string | null
+          used_revision: number | null
+        }
+        Insert: {
+          id?: string
+          opened_at?: string
+          opened_by_account_id: string
+          revoked_at?: string | null
+          status?: string
+          submission_id: string
+          used_at?: string | null
+          used_revision?: number | null
+        }
+        Update: {
+          id?: string
+          opened_at?: string
+          opened_by_account_id?: string
+          revoked_at?: string | null
+          status?: string
+          submission_id?: string
+          used_at?: string | null
+          used_revision?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_permissions_opened_by_account_id_fkey"
+            columns: ["opened_by_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_permissions_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roster_entries: {
         Row: {
           created_at: string
@@ -561,6 +619,54 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: true
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          assignment_id: string
+          content_revision: number
+          first_after_solution: boolean
+          first_submitted_at: string
+          id: string
+          last_submitted_at: string
+          reward_granted: boolean
+          student_id: string
+        }
+        Insert: {
+          assignment_id: string
+          content_revision?: number
+          first_after_solution?: boolean
+          first_submitted_at: string
+          id?: string
+          last_submitted_at: string
+          reward_granted?: boolean
+          student_id: string
+        }
+        Update: {
+          assignment_id?: string
+          content_revision?: number
+          first_after_solution?: boolean
+          first_submitted_at?: string
+          id?: string
+          last_submitted_at?: string
+          reward_granted?: boolean
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -814,6 +920,15 @@ export type Database = {
           p_admin_mode?: boolean
           p_classroom_id: string
           p_enabled: boolean
+        }
+        Returns: Json
+      }
+      submit_assignment: {
+        Args: {
+          p_assignment_id: string
+          p_expected_revision: number
+          p_files: string[]
+          p_request_key: string
         }
         Returns: Json
       }
