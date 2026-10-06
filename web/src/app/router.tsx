@@ -101,6 +101,19 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T03 สถานะการส่งงาน + ตัวดูไฟล์งานส่ง (P3-09)
+            path: 'w/:postId',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).WorkStatusPage,
+            }),
+          },
+          {
+            path: 'w/:postId/s/:submissionId',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).SubmissionViewer,
+            }),
+          },
+          {
             path: 'w/:postId/edit',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).EditPost,

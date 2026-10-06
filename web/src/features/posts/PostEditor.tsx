@@ -115,7 +115,11 @@ export function PostEditor({
   const locks = latest ? locksOf(latest) : { fullScore: false, reward: false, afterSolution: false }
   const shown = latest ? withLockedValues(values, latest) : values
   const homework = shown.kind === 'homework'
-  const roomTab = (kind: PostKind) => `/t/c/${c.id}?tab=${kind === 'homework' ? 'work' : 'general'}`
+  // โหมดแก้ไขการบ้านกลับ T03 (การ์ดโจทย์และไฟล์ — P3-09); อื่น ๆ กลับแท็บของชนิดนั้นใน T08
+  const roomTab = (kind: PostKind) =>
+    mode.kind === 'edit' && kind === 'homework'
+      ? `/t/w/${mode.post.id}`
+      : `/t/c/${c.id}?tab=${kind === 'homework' ? 'work' : 'general'}`
 
   const set = <K extends keyof PostFormValues>(
     key: K,

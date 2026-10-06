@@ -5,11 +5,13 @@ import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { Button } from '../../ui'
 import { postsQuery } from './api'
-import { AnnouncementList, HomeworkList } from './PostLists'
+import { TeacherWorkList } from '../review/TeacherWorkList'
+import { StudentWorkList } from '../work/StudentWorkList'
+import { AnnouncementList } from './PostLists'
 import styles from './posts.module.css'
 
 // แท็บ “โพสต์งานของคุณครู” (homework) และ “โพสต์ทั่วไป” (announcement) ของห้อง — ใช้ทั้ง T08 และ S02
-// ครูเห็นปุ่มสร้างโพสต์ (ถ้าห้องยังโพสต์ได้); รายการงานเต็มพร้อมยอดส่ง/รอตรวจของ T08 มากับ P3-09
+// ครูเห็นปุ่มสร้างโพสต์ (ถ้าห้องยังโพสต์ได้); การบ้านของครูแสดงยอดส่ง/รอตรวจและเข้า T03 (P3-09)
 export function RoomPosts({
   classroomId,
   kind,
@@ -100,7 +102,11 @@ export function RoomPosts({
     <>
       {header}
       {homework ? (
-        <HomeworkList posts={items} audience={audience} heading={heading} />
+        teacher ? (
+          <TeacherWorkList posts={items} classroomId={classroomId} heading={heading} />
+        ) : (
+          <StudentWorkList classroomId={classroomId} />
+        )
       ) : (
         <AnnouncementList
           posts={items}
