@@ -273,3 +273,9 @@ export async function deleteVersionRequest(
   url.searchParams.set('versionId', versionId)
   return client(config).sign(url.toString(), { method: 'DELETE' })
 }
+
+/** HEAD ไฟล์จริง (sweeper แถว copying — TECHNICAL_DESIGN 9 ข้อ 3): นับเป็นคำขอ Class B 1 ครั้ง ไม่มีไบต์ดาวน์โหลด */
+export async function headObjectRequest(config: B2Config, key: string): Promise<Request> {
+  if (!FINAL_KEY.test(key)) throw new Error('b2_key_invalid')
+  return client(config).sign(objectUrl(config, key).toString(), { method: 'HEAD' })
+}

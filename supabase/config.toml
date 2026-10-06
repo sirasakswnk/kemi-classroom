@@ -428,3 +428,10 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/files/deno.json"
 entrypoint = "./functions/files/index.ts"
+
+# Edge Function `process-jobs` (P3-10): pg_cron + pg_net เรียกด้วยรหัสลับ x-jobs-secret (ไม่มี JWT ผู้ใช้) — ฟังก์ชันตรวจเอง
+[functions.process-jobs]
+enabled = true
+verify_jwt = false
+import_map = "./functions/process-jobs/deno.json"
+entrypoint = "./functions/process-jobs/index.ts"
