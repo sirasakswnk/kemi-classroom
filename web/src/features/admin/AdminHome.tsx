@@ -16,6 +16,7 @@ import { BrandLogo } from '../../app/common/brand'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { Button, Chip, Field, Input, Modal, Select, useToast } from '../../ui'
+import { StoragePanel } from '../storage/Storage'
 import { enterAdminMode } from '../teacher/adminMode'
 import { addTeacher, adminTeachersQuery, removeTeacher, type AllowlistRow } from './api'
 import styles from './AdminHome.module.css'
@@ -23,7 +24,7 @@ import styles from './AdminHome.module.css'
 const NEW = '__new__'
 
 // D01 ดูแลระบบ (UX 12 L6, แบบ v2 renderAdmin): บัญชีครู (เพิ่ม/เอาออก ต้องเหลืออย่างน้อย 1) และเข้าหน้าครูในโหมดผู้ดูแล
-// สำรองข้อมูลและพื้นที่เก็บไฟล์มาในระยะ 6–7
+// พื้นที่เก็บไฟล์ + ตัวนับ B2 วันนี้ (P3-10) · สถานะสำรองข้อมูลมากับ P3-11/ระยะ 7
 export default function AdminHome() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
@@ -62,6 +63,8 @@ export default function AdminHome() {
             <span>{copy.laterBody}</span>
           </span>
         </section>
+
+        <StoragePanel />
 
         <div className={styles.cols}>
           <TeachersPanel />

@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Check,
   Info,
@@ -18,6 +18,8 @@ import type { Post } from '../posts/api'
 import { AttachmentList } from '../uploads/AttachmentList'
 import { FileField } from '../uploads/FileField'
 import type { FileFieldState } from '../uploads/useFileField'
+import { storageStatusQuery } from '../storage/api'
+import { UploadBlocked } from '../storage/Storage'
 import { submitAssignment, type SubmissionStatus } from './api'
 import { blockedReason, mineBadge, sameFiles, when } from './workState'
 import styles from './work.module.css'
@@ -44,6 +46,9 @@ export function MyWork({ post, status }: { post: Post; status: SubmissionStatus 
   const current = sub?.files.map((f) => f.asset_id) ?? []
   const canSubmit = status.outcome !== null
   const showForm = canSubmit && (!sub || editing)
+  // J10.3: พื้นที่เต็ม → แทนกล่องเลือกไฟล์ด้วยกล่องแจ้ง (ส่งงานต่อไม่ได้จนมีพื้นที่)
+  const storage = useQuery({ ...storageStatusQuery, enabled: showForm })
+  const storageFull = showForm && storage.data?.level === 'full'
   const badge = mineBadge(status, {
     editing: showForm && !!sub,
     attached: files.assetIds.length > 0,
@@ -230,18 +235,22 @@ export function MyWork({ post, status }: { post: Post; status: SubmissionStatus 
               <span>{copy.afterSolutionNotice}</span>
             </p>
           )}
-          <FileField
-            key={`${sub?.content_revision ?? 0}:${editing}`}
-            kind="submission"
-            target={{
-              purpose: 'submission',
-              classroomId: post.classroom_id,
-              postId: post.id,
-              adminMode: false,
-            }}
-            initial={editing ? sub?.files : undefined}
-            onChange={setFiles}
-          />
+          {storageFull ? (
+            <UploadBlocked />
+          ) : (
+            <FileField
+              key={`${sub?.content_revision ?? 0}:${editing}`}
+              kind="submission"
+              target={{
+                purpose: 'submission',
+                classroomId: post.classroom_id,
+                postId: post.id,
+                adminMode: false,
+              }}
+              initial={editing ? sub?.files : undefined}
+              onChange={setFiles}
+            />
+          )}
           {!sub && files.assetIds.length > 0 && !files.busy && (
             <p className={styles.note}>
               <Info aria-hidden="true" />
@@ -249,39 +258,41 @@ export function MyWork({ post, status }: { post: Post; status: SubmissionStatus 
             </p>
           )}
           {errorBox}
-          <div className={styles.submitBar}>
-            <Button
-              variant="primary"
-              icon={<Send />}
-              disabled={!!blockReason || sending}
-              aria-describedby={blockReason ? hintId : undefined}
-              onClick={() => void submit()}
-            >
-              {sending
-                ? copy.submitting
-                : sub
-                  ? copy.submitEdit(files.assetIds.length)
-                  : copy.submit(files.assetIds.length)}
-            </Button>
-            {blockReason && (
-              <span id={hintId} className={styles.submitHint}>
-                {blockReason}
-              </span>
-            )}
-            {editing && (
+          {!storageFull && (
+            <div className={styles.submitBar}>
               <Button
-                variant="ghost"
-                disabled={sending}
-                onClick={() => {
-                  setEditing(false)
-                  setError(null)
-                  setFiles(EMPTY)
-                }}
+                variant="primary"
+                icon={<Send />}
+                disabled={!!blockReason || sending}
+                aria-describedby={blockReason ? hintId : undefined}
+                onClick={() => void submit()}
               >
-                {copy.cancelEdit}
+                {sending
+                  ? copy.submitting
+                  : sub
+                    ? copy.submitEdit(files.assetIds.length)
+                    : copy.submit(files.assetIds.length)}
               </Button>
-            )}
-          </div>
+              {blockReason && (
+                <span id={hintId} className={styles.submitHint}>
+                  {blockReason}
+                </span>
+              )}
+              {editing && (
+                <Button
+                  variant="ghost"
+                  disabled={sending}
+                  onClick={() => {
+                    setEditing(false)
+                    setError(null)
+                    setFiles(EMPTY)
+                  }}
+                >
+                  {copy.cancelEdit}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </section>

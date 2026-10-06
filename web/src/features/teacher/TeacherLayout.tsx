@@ -20,6 +20,7 @@ import { exitAdminMode, useAdminModeFlag } from './adminMode'
 import { TeacherContext, useTeacher, type TeacherContextValue } from './teacherContext'
 import { initialOf as initialOfTeacher } from '../../lib/initial'
 import styles from './TeacherLayout.module.css'
+import { TeacherStorageBar } from '../storage/Storage'
 
 // โครงหน้าครู (แบบ v2 .desk): เมนูข้างตั้งแต่ 900 px ต่ำกว่านั้นเป็นแถบเลื่อนด้านบน (UX 13) + แถบเตือนโหมดผู้ดูแล (L6)
 // เข้าได้เฉพาะครู หรือผู้ดูแลที่กดเข้าโหมดผู้ดูแลแล้ว
@@ -173,7 +174,10 @@ export function TeacherPage({ crumbs, children }: { crumbs: Crumb[]; children: R
           </span>
         </Link>
       </header>
-      <main className={styles.body}>{children}</main>
+      <main className={styles.body}>
+        <TeacherStorageBar />
+        {children}
+      </main>
     </>
   )
 }

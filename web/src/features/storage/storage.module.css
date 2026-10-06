@@ -1,0 +1,237 @@
+/* พื้นที่เก็บไฟล์ — แบบ v2 .store-panel / .stack-meter / .legend / .store-bar / .blocked-up */
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
+  min-width: 0;
+}
+
+.panel h2 {
+  font-size: 1.125rem;
+}
+
+.panel h3 {
+  font-size: 1rem;
+}
+
+.meterBox {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.big {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.meter {
+  position: relative;
+  display: flex;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-2);
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+}
+
+[data-part='submission'] {
+  background: var(--purple);
+}
+
+[data-part='post'] {
+  background: var(--purple-mid);
+}
+
+[data-part='solution'] {
+  background: var(--green);
+}
+
+[data-part='charm'] {
+  background: var(--gold);
+}
+
+[data-part='deleting'] {
+  background: var(--red);
+}
+
+[data-part='reserved'] {
+  background: var(--ink-3);
+}
+
+[data-part='free'] {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+.mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--amber);
+}
+
+.mark[data-teacher] {
+  background: var(--red);
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.84375rem;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend i {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.legend span {
+  flex: 1;
+  color: var(--ink-2);
+}
+
+.legend b {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+.note[data-tone='amber'] {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.note[data-tone='red'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.note svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table thead th {
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.table tbody th {
+  font-weight: 500;
+}
+
+/* แถบเตือนบนหน้าครู */
+.bar {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  background: var(--amber-soft);
+  color: var(--ink);
+}
+
+.bar[data-tone='red'] {
+  background: var(--red-soft);
+}
+
+.bar svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--amber);
+}
+
+.bar[data-tone='red'] svg {
+  color: var(--red);
+}
+
+/* S03 เต็ม */
+.blocked {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  border: 2px dashed #dda3ae;
+  border-radius: var(--r-lg);
+  background: var(--red-soft);
+  color: var(--ink);
+  text-align: center;
+}
+
+.blocked svg {
+  width: 32px;
+  height: 32px;
+  color: var(--red);
+}
+
+.blocked small {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
