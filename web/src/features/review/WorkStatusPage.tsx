@@ -172,7 +172,7 @@ export default function WorkStatusPage() {
           </div>
         </div>
 
-        <section className={styles.card} aria-label={copy.cols.name}>
+        <section className={styles.card} aria-label={copy.tableAria}>
           <div className={styles.tblBar}>
             <div className={styles.seg} role="group" aria-label={copy.filtersAria}>
               {STATUS_FILTERS.map((f) => (

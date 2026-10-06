@@ -462,6 +462,10 @@
     gap: 12px;
   }
 
+  .no {
+    align-self: center;
+  }
+
   .srow.headRow {
     display: grid;
     border-top: 0;

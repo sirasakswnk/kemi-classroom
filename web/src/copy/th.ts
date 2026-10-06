@@ -705,6 +705,7 @@ export const th = {
     statLate: 'ส่งช้า',
     people: 'คน',
     latePct: (pct: number) => `คน · หัก ${pct}%`,
+    tableAria: 'รายชื่อสถานะการส่ง',
     filtersAria: 'กรองสถานะ',
     filters: { all: 'ทั้งหมด', sub: 'ส่งแล้ว', not: 'ยังไม่ส่ง' },
     range: (a: number, b: number, n: number) => `แสดง ${a}–${b} จาก ${n} คน`,
