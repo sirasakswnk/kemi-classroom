@@ -72,7 +72,10 @@ insert into expected_authenticated values
   ('public.my_work(uuid)'),
   -- 0022_teacher_work (ครู/ผู้ดูแลอ่านยอดและรายชื่อสถานะการส่ง)
   ('public.teacher_work_summary(uuid)'),
-  ('public.teacher_submission_list(uuid)');
+  ('public.teacher_submission_list(uuid)'),
+  -- 0023_jobs (ยอดพื้นที่ทุกบทบาท — นักเรียนเห็นแค่ระดับ; ตัวนับ B2 เฉพาะผู้ดูแล)
+  ('public.storage_status()'),
+  ('public.admin_b2_usage()');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
@@ -86,7 +89,16 @@ insert into expected_service_only values
   ('public.upload_complete_abort(uuid)'),
   ('public.record_b2_usage(text,integer,bigint,bigint)'),
   -- 0018_files_sign (ข้อมูลลงลายเซ็น + ตรวจและนับงบเปิดดูรายวัน)
-  ('public.files_sign_begin(uuid[])');
+  ('public.files_sign_begin(uuid[])'),
+  -- 0023_jobs (ตัวทำงานเบื้องหลัง process-jobs)
+  ('public.jobs_claim(integer)'),
+  ('public.jobs_complete(bigint,text)'),
+  ('public.jobs_fail(bigint,text)'),
+  ('public.delete_asset_begin(bigint)'),
+  ('public.delete_asset_finish(bigint)'),
+  ('public.copying_stale(integer)'),
+  ('public.sweep_copying_finish(uuid,text)'),
+  ('public.jobs_maintenance()');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);
