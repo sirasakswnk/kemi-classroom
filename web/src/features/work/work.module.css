@@ -291,7 +291,8 @@
   background: linear-gradient(transparent, var(--bg) 30%);
 }
 
-.submitBar > * {
+.submitBar > button,
+.submitBar > span {
   width: 100%;
 }
 
@@ -302,7 +303,8 @@
     justify-items: center;
   }
 
-  .submitBar > * {
+  .submitBar > button,
+  .submitBar > span {
     max-width: 420px;
   }
 }
@@ -316,7 +318,8 @@
     justify-items: stretch;
   }
 
-  .submitBar > * {
+  .submitBar > button,
+  .submitBar > span {
     max-width: none;
   }
 }
