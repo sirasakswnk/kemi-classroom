@@ -66,7 +66,10 @@ insert into expected_authenticated values
   ('public.authorize_files(uuid[])'),
   -- 0020_submissions
   ('private.can_read_submission(uuid)'),                            -- ใช้ใน RLS policy
-  ('public.submit_assignment(uuid,uuid[],integer,uuid)');
+  ('public.submit_assignment(uuid,uuid[],integer,uuid)'),
+  -- 0021_submission_status (อ่านสถานะงานของนักเรียน)
+  ('public.submission_status(uuid)'),
+  ('public.my_work(uuid)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
