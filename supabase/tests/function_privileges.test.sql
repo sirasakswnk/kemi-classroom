@@ -69,7 +69,10 @@ insert into expected_authenticated values
   ('public.submit_assignment(uuid,uuid[],integer,uuid)'),
   -- 0021_submission_status (อ่านสถานะงานของนักเรียน)
   ('public.submission_status(uuid)'),
-  ('public.my_work(uuid)');
+  ('public.my_work(uuid)'),
+  -- 0022_teacher_work (ครู/ผู้ดูแลอ่านยอดและรายชื่อสถานะการส่ง)
+  ('public.teacher_work_summary(uuid)'),
+  ('public.teacher_submission_list(uuid)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
