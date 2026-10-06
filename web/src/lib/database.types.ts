@@ -883,6 +883,7 @@ export type Database = {
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
       my_classrooms: { Args: never; Returns: Json }
+      my_work: { Args: { p_classroom_id?: string }; Returns: Json }
       ping: { Args: never; Returns: string }
       preview_roster_import: {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
@@ -923,6 +924,7 @@ export type Database = {
         }
         Returns: Json
       }
+      submission_status: { Args: { p_assignment_id: string }; Returns: Json }
       submit_assignment: {
         Args: {
           p_assignment_id: string
