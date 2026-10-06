@@ -934,6 +934,11 @@ export type Database = {
         }
         Returns: Json
       }
+      teacher_submission_list: {
+        Args: { p_assignment_id: string }
+        Returns: Json
+      }
+      teacher_work_summary: { Args: { p_classroom_id: string }; Returns: Json }
       unbind_student: {
         Args: { p_admin_mode?: boolean; p_student_id: string }
         Returns: Json
