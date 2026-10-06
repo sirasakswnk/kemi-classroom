@@ -63,7 +63,10 @@ insert into expected_authenticated values
   -- 0017_upload_complete (ยืนยันเจ้าของ batch ด้วย JWT ของผู้ใช้ — อ่านอย่างเดียว)
   ('public.upload_complete_target(uuid,integer)'),
   -- 0018_files_sign (คืนเฉพาะ id ที่เปิดได้ + เพดานครั้ง — ไม่คืน key/เวอร์ชัน)
-  ('public.authorize_files(uuid[])');
+  ('public.authorize_files(uuid[])'),
+  -- 0020_submissions
+  ('private.can_read_submission(uuid)'),                            -- ใช้ใน RLS policy
+  ('public.submit_assignment(uuid,uuid[],integer,uuid)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**

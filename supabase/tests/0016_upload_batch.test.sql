@@ -126,7 +126,7 @@ select throws_ok($$ select public.create_upload_batch('solution', '7e000000-0000
 select throws_ok($$ select public.create_upload_batch('post', '7e000000-0000-4000-8000-000000000001', '8e000000-0000-4000-8000-00000000000d', pg_temp.files(), gen_random_uuid()) $$,
   'P0001', 'forbidden', 'โพสต์ของห้องอื่นใช้กับห้องนี้ไม่ได้');
 select throws_ok($$ select public.create_upload_batch('submission', '7e000000-0000-4000-8000-000000000001', '8e000000-0000-4000-8000-00000000000a', pg_temp.files(), gen_random_uuid()) $$,
-  'P0001', 'invalid_request', 'งานส่ง (submission) ยังไม่เปิดในรอบนี้ (P3-07)');
+  'P0001', 'forbidden', 'ครูขอ batch งานส่งไม่ได้ (เฉพาะนักเรียน — 0020_submissions)');
 select throws_ok($$ select public.create_upload_batch('charm', '7e000000-0000-4000-8000-000000000001', null, pg_temp.files(), gen_random_uuid()) $$,
   'P0001', 'invalid_request', 'รูปเครื่องราง (charm) ยังไม่เปิด (ระยะ 5)');
 
