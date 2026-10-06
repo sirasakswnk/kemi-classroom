@@ -834,6 +834,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_b2_usage: { Args: never; Returns: Json }
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
@@ -848,6 +849,7 @@ export type Database = {
         }
         Returns: Json
       }
+      copying_stale: { Args: { p_limit?: number }; Returns: Json }
       create_classroom: {
         Args: {
           p_admin_mode?: boolean
@@ -878,8 +880,20 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_asset_begin: { Args: { p_job_id: number }; Returns: Json }
+      delete_asset_finish: { Args: { p_job_id: number }; Returns: boolean }
       ensure_account: { Args: never; Returns: Json }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
+      jobs_claim: { Args: { p_limit?: number }; Returns: Json }
+      jobs_complete: {
+        Args: { p_job_id: number; p_note?: string }
+        Returns: boolean
+      }
+      jobs_fail: {
+        Args: { p_error: string; p_job_id: number }
+        Returns: string
+      }
+      jobs_maintenance: { Args: never; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
       my_classrooms: { Args: never; Returns: Json }
@@ -924,6 +938,7 @@ export type Database = {
         }
         Returns: Json
       }
+      storage_status: { Args: never; Returns: Json }
       submission_status: { Args: { p_assignment_id: string }; Returns: Json }
       submit_assignment: {
         Args: {
@@ -933,6 +948,10 @@ export type Database = {
           p_request_key: string
         }
         Returns: Json
+      }
+      sweep_copying_finish: {
+        Args: { p_asset_id: string; p_version_id: string }
+        Returns: string
       }
       teacher_submission_list: {
         Args: { p_assignment_id: string }

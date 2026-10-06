@@ -208,13 +208,16 @@ select is((public.jobs_maintenance() ->> 'orphans_queued'), '0', 'เรีย�
 -- ---------------------------------------------------------------------------
 -- ฉ: storage_status / admin_b2_usage
 -- ---------------------------------------------------------------------------
-update public.storage_settings set quota_bytes = 1000000, hard_stop_margin_bytes = 1000, admin_warn_pct = 1, teacher_warn_pct = 2;
+-- เพดานสัมพันธ์กับยอดจริง (kemi-dev มีไฟล์จริงอยู่ด้วย) — ใช้ราว 1% ของเพดาน
+create temp table q on commit drop as select private.storage_used_bytes() * 100 + 100000 as quota;
+grant select on q to authenticated;
+update public.storage_settings set quota_bytes = (select quota from q), hard_stop_margin_bytes = 1000, admin_warn_pct = 50, teacher_warn_pct = 90;
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "2b100000-0000-4000-8000-000000000003", "role": "authenticated"}';
 select is(public.storage_status(), '{"level": "ok"}'::jsonb, 'นักเรียนเห็นแค่ระดับ');
 select throws_ok($$ select public.admin_b2_usage() $$, 'P0001', 'forbidden', 'นักเรียนอ่านตัวนับ B2 ไม่ได้');
 set local request.jwt.claims to '{"sub": "2b100000-0000-4000-8000-000000000001", "role": "authenticated"}';
-select ok((select s ->> 'level' in ('admin_warn', 'teacher_warn', 'ok') and (s ->> 'limit_bytes')::bigint = 999000
+select ok((select s ->> 'level' = 'ok' and (s ->> 'limit_bytes')::bigint = (select quota from q) - 1000
                   and s ? 'by_purpose' and s ? 'deleting_bytes'
              from public.storage_status() s), 'ครูเห็นยอดละเอียดและเพดาน = quota − margin');
 select throws_ok($$ select public.admin_b2_usage() $$, 'P0001', 'forbidden', 'ครูอ่านตัวนับ B2 ไม่ได้');
