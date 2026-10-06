@@ -234,3 +234,11 @@
   opacity: 0.35;
   cursor: default;
 }
+
+/* S03 กล่องเลือกไฟล์งาน: สองบรรทัดเพดาน/ชนิด (UX 6) — ข้อความรอง ไม่ใช่คำเตือน */
+.chooserHint {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}

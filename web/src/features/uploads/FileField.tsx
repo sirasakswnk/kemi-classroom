@@ -72,7 +72,7 @@ export function FileField({
         </span>
       </span>
       {submission && (
-        <p id={hintId} className={styles.hint}>
+        <p id={hintId} className={styles.chooserHint}>
           {copy.submissionHint[0]}
           <br />
           {copy.submissionHint[1]}
