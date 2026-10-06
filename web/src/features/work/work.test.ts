@@ -6,7 +6,6 @@ import {
   dueHint,
   dueSoon,
   filterWork,
-  hasRecentAnnouncement,
   isPending,
   mineBadge,
   sameFiles,
@@ -125,41 +124,6 @@ describe('เรียงและกรองงาน (UX 5)', () => {
     expect(dueHint(due, Date.parse('2026-11-10T13:00:01Z'))).toBe('overdue')
     expect(dueHint(due, Date.parse('2026-11-10T00:00:00Z'))).toBe('soon')
     expect(dueHint(due, Date.parse('2026-11-08T00:00:00Z'))).toBeNull()
-  })
-})
-
-describe('แท็บที่เปิดก่อนของ S02 (UX 5)', () => {
-  const now = Date.parse('2026-11-10T00:00:00Z')
-  it('ประกาศที่โพสต์หรือแก้ภายใน 7 วัน', () => {
-    expect(
-      hasRecentAnnouncement(
-        [{ kind: 'announcement', published_at: '2026-11-04T00:00:00Z', content_updated_at: null }],
-        now,
-      ),
-    ).toBe(true)
-    expect(
-      hasRecentAnnouncement(
-        [
-          {
-            kind: 'announcement',
-            published_at: '2026-10-01T00:00:00Z',
-            content_updated_at: '2026-11-09T00:00:00Z',
-          },
-        ],
-        now,
-      ),
-    ).toBe(true)
-  })
-  it('ประกาศเก่าเกิน 7 วัน หรือมีแต่การบ้าน → แท็บงาน', () => {
-    expect(
-      hasRecentAnnouncement(
-        [
-          { kind: 'announcement', published_at: '2026-11-02T23:59:00Z', content_updated_at: null },
-          { kind: 'homework', published_at: '2026-11-09T00:00:00Z', content_updated_at: null },
-        ],
-        now,
-      ),
-    ).toBe(false)
   })
 })
 

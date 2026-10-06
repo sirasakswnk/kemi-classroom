@@ -62,25 +62,6 @@ export function dueHint(dueAt: string, now: number): 'overdue' | 'soon' | null {
   return null
 }
 
-interface AnnouncementLike {
-  kind: string
-  published_at: string
-  content_updated_at: string | null
-}
-
-/** มีประกาศที่โพสต์หรือแก้ภายใน 7 วัน (UX 5 แท็บที่เปิดก่อนของ S02) */
-export function hasRecentAnnouncement(posts: AnnouncementLike[], now: number): boolean {
-  const since = now - 7 * DAY_MS
-  return posts.some(
-    (p) =>
-      p.kind === 'announcement' &&
-      Math.max(
-        Date.parse(p.published_at),
-        p.content_updated_at ? Date.parse(p.content_updated_at) : 0,
-      ) >= since,
-  )
-}
-
 export const sameFiles = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id, i) => id === b[i])
 

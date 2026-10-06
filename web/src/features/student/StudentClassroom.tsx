@@ -11,15 +11,22 @@ import { ClassBanner } from '../classrooms/ClassBanner'
 import { postsQuery } from '../posts/api'
 import { RoomPosts } from '../posts/RoomPosts'
 import { StudentWorkList } from '../work/StudentWorkList'
-import { hasRecentAnnouncement } from '../work/workState'
+import { useAuth } from '../../app/auth/useAuth'
 import { classroomViewQuery, myClassroomsQuery } from './api'
+import {
+  hasNewAnnouncement,
+  latestAnnouncement,
+  markSeen,
+  readSeen,
+  seenKey,
+} from './seenAnnouncements'
 import styles from './student.module.css'
 
 const TABS = ['general', 'work', 'members'] as const
 
 // S02 ห้องเรียนของนักเรียน: หัวห้อง + สามแท็บ (งานของคุณครู · โพสต์ทั่วไป · สมาชิก)
-// แท็บที่เปิดก่อน (UX 5): มีประกาศที่โพสต์/แก้ภายใน 7 วัน → “โพสต์ทั่วไป” + ป้าย “ใหม่” ไม่งั้น “โพสต์งานของคุณครู”;
-// ลิงก์ที่ระบุ ?tab= ใช้แท็บนั้น · ไม่เก็บสถานะอ่านแล้ว
+// เปิดที่ “โพสต์งานของคุณครู” เสมอ (UX 5 [ยืนยัน 6 ต.ค. 2026]) — ลิงก์ที่ระบุ ?tab= ใช้แท็บนั้น
+// ป้าย “ใหม่” บน “โพสต์ทั่วไป”: ประกาศที่โพสต์ภายใน 7 วันและยังไม่เคยเห็น (seenAnnouncements) — เข้าแท็บแล้วจดว่าเห็น
 // ตรวจ membership ทุกครั้งที่โหลด (classroom_view) — ถูกครูเอาออกแล้วเห็นข้อความ not_member (UX 7.1)
 export default function StudentClassroom() {
   const { classId = '' } = useParams()
@@ -27,8 +34,19 @@ export default function StudentClassroom() {
   const classes = useQuery(myClassroomsQuery)
   const posts = useQuery({ ...postsQuery(classId), enabled: view.isSuccess })
   const [now] = useState(() => Date.now())
-  const recent = !!posts.data && hasRecentAnnouncement(posts.data, now)
-  const [tab, selectTab] = useTabParam(TABS, recent ? 'general' : 'work')
+  const [tab, selectTab] = useTabParam(TABS, 'work')
+  const { state } = useAuth()
+  const seen = state.status === 'ready' ? seenKey(state.account.account_id, classId) : null
+  // อยู่ในแท็บประกาศ = เห็นแล้ว (รวมประกาศที่เข้ามาใหม่ระหว่างเปิดอยู่) — ไม่ขึ้นป้ายบนแท็บที่กำลังดู
+  useEffect(() => {
+    if (tab !== 'general' || !seen || !posts.data) return
+    const latest = latestAnnouncement(posts.data)
+    if (latest) markSeen(seen, latest)
+  }, [tab, seen, posts.data])
+  const newBadge =
+    tab !== 'general' &&
+    !!posts.data &&
+    hasNewAnnouncement(posts.data, seen ? readSeen(seen) : null, now)
   const queryClient = useQueryClient()
   const error = view.isError ? appErrorOf(view.error) : null
   const notMember = error?.code === 'not_member'
@@ -45,7 +63,7 @@ export default function StudentClassroom() {
     </Link>
   )
 
-  if (view.isPending || (view.isSuccess && posts.isPending)) {
+  if (view.isPending) {
     return (
       <main className={styles.page}>
         {back}
@@ -104,7 +122,7 @@ export default function StudentClassroom() {
         tabs={TABS.map((key) => ({
           key,
           label: th.classrooms.room.tabs[key],
-          badge: key === 'general' && recent ? th.work.newBadge : undefined,
+          badge: key === 'general' && newBadge ? th.work.newBadge : undefined,
         }))}
         selected={tab}
         onSelect={selectTab}
