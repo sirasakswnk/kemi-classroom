@@ -1,0 +1,180 @@
+/* ตัวเลือกวันที่/เวลาของระบบ (UX 13) — ปุ่มและวันในปฏิทินอย่างน้อย 44 px */
+
+.date,
+.time {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap-min);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trigger svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--purple);
+}
+
+.placeholder {
+  color: var(--ink-3);
+}
+
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .chip {
+    min-height: var(--tap-min);
+  }
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--purple);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.chip:focus-visible,
+.navBtn:focus-visible,
+.day:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.selects {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.select {
+  width: auto;
+  min-width: 84px;
+  min-height: var(--tap-min);
+  font-variant-numeric: tabular-nums;
+}
+
+.colon {
+  font-weight: 600;
+}
+
+.unit {
+  color: var(--ink-2);
+}
+
+/* ---------- ปฏิทิน ---------- */
+.calendar {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.calHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 340px;
+}
+
+.calHead b {
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 1.0625rem;
+}
+
+.navBtn {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.navBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.grid {
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.grid th {
+  padding: 4px 0;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.grid td {
+  padding: 0;
+}
+
+.day {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.day:hover {
+  background: var(--purple-soft);
+}
+
+.day[aria-current='date'] {
+  border-color: var(--purple-mid);
+  font-weight: 600;
+}
+
+.day[aria-pressed='true'] {
+  background: var(--purple);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  max-width: 340px;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  text-align: center;
+}

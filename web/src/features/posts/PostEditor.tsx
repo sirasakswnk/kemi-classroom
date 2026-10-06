@@ -18,7 +18,17 @@ import { th } from '../../copy/th'
 import { initialOf } from '../../lib/initial'
 import { appErrorOf } from '../../lib/request'
 import { bangkokToUtcIso, thaiDate, thaiTime } from '../../lib/thaiTime'
-import { Card, Chip, Field, Input, Stepper, Textarea, useToast } from '../../ui'
+import {
+  Card,
+  Chip,
+  DatePicker,
+  Field,
+  Input,
+  Stepper,
+  Textarea,
+  TimePicker,
+  useToast,
+} from '../../ui'
 import { FileField } from '../uploads/FileField'
 import type { FileFieldState } from '../uploads/useFileField'
 import type { Classroom } from '../classrooms/api'
@@ -91,8 +101,8 @@ export function PostEditor({
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const fullScoreRef = useRef<HTMLInputElement>(null)
   const latePctRef = useRef<HTMLInputElement>(null)
-  const dueRef = useRef<HTMLInputElement>(null)
-  const closeRef = useRef<HTMLInputElement>(null)
+  const dueRef = useRef<HTMLButtonElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
   // ช่องโทเคน/รับหลังเฉลยเป็นปุ่ม ไม่ย้ายโฟกัส ข้อความผิดพลาดอยู่ใต้แถวนั้น
   const focusField = (field: PostField) => {
     const targets: Partial<Record<PostField, RefObject<HTMLElement | null>>> = {
@@ -424,18 +434,16 @@ export function PostEditor({
                         error={errors.due}
                       >
                         <div className={styles.dt}>
-                          <Input
+                          <DatePicker
                             ref={dueRef}
-                            type="date"
+                            label={copy.due}
                             value={values.dueDate}
-                            onChange={(e) => set('dueDate', e.target.value, 'due')}
+                            onChange={(v) => set('dueDate', v, 'due')}
                           />
-                          <Input
-                            id="postDueTime"
-                            type="time"
-                            aria-label={copy.dueTimeAria}
+                          <TimePicker
+                            label={copy.due}
                             value={values.dueTime}
-                            onChange={(e) => set('dueTime', e.target.value, 'due')}
+                            onChange={(v) => set('dueTime', v, 'due')}
                           />
                         </div>
                       </Field>
@@ -455,18 +463,16 @@ export function PostEditor({
                       {values.hasClose && (
                         <Field className={styles.full} label={copy.close} error={errors.close}>
                           <div className={styles.dt}>
-                            <Input
+                            <DatePicker
                               ref={closeRef}
-                              type="date"
+                              label={copy.close}
                               value={values.closeDate}
-                              onChange={(e) => set('closeDate', e.target.value, 'close')}
+                              onChange={(v) => set('closeDate', v, 'close')}
                             />
-                            <Input
-                              id="postCloseTime"
-                              type="time"
-                              aria-label={copy.closeTimeAria}
+                            <TimePicker
+                              label={copy.close}
                               value={values.closeTime}
-                              onChange={(e) => set('closeTime', e.target.value, 'close')}
+                              onChange={(v) => set('closeTime', v, 'close')}
                             />
                           </div>
                         </Field>

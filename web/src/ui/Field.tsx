@@ -1,16 +1,9 @@
 import { TriangleAlert } from 'lucide-react'
-import { createContext, useContext, useId, type ComponentProps, type ReactNode } from 'react'
+import { useId, type ComponentProps, type ReactNode } from 'react'
 import { th } from '../copy/th'
 import { cx } from '../lib/cx'
 import styles from './Field.module.css'
-
-interface FieldContextValue {
-  id: string
-  describedBy: string | undefined
-  invalid: boolean
-}
-
-const FieldContext = createContext<FieldContextValue | null>(null)
+import { FieldContext, useControlProps } from './fieldContext'
 
 export interface FieldProps {
   label: ReactNode
@@ -69,20 +62,6 @@ export function Field({
       )}
     </div>
   )
-}
-
-function useControlProps(props: {
-  id?: string
-  className?: string
-  'aria-describedby'?: string
-  'aria-invalid'?: ComponentProps<'input'>['aria-invalid']
-}) {
-  const field = useContext(FieldContext)
-  return {
-    id: props.id ?? field?.id,
-    'aria-describedby': cx(field?.describedBy, props['aria-describedby']) || undefined,
-    'aria-invalid': props['aria-invalid'] ?? (field?.invalid ? true : undefined),
-  }
 }
 
 export function Input({ className, ...rest }: ComponentProps<'input'>) {

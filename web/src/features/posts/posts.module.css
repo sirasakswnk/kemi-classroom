@@ -180,11 +180,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* วันที่ + เวลา (UX 13: ตัวเลือกของระบบ) — ตั้งแต่ 600 px วางคู่กัน */
 .dt {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 8px;
-  max-width: 420px;
+  gap: 12px;
+  max-width: 640px;
+}
+
+@media (min-width: 600px) {
+  .dt {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
 }
 
 .switchRow {
