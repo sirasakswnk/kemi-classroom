@@ -40,8 +40,9 @@ env:
   B2_REGION: eu-central-003
   SUPABASE_URL: https://igchlnmxbghsigyziomk.supabase.co
   PG_MAJOR: '17'
-  RCLONE_VERSION: v1.75.1
-  RCLONE_DEB_SHA256: 09c9f7606ed9e31eecc1eec26a89992cf2931a8d2d1a5f0ae2bb1c11630ffb15
+  # ห้ามตั้งชื่อขึ้นต้น RCLONE_ ที่ตรงกับแฟล็ก (rclone อ่าน RCLONE_VERSION เป็น --version)
+  RCLONE_PKG_VERSION: v1.75.1
+  RCLONE_PKG_SHA256: 09c9f7606ed9e31eecc1eec26a89992cf2931a8d2d1a5f0ae2bb1c11630ffb15
 
 jobs:
   backup:
@@ -76,8 +77,8 @@ jobs:
           if [ ! -x "$pgdg" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-common >/dev/null; fi
           sudo "$pgdg" -y >/dev/null
           sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" >/dev/null
-          curl -fsSLo "$RUNNER_TEMP/rclone.deb" "https://downloads.rclone.org/$RCLONE_VERSION/rclone-$RCLONE_VERSION-linux-amd64.deb"
-          echo "$RCLONE_DEB_SHA256  $RUNNER_TEMP/rclone.deb" | sha256sum -c -
+          curl -fsSLo "$RUNNER_TEMP/rclone.deb" "https://downloads.rclone.org/$RCLONE_PKG_VERSION/rclone-$RCLONE_PKG_VERSION-linux-amd64.deb"
+          echo "$RCLONE_PKG_SHA256  $RUNNER_TEMP/rclone.deb" | sha256sum -c -
           sudo dpkg -i "$RUNNER_TEMP/rclone.deb" >/dev/null
           "/usr/lib/postgresql/$PG_MAJOR/bin/pg_dump" --version
           rclone version | sed -n 1p
