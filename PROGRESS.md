@@ -7,7 +7,7 @@
 ## สถานะล่าสุด
 
 - ระยะปัจจุบัน: 3 (ระยะ 2 ปิดแล้ว 4 ต.ค. 2026: merge `phase-2` เข้า `main` @ `aff3cb5`, production ใช้งานได้ · ระยะ 1 ปิด 2 ต.ค. 2026 @ `137ea08`)
-- งานถัดไป: **P3-11c รอผู้ใช้ยืนยันอีเมล Healthchecks** (รอบ simulate + DOWN ~01:30 น. 8 ต.ค.) แล้ว Claude บันทึก §13 ข้อ 5 และติ๊ก P3-11/P3-11c → จากนั้น P3-12 · รันสำรองด้วยมือ: `gh workflow run backup.yml --ref phase-3` (main มีแค่ตัวยึด) · migration ถัดไป `0025_…`
+- งานถัดไป: **P3-12** — (ก) ทำแล้วยกเว้นข้อ 8/10 ที่ต้องแก้ `storage_settings` บน kemi-dev ชั่วคราว (P3-12a รออนุญาต) · ผู้ใช้ทำ `ops/demo2-checklist.md` (P3-12b) · รันสำรองด้วยมือ: `gh workflow run backup.yml --ref phase-3` · ถ้ายังไม่ merge ระยะ 3 ภายใน 14 ต.ค. ให้รันมือ 1 รอบหลังวันนั้น · migration ถัดไป `0025_…`
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -356,6 +356,21 @@
       - 7 ต.ค. ผู้ใช้ได้อีเมล Healthchecks แล้ว (DOWN ของรอบ simulate + UP หลังรอบ 4) → §13 ข้อ 5 ส่วน /fail บันทึกแล้ว · **ยังรอ:** (2) แจ้งเมื่อได้อีเมล DOWN ~15 ชม. หลังรอบสุดท้าย (รอบสุดท้ายสำเร็จ 10:27 น. → ≈ 01:30 น. 8 ต.ค. เวลาไทย; ใช้เป็นหลักฐาน “งานไม่รันแล้วได้อีเมล” ไม่ต้อง Pause check) · (3) เทียบตัวเลข B2 Caps & Alerts วันที่ 7 ต.ค. (Class B, ดาวน์โหลด) กับตัวนับข้างบน · §13 ข้อ 14: ถ้ายังไม่ merge ระยะ 3 ให้รันมือ 1 รอบหลัง 14 ต.ค. 2026
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** อ่านไฟล์ใหม่จาก B2 ครั้งเดียวลงเครื่อง runner (`rclone copy b2ro:… ./new --files-from new.txt`) ตรวจขนาด/ETag กับ manifest → `rclone copy ./new gcrypt:files` → `rclone cryptcheck ./new gcrypt:files` (ต้นทางเป็นสำเนาในเครื่อง ไม่อ่าน B2 ซ้ำ); บันทึกไบต์/คำขอที่อ่านลงตัวนับรายวันผ่าน psql ด้วย `private.b2_usage_add('backup', คำขอ, ไบต์)` (มีแล้วจาก P3-04); `backup_new_files`/`backup_run_file_list` เรียกก่อนจบรอบ
 - [ ] P3-12 ทดสอบอุปกรณ์จริงและตรวจรับระยะ 3 (จุดสาธิต 2)
+  - **ไล่ตรวจรับระยะ 3 (BUILD_PLAN ส่วน 10) 7 ต.ค. 2026** — (ก) Claude บน preview · (ข) อุปกรณ์จริงของผู้ใช้ · (ค) ที่โรงเรียน
+    1. PUT ขนาดไม่ตรงลายเซ็น / magic number ผิด → ✅ `proof.mjs` 5 ต.ค. (403) + ลองจริง 7 ต.ค. ผ่านฟังก์ชันบน kemi-dev ด้วย session ครูทดสอบ: PUT ขนาด +1 ไบต์และชนิดต่างถูกปฏิเสธ (ไฟล์ไม่ลง: complete → `upload_not_found`), เนื้อไม่ใช่ PDF ที่ประกาศเป็น PDF → complete 422 `upload_type_mismatch`
+    2. อัปทับ staging หลัง complete → ✅ ลองจริง 7 ต.ค.: PUT ด้วยลิงก์เดิมได้ 200 แต่ไฟล์ที่ออกลิงก์ได้ยังเป็นเนื้อเดิม, `staging_version_id`/`version_id` ของ asset ไม่เปลี่ยน, complete ซ้ำคืน asset เดิม (asset ทดสอบ `ทดสอบ-อัปทับ.pdf` ไม่ผูก → cron ลบเองเป็น orphan)
+    3. สมาชิกเปิด/ดาวน์โหลดไฟล์โจทย์ ชื่อไทยบนมือถือ แท็บเล็ต คอม → (ข) · คนนอกห้องขอลิงก์ไม่ได้ → ✅ pgTAP `0018` (P3-05)
+    4. ไฟล์ของคนอื่น 403 → ✅ pgTAP `0018` + ลองจริง: ขอชุดที่ปน id ที่ไม่มีสิทธิ์ได้ 403 `forbidden` ทั้งชุด, publishable key อย่างเดียว 401 · URL B2 ไม่มีลายเซ็น → ✅ 401 `UnauthorizedAccess` · origin อื่น → ✅ `proof.mjs` + 7 ต.ค.: preflight B2 จาก origin อื่น 403 (preview 200), preflight `uploads`/`files` ไม่มี `Access-Control-Allow-Origin` ให้ origin อื่น
+    5. สร้าง/แก้งานหลังมีคนส่ง, N1/N2 → ✅ pgTAP P3-02/P3-02b/P3-06b + ผู้ใช้ลองบน preview 6 ต.ค.
+    6. ตารางรับการส่ง 7 แถว → ✅ pgTAP P3-07
+    7. ส่งแก้เก็บ 2 เปลี่ยน 1 → ✅ บางส่วน: Playwright (เก็บ 1 เปลี่ยน 1 ไม่อัปโหลดซ้ำ) + kemi-dev 6 ต.ค. งาน `delete_asset` ระบุเวอร์ชัน + cron ลบจริง (P3-10) · แบบ 2+1 บนเครื่องจริง → (ข) ข้อ 5
+    8. quota ต่ำบน dev → **ยังไม่ได้ทำ: ต้องแก้ `storage_settings` ของ kemi-dev ชั่วคราว ระบบสิทธิ์ของ Claude Code ปฏิเสธ — รอผู้ใช้อนุญาต** (มี Playwright แบบจำลองจาก P3-10d)
+    9. `backup.yml` → ✅ P3-11c
+    10. งบเปิดดูต่ำ → **ยังไม่ได้ทำ (เหตุเดียวกับข้อ 8)** · เปิดไฟล์เดิมซ้ำ → ✅ 7 ต.ค. กด “เปิดดู” PDF 2 ครั้ง: `files/sign` 1 ครั้ง ตัวนับ view +1 (ลิงก์เดียวกัน `private,max-age=600` — การโหลด B2 ซ้ำเกิดในแท็บใหม่ ดู Network จากแท็บหน้าเว็บไม่ได้) · complete ใช้ B2 1 คำขอต่อไฟล์ → ✅ 7 ต.ค. complete 4 ครั้ง = Class B 4 (complete ซ้ำของ asset ที่ ready ไม่นับ)
+    11. Caps & Alerts หลังวันใช้งานจริง → (ค) · 12. HEIC, เกิน 20 MB, ตัวห้อยหลังย่อ, เวลาอัปโหลด Wi-Fi โรงเรียน → (ข)/(ค)
+  - [ ] P3-12a (ก) ข้อ 8 และ 10: ตั้ง `quota_bytes` / `daily_view_budget_*` ต่ำชั่วคราวบน kemi-dev → ตรวจบน preview → คืนค่าเดิม (quota 500,000,000 · งบ 750,000,000 ไบต์ / 1,800 คำขอ) · **รออนุญาต**
+  - [ ] P3-12b (ข)/(ค) ผู้ใช้ทำตาม `ops/demo2-checklist.md` แล้วส่งผล + ตัวเลข Caps & Alerts
+  - [ ] P3-12c สรุปผล → เสนอ merge `phase-3` → `main` (รออนุญาต; ผลที่ตามมา: ตาราง `backup.yml` 02:30/14:30 น. เริ่มทำงานกับ kemi-dev ทุกวัน, `backup.yml` ตัวยึดบน main ถูกแทนด้วยไฟล์ของ phase-3) · ถ้ายังไม่ merge ภายใน 14 ต.ค. → รันสำรองมือ 1 รอบหลังวันนั้น (§13 ข้อ 14)
     - **เพดานรายวันของ B2 (TECHNICAL_DESIGN 9.3, 5 ต.ค. 2026):** หลังวันใช้งานจริง จดตัวเลขจากหน้า Caps & Alerts ของ B2 (ดาวน์โหลด, Class B, Class C) เทียบกับตัวนับในฐานข้อมูล แล้วปรับงบใน TECHNICAL_DESIGN 9.3 (ข้อพิสูจน์ 19) — รวม `copy_bytes` เพื่อตอบว่า CopyObject นับเป็นไบต์ดาวน์โหลดหรือไม่; ตรวจรับ: งบเปิดดูต่ำบน dev หยุดการเปิดไฟล์แต่การส่งงานยังผ่าน, เปิดไฟล์เดิมซ้ำใน 10 นาทีไม่นับเพิ่ม, complete ใช้คำขอ B2 ครั้งเดียวต่อไฟล์
 
 ## ระยะ 4 — ตรวจงานและคะแนน
