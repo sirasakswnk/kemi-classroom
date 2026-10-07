@@ -1,0 +1,105 @@
+# สำรองข้อมูลวันละ 2 รอบ — TECHNICAL_BUILD_PLAN ส่วน 8 (ขั้นตอน backup.yml), TECHNICAL_DESIGN ส่วน 12
+# P3-11: แบบพื้นฐานกับ kemi-dev เท่านั้น (ops/backup.sh กันไว้จนถึงระยะ 7) — ยังไม่มี job guard และ restore-test.yml (P7-01)
+# ตารางเวลาทำงานเฉพาะบน branch หลัก (main) — ก่อน merge ระยะ 3 รันได้ด้วยมือ (workflow_dispatch) เท่านั้น
+#
+# GitHub Secrets (ผู้ใช้ใส่เองทางหน้าเว็บ ดู ops/backup-setup.md):
+#   BACKUP_DB_PASSWORD   รหัสผ่านฐานข้อมูลของ kemi-dev (ต่อผ่าน Session pooler)
+#   RCLONE_CONFIG        เนื้อไฟล์ rclone.conf (remote gdrive, gcrypt, b2ro)
+#   HC_PING_URL          URL ping ของ check kemi-backup ใน Healthchecks.io
+#   SUPABASE_PING_KEY    secret key แยกของงานนี้ สำหรับเรียก public.ping() ผ่าน Data API (ไม่บังคับ)
+name: backup
+
+on:
+  schedule:
+    - cron: '30 19 * * *' # 02:30 น. เวลาไทย
+    - cron: '30 7 * * *' # 14:30 น. เวลาไทย
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: 'ล้มโดยตั้งใจหลังเริ่มรอบ (ทดสอบอีเมลของ Healthchecks และการปลดล็อก)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# รันทีละรอบ ไม่ยกเลิกรอบที่กำลังทำ (ธง maintenance_locks ต้องถูกปลดโดยรอบนั้นเอง)
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+env:
+  # ค่าที่ไม่ใช่ความลับของ kemi-dev — สคริปต์ตรวจซ้ำว่าเป็น kemi-dev (project ref / bucket เขียนตายใน ops/backup.sh)
+  PGHOST: aws-0-ap-southeast-1.pooler.supabase.com
+  PGPORT: '5432'
+  PGUSER: postgres.igchlnmxbghsigyziomk
+  PGDATABASE: postgres
+  PGSSLMODE: require
+  B2_BUCKET: kemi-dev-files
+  B2_S3_ENDPOINT: https://s3.eu-central-003.backblazeb2.com
+  B2_REGION: eu-central-003
+  SUPABASE_URL: https://igchlnmxbghsigyziomk.supabase.co
+  PG_MAJOR: '17'
+  RCLONE_VERSION: v1.75.1
+  RCLONE_DEB_SHA256: 09c9f7606ed9e31eecc1eec26a89992cf2931a8d2d1a5f0ae2bb1c11630ffb15
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    # ต่ำกว่าอายุธง 2 ชม. มาก — รอบปกติไม่กี่นาที
+    timeout-minutes: 45
+    steps:
+      - name: ตรวจว่ามี secret ครบ
+        env:
+          BACKUP_DB_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
+          RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+        run: |
+          missing=''
+          [ -n "$BACKUP_DB_PASSWORD" ] || missing="$missing BACKUP_DB_PASSWORD"
+          [ -n "$RCLONE_CONFIG" ] || missing="$missing RCLONE_CONFIG"
+          [ -n "$HC_PING_URL" ] || missing="$missing HC_PING_URL"
+          if [ -n "$missing" ]; then echo "::error::ยังไม่ได้ใส่ GitHub Secrets:$missing"; exit 1; fi
+
+      # ข้อ 1: ping /start ก่อนทำอะไร (Healthchecks วัดเวลารอบ และรู้ว่างานเริ่มแล้ว)
+      - name: ping start
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+        run: curl -fsS -m 10 --retry 3 -o /dev/null "$HC_PING_URL/start" || echo '::warning::ส่ง ping /start ไม่สำเร็จ'
+
+      - uses: actions/checkout@v7
+
+      # ข้อ 1: postgresql-client รุ่นหลักตรงกับเซิร์ฟเวอร์จาก PGDG + rclone รุ่นที่ตรึงไว้ (ตรวจ SHA-256)
+      - name: ติดตั้ง postgresql-client และ rclone
+        run: |
+          pgdg=/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          if [ ! -x "$pgdg" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-common >/dev/null; fi
+          sudo "$pgdg" -y >/dev/null
+          sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" >/dev/null
+          curl -fsSLo "$RUNNER_TEMP/rclone.deb" "https://downloads.rclone.org/$RCLONE_VERSION/rclone-$RCLONE_VERSION-linux-amd64.deb"
+          echo "$RCLONE_DEB_SHA256  $RUNNER_TEMP/rclone.deb" | sha256sum -c -
+          sudo dpkg -i "$RUNNER_TEMP/rclone.deb" >/dev/null
+          "/usr/lib/postgresql/$PG_MAJOR/bin/pg_dump" --version
+          rclone version | sed -n 1p
+          aws --version
+
+      - name: สำรองข้อมูล (ops/backup.sh)
+        env:
+          PGPASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
+          RCLONE_CONFIG_CONTENT: ${{ secrets.RCLONE_CONFIG }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+          SUPABASE_PING_KEY: ${{ secrets.SUPABASE_PING_KEY }}
+          HC_STATE_FILE: ${{ runner.temp }}/hc-state
+          SIMULATE_FAILURE: ${{ inputs.simulate_failure }}
+        run: PG_BIN="/usr/lib/postgresql/$PG_MAJOR/bin" bash ops/backup.sh
+
+      # ล้มก่อนถึงสคริปต์ (ติดตั้งไม่ผ่าน) หรือถูกยกเลิก/หมดเวลา: ส่ง /fail ถ้าสคริปต์ยังไม่ได้ส่งผล
+      - name: ping fail (สำรอง)
+        if: ${{ failure() || cancelled() }}
+        env:
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+          HC_STATE_FILE: ${{ runner.temp }}/hc-state
+        run: |
+          if [ -n "$HC_PING_URL" ] && [ ! -s "$HC_STATE_FILE" ]; then
+            curl -fsS -m 10 --retry 3 -o /dev/null --data-raw "kemi-backup ล้มนอกสคริปต์ (run ${{ github.run_id }})" "$HC_PING_URL/fail" || true
+          fi
