@@ -458,7 +458,7 @@ grant execute on function public.grade_submission to authenticated;
 | 9 | ชนิดของ ETag ที่ B2 ส่งกลับ (ใช้เป็น checksum) — **พิสูจน์แล้ว 5 ต.ค. 2026:** PUT ชิ้นเดียวได้ ETag = MD5 hex ของเนื้อไฟล์ (ในเครื่องหมายคำพูด) GET ส่งค่าเดียวกัน; ETag ของ CopyObject เท่ากับ MD5 ของไฟล์และตรงกับที่ GET ส่งกลับ (5 ต.ค. 2026) | 3 | ใช้ขนาด + `cryptcheck` เป็นหลัก |
 | 10 | `response-content-type` / `response-content-disposition` บน presigned GET ของ B2 — **พิสูจน์แล้ว 5 ต.ค. 2026** รวมชื่อไฟล์ไทยแบบ `filename*=UTF-8''…` | 3–4 | ตั้งชื่อไฟล์ฝั่งหน้าเว็บด้วย Blob |
 | 11 | Safari บน iPhone แปลง HEIC เป็น JPEG เองเมื่อเลือกไฟล์ | 3 | โหลดตัวถอด HEIC ตามแผน |
-| 12 | `pg_dump --snapshot` ผ่าน Session pooler | 3, 7 | dump ก่อนแล้วสร้าง manifest จาก dump ที่ restore ชั่วคราว หรืออาศัย `maintenance_locks` |
+| 12 | `pg_dump --snapshot` ผ่าน Session pooler — **ผ่านแล้ว 7 ต.ค. 2026 (P3-11c):** รันบน GitHub Actions กับ kemi-dev สำเร็จ 3 รอบ (PG 17, session A `REPEATABLE READ` + `pg_export_snapshot` แล้ว `pg_dump --snapshot` อีก session ผ่าน pooler พอร์ต 5432) | 3, 7 | dump ก่อนแล้วสร้าง manifest จาก dump ที่ restore ชั่วคราว หรืออาศัย `maintenance_locks` |
 | 13 | การต่อฐานข้อมูลผ่าน pooler อย่างเดียวกันโปรเจกต์หลับได้ไหม | 7–8 (สังเกตช่วงปิดเทอม) | `ping()` ผ่าน Data API ทุกรอบสำรองอยู่แล้ว |
 | 14 | token ของ rclone (`drive.file`, consent production) ไม่หมดอายุ 7 วัน — **7 ต.ค. 2026:** Publish เป็น In production ได้หลังใส่ homepage/privacy URL (ส่วน 7); พิสูจน์เมื่อรอบสำรองยังผ่านหลังวันที่ 14 ต.ค. 2026 | 0, 7 | ตรวจสถานะ consent screen และสร้าง token ใหม่; Healthchecks.io จะเตือนถ้าสำรองล้มเหลว |
 | 15 | สร้าง ZIP ภาคเรียนขนาดหลาย GB ในเบราว์เซอร์ของครู | 6 | แบ่ง ZIP ตามห้อง/งาน |
