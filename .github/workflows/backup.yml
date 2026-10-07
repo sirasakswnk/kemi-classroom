@@ -1,0 +1,25 @@
+# ตัวยึดบน main — GitHub สั่งรัน workflow ด้วยมือได้เฉพาะเมื่อมีไฟล์นี้บน branch หลัก (TECHNICAL_BUILD_PLAN ส่วน 8)
+# งานสำรองจริงอยู่บน phase-3: gh workflow run backup.yml --ref phase-3 [-f simulate_failure=true]
+# ไม่มีตารางเวลา ไม่ต่อฐานข้อมูล ไม่ ping Healthchecks — ตอน merge ระยะ 3 ให้ใช้ไฟล์ของ phase-3 แทนไฟล์นี้
+name: backup
+
+on:
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: 'ล้มโดยตั้งใจหลังเริ่มรอบ (ทดสอบอีเมลของ Healthchecks และการปลดล็อก)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: รันด้วย --ref phase-3
+        run: |
+          echo '::error title=ไม่ได้สำรอง::ไฟล์บน main เป็นตัวยึด — สั่งรันด้วย gh workflow run backup.yml --ref phase-3'
+          exit 1
