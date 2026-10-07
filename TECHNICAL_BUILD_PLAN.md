@@ -86,7 +86,7 @@ Classroom/                     # root ของ repo
 | B2 key อ่าน/เขียน/ลบ (เฉพาะ bucket) | secret ของ Edge Functions (`B2_KEY_ID`, `B2_APP_KEY`, `B2_BUCKET`, `B2_ENDPOINT`) |
 | service role ของ Supabase (Edge Function ใช้เขียนข้อมูลที่ระบบเชื่อ เช่นผล complete) | `SUPABASE_SERVICE_ROLE_KEY` ที่ Edge Function ได้อัตโนมัติ (กุญแจแบบ legacy) — **ห้ามปิด legacy API keys ใน Dashboard จนกว่าจะเปลี่ยนฟังก์ชันไปใช้ secret key แบบใหม่ (`sb_secret_…`)**; ไม่ใส่ใน Pages หรือ GitHub |
 | รหัสลับที่ `pg_cron` ใช้เรียก `process-jobs` | Supabase Vault + secret ของ Edge Function |
-| connection string ของ Session pooler, B2 key อ่านอย่างเดียว, rclone config, รหัส crypt + salt, URL ping ของ Healthchecks.io, `SUPABASE_ACCESS_TOKEN`, B2 key สำหรับ `restore-test` (เขียน/ลบได้เฉพาะ `kemi-dev-files`) | GitHub Actions secrets |
+| งานสำรอง (P3-11, ชื่อตาม `backup.yml`): `BACKUP_DB_PASSWORD` (รหัสผ่านฐานข้อมูลอย่างเดียว — host/user ของ Session pooler ไม่ใช่ความลับ เขียนใน workflow), `RCLONE_CONFIG` (ทั้งไฟล์: token ของ Drive, กุญแจ B2 อ่านอย่างเดียวใน remote `b2ro`, รหัส crypt + salt แบบถอดกลับได้ — จึงไม่มี secret crypt แยก), `HC_PING_URL`, `SUPABASE_PING_KEY` (secret key `sb_secret_…` ชื่อ `github_backup` (ชื่อรับเฉพาะตัวพิมพ์เล็ก ตัวเลข `_`) ใช้เฉพาะเรียก `ping()` ไม่บังคับ); ระยะ 7 เพิ่ม `SUPABASE_ACCESS_TOKEN`, B2 key สำหรับ `restore-test` (เขียน/ลบได้เฉพาะ `kemi-dev-files`) และชุดของ prod | GitHub Actions secrets |
 | รหัส crypt + salt, recovery codes ของทุกบัญชี | ตัวจัดการรหัสผ่านของผู้พัฒนา + สำเนาออฟไลน์ |
 
 ## 4. ฐานข้อมูล
@@ -240,7 +240,7 @@ grant execute on function public.grade_submission to authenticated;
 ```
 
    ลายเซ็นอยู่ใน query string จึงไม่ต้องอนุญาต `authorization`/`x-amz-*`; bucket ใช้จริงควรเอา `localhost` และ preview ออกเมื่อเปิดใช้; **พิสูจน์แล้ว 5 ต.ค. 2026:** B2 รับ origin แบบ wildcard และ preflight ผ่านเฉพาะ production/preview/localhost (ตั้งด้วย `ops/b2/apply-settings.mjs` ใช้กุญแจชั่วคราว `listBuckets`+`writeBuckets` แล้วลบทิ้ง)
-5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (list/read เฉพาะ bucket) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง; dev ใช้ `kemi-edge-dev` ที่สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket — **ตรวจจากหน้า B2 5 ต.ค. 2026 กว้างกว่าที่ใช้มาก:** มี `writeBuckets` และ `write/readBucket*` (Encryption, LifecycleRules, Logging, Notifications, Replications) นอกจาก `readFiles`/`writeFiles`/`deleteFiles`/`listFiles`/`shareFiles` — ถ้ากุญแจนี้รั่วจะเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS/lifecycle ได้; **ของ prod ในระยะ 7 ต้องสร้างผ่าน API ให้เหลือ `readFiles`, `writeFiles`, `deleteFiles` (+ `listFiles` ถ้า sweeper ต้องใช้) เฉพาะ bucket** และพิจารณาเปลี่ยนกุญแจ dev แบบเดียวกันตอนนั้น
+5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (Read Only เฉพาะ bucket **จำกัด prefix `files/`** — dev ใช้ `kemi-backup-ro-dev` ของ `kemi-dev-files` สร้างจากหน้าเว็บใน P3-11) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง; dev ใช้ `kemi-edge-dev` ที่สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket — **ตรวจจากหน้า B2 5 ต.ค. 2026 กว้างกว่าที่ใช้มาก:** มี `writeBuckets` และ `write/readBucket*` (Encryption, LifecycleRules, Logging, Notifications, Replications) นอกจาก `readFiles`/`writeFiles`/`deleteFiles`/`listFiles`/`shareFiles` — ถ้ากุญแจนี้รั่วจะเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS/lifecycle ได้; **ของ prod ในระยะ 7 ต้องสร้างผ่าน API ให้เหลือ `readFiles`, `writeFiles`, `deleteFiles` (+ `listFiles` ถ้า sweeper ต้องใช้) เฉพาะ bucket** และพิจารณาเปลี่ยนกุญแจ dev แบบเดียวกันตอนนั้น
 
 **Cloudflare Pages**
 
@@ -250,9 +250,9 @@ grant execute on function public.grade_submission to authenticated;
 
 **Google Drive สำรอง + rclone**
 
-1. บัญชี Google แยกของโปรเจกต์ เปิดยืนยันสองขั้น สร้างโฟลเดอร์ `kemi-backup` ไม่แชร์ให้ใคร
-2. โปรเจกต์ Google Cloud ในบัญชีนี้ → OAuth client แบบ Desktop สำหรับ rclone, scope `drive.file`, consent screen production (กัน token หมดอายุ 7 วัน)
-3. `rclone config`: remote `gdrive` (drive, `drive.file`) → remote `gcrypt` (crypt ครอบ `gdrive:kemi-backup` เข้ารหัสชื่อไฟล์และเนื้อหา) และ remote `b2ro` (B2 ด้วยกุญแจอ่านอย่างเดียว); เก็บ config เป็น GitHub secret
+1. บัญชี Google แยกของโปรเจกต์ เปิดยืนยันสองขั้น; **ไม่สร้างโฟลเดอร์เองจากหน้าเว็บ Drive** เพราะสิทธิ์ `drive.file` เห็นเฉพาะสิ่งที่ rclone สร้าง — ให้ `rclone mkdir gcrypt:` สร้าง `kemi-backup` (ไม่แชร์ให้ใคร ห้ามย้าย/เปลี่ยนชื่อ) (P3-11a, 7 ต.ค. 2026)
+2. โปรเจกต์ Google Cloud ในบัญชีนี้ → OAuth client แบบ Desktop สำหรับ rclone, scope `drive.file`, consent screen production (กัน token หมดอายุ 7 วัน); **ตั้งแต่ปลาย ส.ค. 2026 Google ไม่ให้กด Publish app จนกว่าหน้า Branding จะมี homepage URL + privacy policy URL** — ใช้ `https://kemi-classroom.pages.dev` กับ `https://kemi-classroom.pages.dev/privacy` (หน้าจริงสร้างใน P7-06 ร่วมกับแอปล็อกอิน) และ Authorized domain `kemi-classroom.pages.dev`; ไม่ใส่โลโก้ (ใส่แล้วต้องส่งตรวจ); สถานะเป็น In production แบบไม่ผ่านการตรวจได้เพราะ `drive.file` ไม่ต้องตรวจ (ทำแล้ว 7 ต.ค. 2026 กับ dev)
+3. `rclone config` บนเครื่องผู้พัฒนา: remote `gdrive` (drive, `drive.file`) → remote `gcrypt` (crypt ครอบ `gdrive:kemi-backup` เข้ารหัสชื่อไฟล์และเนื้อหา รหัส + salt ให้ rclone สุ่ม 256 บิต) และ remote `b2ro` (B2 ด้วยกุญแจอ่านอย่างเดียว — สคริปต์ใช้เป็นที่เก็บกุญแจให้ `aws s3api` ไม่ได้อ่าน B2 ผ่าน rclone ดูส่วน 8 ข้อ 5); ห้ามตั้งรหัสผ่านให้ไฟล์ config; เก็บทั้งไฟล์เป็น GitHub secret แล้วลบไฟล์ในเครื่อง; ขั้นตอนละเอียดอยู่ใน `ops/backup-setup.md`
 
 **Healthchecks.io**
 
@@ -265,22 +265,22 @@ grant execute on function public.grade_submission to authenticated;
 | --- | --- | --- |
 | `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; เมื่อแก้ `supabase/**` รัน pgTAP กับฐานข้อมูลชั่วคราวใน runner (Supabase CLI เปิด Postgres ใน Docker แล้วใส่ migration ของ commit นั้น) — ไม่ใช้ secret และไม่แตะ `kemi-dev` |
 | `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น และ**ห้ามรัน pgTAP กับ prod เด็ดขาด** (บางเทสต์แก้แถวจริงชั่วคราวใน transaction ที่ย้อนกลับ เช่นเทสต์ครูคนสุดท้าย) สคริปต์รันเทสต์ต้องตรวจ project ref ว่าเป็น `kemi-dev` หรือฐานข้อมูลในเครื่องก่อนรัน |
-| `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง | สำรองตาม TECHNICAL_DESIGN ส่วน 12 |
+| `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง (input `simulate_failure` ไว้ทดสอบการล้ม) | สำรองตาม TECHNICAL_DESIGN ส่วน 12; GitHub สั่งรันด้วยมือได้เฉพาะ workflow ที่มีไฟล์บน branch หลัก จึงวางไฟล์แบบ `workflow_dispatch` อย่างเดียว (ไม่มีตารางเวลา) บน `main` ก่อน แล้วสั่ง `--ref phase-3` ซึ่งใช้ไฟล์ของ branch นั้น; ตารางเวลาเริ่มเมื่อ merge ระยะ 3 |
 | `restore-test.yml` | กดรันเอง เลือกจุดกู้คืนและชุดไฟล์ | กู้เข้า Supabase ชั่วคราวใน runner + ไฟล์ใน `kemi-dev-files` แล้วตรวจ ลบทิ้ง และบันทึกผลลง prod |
 
 ประมาณการนาที: สำรอง ~5 นาที × 60 รอบ ≈ 300 นาที/เดือน + CI ≈ 300–500 นาที + `restore-test` ~15 นาทีต่อครั้ง รวมต่ำกว่า 2,000 นาทีฟรีของ repo private
 
-**ขั้นตอน `backup.yml`** (สคริปต์ `ops/backup.sh`, ทุกขั้นล้มเหลวแล้ว ping `/fail` และปลดล็อก):
+**ขั้นตอน `backup.yml`** (สคริปต์ `ops/backup.sh`, ทุกขั้นล้มเหลวแล้ว ping `/fail` และปลดล็อก ยกเว้นข้อ 8; ก่อนระยะ 7 สคริปต์เขียน project ref และ bucket ของ `kemi-dev` ตายไว้ project อื่นถูกกันก่อนต่อฐานข้อมูล `target_not_allowed`):
 
-1. `concurrency: backup`; ping `/start`; ติดตั้ง `postgresql-client` รุ่นหลักตรงกับเซิร์ฟเวอร์จาก PGDG และ rclone
+1. `concurrency: backup` (ไม่ยกเลิกรอบที่กำลังทำ); ตรวจว่ามี secret ครบ; ping `/start`; ติดตั้ง `postgresql-client` รุ่นหลักตรงกับเซิร์ฟเวอร์จาก PGDG และ rclone รุ่นที่ตรึงไว้พร้อมตรวจ SHA-256 (`aws` CLI มีใน runner อยู่แล้ว)
 2. psql เรียก `private.backup_start` (ตั้ง `maintenance_locks` หมดอายุ 2 ชม. + สร้าง `backup_runs` สถานะกำลังทำ ใน transaction เดียว; รอบค้างที่ธงหมดอายุแล้วถูกปิดเป็น failed) — ฟังก์ชันสำรองทุกตัวเรียกได้เฉพาะ postgres ผ่าน connection string เดียวกับ pg_dump จึงไม่ต้องมี service role key ใน GitHub; สคริปต์ตั้ง `trap` ให้เรียก `private.backup_release_lock` ทุกครั้งที่ออก เพราะจบรอบไม่ปลดธงเอง
 3. เปิด session A ผ่าน Session pooler: `BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT pg_export_snapshot();` แล้วใน session เดียวกันรัน `ops/manifest.sql` ซึ่งเรียกฟังก์ชันบันทึก manifest (ดึง asset สถานะ `ready` จาก snapshot นี้เอง ไม่ใช่ใน REPEATABLE READ ตอบ `snapshot_required`) แล้วอ่านรายการ `final_key`, `version_id`, ขนาด, checksum ออกมาเป็นไฟล์ manifest
 4. session B: `pg_dump --snapshot=<id> --schema=public --schema=private --exclude-table-data=private.backup_manifests --exclude-table-data=private.backup_run_files` (manifest อัปโหลดเป็นไฟล์แยกอยู่แล้ว ไม่ต้องอยู่ใน dump) แยกไฟล์ schema และ data จากนั้น COMMIT session A — dump กับ manifest จึงมาจากจุดเดียวกัน **[ต้องพิสูจน์ผ่าน pooler]**
-5. หาไฟล์ใหม่ = ไฟล์ในรอบนี้ที่ยังไม่เคยอยู่ในรอบสำเร็จใด (`backup_new_files`; ส่วนไฟล์ manifest ของรอบใช้ `backup_run_file_list` — ทั้งสองเรียกได้เฉพาะระหว่างรอบ ต้องเรียกก่อนจบรอบ) → `rclone copy b2ro:<bucket> ./new --files-from new.txt` (**อ่านจาก B2 ครั้งเดียว** ตาม TECHNICAL_DESIGN 9.3) ตรวจขนาด/ETag กับ manifest → `rclone copy ./new gcrypt:files`; บันทึกไบต์/คำขอที่อ่านลงงบรายวันผ่าน psql
-6. `rclone cryptcheck ./new gcrypt:files` (ต้นทางเป็นสำเนาในเครื่อง ไม่อ่าน B2 ซ้ำ) + ตรวจการมีอยู่/ขนาดของไฟล์เดิมจาก `rclone lsjson`; ไฟล์ที่ขนาดไม่ตรง manifest ดึงตาม `version_id` ด้วย `aws s3api get-object --version-id` (endpoint B2) แล้วคัดลอกแทน; ยังไม่ครบ = ล้มเหลว
-7. อัปโหลด dump + manifest ไป `gcrypt:runs/<เวลา>/` → psql เรียกฟังก์ชันจบรอบสำเร็จพร้อมชื่อจุดกู้คืน จำนวน และขนาด (ไม่ตรงกับ manifest ตอบ `manifest_mismatch` = รอบล้มเหลว) → ping สำเร็จ
-8. ล้าง dump/manifest ของรอบเก่ากว่า 7 วัน**ยกเว้นรอบสำเร็จล่าสุดเสมอ** และไฟล์จาก `backup_prune_candidates` (รอบสำเร็จล่าสุดที่เห็นไฟล์เก่ากว่า 8 วัน ไม่รวมไฟล์ในรอบสำเร็จล่าสุด) ด้วย `--drive-use-trash=false` เฉพาะในโฟลเดอร์สำรอง แล้วจึงส่งรายการที่ลบสำเร็จให้ `backup_prune_confirm` (ลบจาก Drive ก่อน ค่อยลบแถว)
-9. ปลดล็อก (`private.backup_release_lock` จาก trap ในข้อ 2) และเรียก `ping()` ผ่าน Data API (ช่วยกันโปรเจกต์หลับ; ตรวจตอนทำ P3-11 ว่าบทบาทที่ใช้เรียกได้จริง เพราะ anon เรียกฟังก์ชันใดไม่ได้)
+5. หาไฟล์ใหม่ = ไฟล์ในรอบนี้ที่ยังไม่เคยอยู่ในรอบสำเร็จใด (`backup_new_files`; ส่วนไฟล์ manifest ของรอบใช้ `backup_run_file_list` — ทั้งสองเรียกได้เฉพาะระหว่างรอบ ต้องเรียกก่อนจบรอบ) → **ข้ามไฟล์ใหม่ที่มีอยู่ใน `gcrypt:files` แล้วและขนาดตรง** (เหลือจากรอบที่ล้มหลังคัดลอก; ตรวจแบบเดียวกับไฟล์เดิมในข้อ 6 — เพิ่ม 7 ต.ค. 2026) → ดึงที่เหลือไฟล์ละ 1 GET ด้วย `aws s3api get-object --version-id` (endpoint S3 ของ B2, กุญแจจาก remote `b2ro`) ซึ่งอ่านเวอร์ชันที่บันทึกตรง ๆ และไม่มีคำขอ HEAD/List เพิ่มแบบ `rclone copy b2ro:` (**อ่านจาก B2 ครั้งเดียว** ตาม TECHNICAL_DESIGN 9.3; P3-11a) ตรวจขนาด/MD5 กับ manifest → `rclone copy ./new gcrypt: --no-traverse`; บันทึกไบต์/คำขอที่อ่านลงงบรายวันผ่าน psql ทั้งตอนสำเร็จและล้มเหลว
+6. `rclone cryptcheck ./new gcrypt: --one-way` (ต้นทางเป็นสำเนาในเครื่อง ไม่อ่าน B2 ซ้ำ) + ตรวจการมีอยู่/ขนาดของทุกไฟล์ใน manifest จาก `rclone lsjson -R gcrypt:files`; ไฟล์ที่หายหรือขนาดไม่ตรงดึงตาม `version_id` ด้วยวิธีเดียวกับข้อ 5 แล้วคัดลอก + cryptcheck + ตรวจซ้ำ; ยังไม่ครบ = ล้มเหลว
+7. อัปโหลด dump + manifest ไป `gcrypt:runs/<YYYYMMDDTHHMMSSZ>/` = `schema.dump`, `data.dump` (`pg_dump -Fc`), `manifest.csv`, `meta.json` (รอบ, snapshot, จำนวน, ขนาด, รุ่น Postgres — ไม่มีข้อมูลนักเรียน) แล้ว cryptcheck; ไฟล์อยู่ที่ `gcrypt:files/<asset_id>.<ext>` ตาม `final_key` → psql เรียกฟังก์ชันจบรอบสำเร็จพร้อมชื่อจุดกู้คืน จำนวน และขนาด (ไม่ตรงกับ manifest ตอบ `manifest_mismatch` = รอบล้มเหลว) → ping สำเร็จ; รอบที่ล้มหลังอัปโหลดแล้วลบ `runs/<เวลา>` ของรอบนั้นทิ้ง (ไฟล์ใน `files/` คงไว้ให้รอบถัดไปใช้ตามข้อ 5)
+8. ล้าง dump/manifest ของรอบเก่ากว่า 7 วัน**ยกเว้นรอบสำเร็จล่าสุดเสมอ** และไฟล์จาก `backup_prune_candidates` (รอบสำเร็จล่าสุดที่เห็นไฟล์เก่ากว่า 8 วัน ไม่รวมไฟล์ในรอบสำเร็จล่าสุด) ด้วย `--drive-use-trash=false` เฉพาะในโฟลเดอร์สำรอง แล้วจึงส่งรายการที่ลบสำเร็จให้ `backup_prune_confirm` (ลบจาก Drive ก่อน ค่อยลบแถว); **ข้อนี้ล้มเหลวหลังจบรอบสำเร็จแล้ว:** workflow ล้มให้ GitHub ส่งอีเมล แต่ไม่ ping `/fail` และ `backup_runs` ยังเป็นสำเร็จ เพราะจุดกู้คืนของรอบนั้นใช้ได้ (ล้างไม่สำเร็จนาน ๆ ทำให้ Drive เต็ม จึงต้องแก้เมื่อได้อีเมล)
+9. ปลดล็อก (`private.backup_release_lock` จาก trap ในข้อ 2) และเรียก `ping()` ผ่าน Data API ด้วย `SUPABASE_PING_KEY` (secret key แยกของงานนี้ เพราะ anon เรียกฟังก์ชันใดไม่ได้; ช่วยกันโปรเจกต์หลับ) — ไม่มี key หรือเรียกไม่สำเร็จขึ้นแค่คำเตือน ไม่ทำให้รอบล้ม; ยืนยันใน P3-11c ว่าเรียกสำเร็จจริงเมื่อใส่ key
 
 **ตาราง manifest ในฐานข้อมูล (ตัดสิน 4 ต.ค. 2026 จากขนาดที่วัดใน P3-01c; ทำแล้วใน P3-01d วัดได้รวมประมาณ 9–19 MB ที่ 10,000–20,000 ไฟล์):** แบบแถวต่อไฟล์ต่อรอบใช้ประมาณ 468 ไบต์ต่อแถว เก็บ 16 รอบแล้วกิน 75–150 MB (15–30% ของ 500 MB ฟรี) จึงเปลี่ยนเป็น**ไฟล์ละแถว** เก็บ `final_key`, `version_id`, ขนาด, checksum, รอบสำเร็จแรกและรอบสำเร็จล่าสุดที่เห็นไฟล์ (ประมาณ 5–10 MB) ใช้ได้เพราะ `final_key` ไม่ถูกใช้ซ้ำและ asset ไม่ย้อนเป็น `ready` ไฟล์จึงอยู่ในรอบติดกันเสมอ; รายการของรอบที่กำลังทำเก็บชั่วคราวได้แต่ต้องล้างเมื่อจบรอบไม่ว่าผลใด; รอบแรก/ล่าสุดขยับเฉพาะตอนจบรอบสำเร็จ; รายการเต็มของแต่ละจุดกู้คืนอยู่ในไฟล์ manifest บน Drive ซึ่งเป็นสิ่งที่ `restore-test` และการกู้จริงใช้
 
@@ -358,6 +358,7 @@ grant execute on function public.grade_submission to authenticated;
 - [ ] ตารางรับการส่งทั้ง 7 แถวผ่าน pgTAP; ส่งแก้ล้มเหลวชุดเดิมและเวลาเดิมอยู่ครบ
 - [ ] ส่งแก้โดยเก็บรูปเดิม 2 รูปเปลี่ยนรูปที่ 3: ไม่อัปโหลด 2 รูปเดิมซ้ำ และลบเฉพาะรูปที่ถูกแทน (ระบุเวอร์ชัน)
 - [ ] ตั้ง quota ต่ำบน dev: อัปโหลดใหม่ถูกหยุดพร้อมข้อความ J10.3 แต่ดู/ตรวจงานได้
+- [ ] `backup.yml` กับ dev: รอบแรกสำเร็จ (dump + manifest + ไฟล์อยู่ใน Drive แบบเข้ารหัส, `pg_dump --snapshot` ผ่าน pooler = ส่วน 13 ข้อ 12); รอบสองไม่อ่าน B2 ซ้ำ; รอบล้มโดยตั้งใจได้อีเมล Healthchecks.io (ข้อ 5) และธง `maintenance_locks` ถูกปลด; `ping()` ผ่าน Data API สำเร็จ
 - [ ] ตั้งงบดาวน์โหลดรายวันต่ำบน dev: เปิดดูไฟล์ถูกหยุดพร้อมข้อความ `download_budget_reached` แต่การส่งงานยังผ่าน; เปิดไฟล์เดิมซ้ำภายใน 10 นาทีไม่เพิ่มตัวนับและไม่โหลดจาก B2 ซ้ำ (ดูแท็บ Network); complete ใช้คำขอ B2 ครั้งเดียวต่อไฟล์
 - [ ] จุดสาธิต 2: จดตัวเลขจากหน้า Caps & Alerts ของ B2 หลังวันใช้งานจริง เทียบกับตัวนับในฐานข้อมูล แล้วปรับงบใน TECHNICAL_DESIGN 9.3
 - [ ] อุปกรณ์จริง: HEIC จาก iPhone, รูปต้นฉบับเกิน 20 MB ถูกปฏิเสธก่อนย่อแต่รูปที่ไม่เกินผ่าน, ตัวห้อย/ตัวยกอ่านชัดหลังย่อ, วัดเวลาอัปโหลดผ่าน Wi-Fi โรงเรียน (จุดสาธิต 2)
@@ -403,7 +404,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, bucket `kemi-files` + กุญแจ B2 ของ prod แบบสิทธิ์แคบผ่าน API, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, bucket `kemi-files` + กุญแจ B2 ของ prod แบบสิทธิ์แคบผ่าน API, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`; สลับ `backup.yml` ไป prod (ตัวกันในสคริปต์, secret ชุด prod, กุญแจอ่านอย่างเดียวของ `kemi-files`) **ห้ามให้สำรอง dev กับ prod ปนในโฟลเดอร์ Drive เดียวกัน** (ใช้ remote crypt ใหม่ที่ชี้โฟลเดอร์ใหม่ หรือ purge สำรอง dev ก่อนรอบแรกของ prod) แล้วหยุดสำรอง dev เพราะใช้เพดานรายวันของ B2 ก้อนเดียวกับ prod
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io
@@ -459,7 +460,7 @@ grant execute on function public.grade_submission to authenticated;
 | 11 | Safari บน iPhone แปลง HEIC เป็น JPEG เองเมื่อเลือกไฟล์ | 3 | โหลดตัวถอด HEIC ตามแผน |
 | 12 | `pg_dump --snapshot` ผ่าน Session pooler | 3, 7 | dump ก่อนแล้วสร้าง manifest จาก dump ที่ restore ชั่วคราว หรืออาศัย `maintenance_locks` |
 | 13 | การต่อฐานข้อมูลผ่าน pooler อย่างเดียวกันโปรเจกต์หลับได้ไหม | 7–8 (สังเกตช่วงปิดเทอม) | `ping()` ผ่าน Data API ทุกรอบสำรองอยู่แล้ว |
-| 14 | token ของ rclone (`drive.file`, consent production) ไม่หมดอายุ 7 วัน | 0, 7 | ตรวจสถานะ consent screen และสร้าง token ใหม่; Healthchecks.io จะเตือนถ้าสำรองล้มเหลว |
+| 14 | token ของ rclone (`drive.file`, consent production) ไม่หมดอายุ 7 วัน — **7 ต.ค. 2026:** Publish เป็น In production ได้หลังใส่ homepage/privacy URL (ส่วน 7); พิสูจน์เมื่อรอบสำรองยังผ่านหลังวันที่ 14 ต.ค. 2026 | 0, 7 | ตรวจสถานะ consent screen และสร้าง token ใหม่; Healthchecks.io จะเตือนถ้าสำรองล้มเหลว |
 | 15 | สร้าง ZIP ภาคเรียนขนาดหลาย GB ในเบราว์เซอร์ของครู | 6 | แบ่ง ZIP ตามห้อง/งาน |
 | 16 | `supabase start` ใน runner ของ GitHub Actions ใช้ restore dump ของ prod ได้ (roles/ส่วนขยายตรงกัน) | 7 | ใช้ Postgres container รุ่นเดียวกันพร้อมสร้าง role ที่ต้องใช้เอง |
 | 17 | ความเร็วจากประเทศไทยไปแต่ละภูมิภาคของ B2 — **วัดแล้ว 4 ต.ค. 2026:** เลือก EU Central (ส่วน 3) | 0 (ก่อนสมัคร) | เลือกภูมิภาคที่เร็วรองลงมาที่ผ่านการวัด |
