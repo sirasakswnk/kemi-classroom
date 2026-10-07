@@ -18,7 +18,14 @@
    - App name `kemi-backup rclone`, User support email = อีเมลบัญชีสำรอง → Next
    - Audience: **External** → Next → Contact email = อีเมลบัญชีสำรอง → ยอมรับนโยบาย → Create
 4. **Data Access → Add or remove scopes** → ติ๊กเฉพาะ `.../auth/drive.file` → Update → Save
-5. **Audience → Publish app → Confirm** ให้สถานะเป็น **In production** (โหมด Testing ทำให้ token หมดอายุใน 7 วัน — BUILD_PLAN 13 ข้อ 14) — `drive.file` ไม่ต้องส่งตรวจ (verification)
+5. **Branding** (ต้องกรอกก่อน — ตั้งแต่ปลาย ส.ค. 2026 Google ไม่ให้กด Publish app จนกว่าจะมี homepage + privacy policy URL; BUILD_PLAN ส่วน 7):
+   - Application home page `https://kemi-classroom.pages.dev`
+   - Application privacy policy link `https://kemi-classroom.pages.dev/privacy` (หน้าจริงสร้างใน P7-06)
+   - Authorized domains → Add domain `kemi-classroom.pages.dev`
+   - Developer contact information = อีเมลบัญชีสำรอง
+   - **ไม่ใส่โลโก้** (ใส่แล้วต้องส่งตรวจ) → Save
+
+   แล้ว **Audience → Publish app → Confirm** ให้สถานะเป็น **In production** (โหมด Testing ทำให้ token หมดอายุใน 7 วัน — BUILD_PLAN 13 ข้อ 14) — `drive.file` ไม่ต้องส่งตรวจ (verification)
 6. **Clients → Create client** → Application type **Desktop app** → ชื่อ `rclone` → Create
    - หน้าต่างจะแสดง Client ID และ Client secret — เปิดค้างไว้เพื่อคัดลอกไปวางใน `rclone config` ข้อ 3.2 (ไม่ต้องเก็บที่อื่น)
 
@@ -60,7 +67,7 @@
 
 1. **รหัสผ่านฐานข้อมูล:** ใช้รหัสที่ตั้งตอนสร้างโปรเจกต์ ถ้าจำไม่ได้ → Dashboard → Project Settings → Database → **Reset database password** (หน้าเว็บ/Edge Function ไม่ใช้รหัสนี้ และ CLI ใช้ login role ชั่วคราว จึงไม่กระทบระบบ)
 2. **ตรวจ host ของ Session pooler:** Dashboard → ปุ่ม **Connect** → Session pooler → host ต้องเป็น `aws-0-ap-southeast-1.pooler.supabase.com` และ user `postgres.igchlnmxbghsigyziomk` (ตามที่ใส่ใน `backup.yml`) — ถ้าไม่ตรงให้บอก Claude (host/user ไม่ใช่ความลับ บอกในแชตได้)
-3. **secret key สำหรับ `ping()` (ไม่บังคับ แต่แนะนำ):** Project Settings → **API Keys → Secret keys → New secret key** ชื่อ `github-backup` → คัดลอกค่า (`sb_secret_...`) — ใช้เรียก `public.ping()` ผ่าน Data API ทุกรอบเพื่อกันโปรเจกต์หลับ (BUILD_PLAN ส่วน 8 ข้อ 9); ลบ/เปลี่ยนแยกจาก key อื่นได้
+3. **secret key สำหรับ `ping()` (ไม่บังคับ แต่แนะนำ):** Project Settings → **API Keys → Secret keys → New secret key** ชื่อ `github_backup` (ช่องชื่อรับเฉพาะตัวพิมพ์เล็ก ตัวเลข และ `_`) → คัดลอกค่า (`sb_secret_...`) — ใช้เรียก `public.ping()` ผ่าน Data API ทุกรอบเพื่อกันโปรเจกต์หลับ (BUILD_PLAN ส่วน 8 ข้อ 9); ลบ/เปลี่ยนแยกจาก key อื่นได้
 
 ## 6. GitHub Secrets (หน้าเว็บ)
 

@@ -53,6 +53,10 @@ printf 'files/a.pdf\t10\nfiles/b.jpg\t20\nfiles/c.png\t30\n' >"$tmp/full.tsv"
 ok 'ครบ = ไม่มีรายการ' test -z "$(missing_or_mismatch "$tmp/m.csv" "$tmp/full.tsv")"
 printf 'final_key,version_id,size_bytes,checksum\n' >"$tmp/m0.csv"
 ok 'manifest ว่าง' test -z "$(missing_or_mismatch "$tmp/m0.csv" "$tmp/empty.tsv")"
+tail -n +2 "$tmp/m.csv" >"$tmp/new.csv"
+ok 'ไฟล์ใหม่ที่มีใน Drive ขนาดตรงถูกข้าม' test "$(not_in_drive "$tmp/new.csv" "$tmp/d.tsv" | cut -d, -f1 | tr '
+' ' ')" = 'files/b.jpg files/c.png '
+ok 'ไฟล์ใหม่ส่งต่อทั้งแถว' test "$(not_in_drive "$tmp/new.csv" "$tmp/empty.tsv" | sed -n 1p)" = 'files/a.pdf,v1,10,x'
 rm -rf "$tmp"
 
 echo "unit: ผ่าน $pass ไม่ผ่าน $fail"

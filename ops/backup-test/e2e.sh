@@ -177,5 +177,21 @@ ok 'a2/a3 ยังอยู่' eq "$(rc lsf gcrypt:files/e2e | tr '\n' ' ')" '
 ok 'จุดกู้คืนเหลือ 2 (รอบแปด + รอบเก้า)' eq "$(rc lsf --dirs-only gcrypt:runs | wc -l)" 2
 ok 'log บอกยืนยันล้าง 1' grep -q 'ขอ 1 ยืนยัน 1' /tmp/run-รอบเก้า*.log
 
+# รอบล้มหลังคัดลอก: a5 ขึ้น Drive แล้ว แต่ a3 หายทั้งใน Drive และ B2 → ล้มที่ขั้น repair
+make_asset a5.pdf 3000
+mv "$FAKE_B2_DIR/kemi-dev-files/files/e2e/a3.pdf@v-a3.pdf" /tmp/a3.hold
+rc deletefile gcrypt:files/e2e/a3.pdf
+run_backup 'รอบสิบ: ล้มหลังคัดลอกไฟล์ใหม่'
+ok 'ล้มที่ขั้น repair' eq "$(last_run | cut -d'|' -f1,4)" 'failed|ล้มที่ขั้น repair'
+ok 'a5 อยู่ใน Drive แล้ว' eq "$(rc cat gcrypt:files/e2e/a5.pdf | wc -c)" 3000
+mv /tmp/a3.hold "$FAKE_B2_DIR/kemi-dev-files/files/e2e/a3.pdf@v-a3.pdf"
+reads_before=$(b2_reads)
+run_backup 'รอบสิบเอ็ด: ไฟล์ใหม่ที่มีใน Drive แล้ว → ไม่อ่าน B2'
+ok 'สำเร็จ ใหม่ 1' eq "$(last_run | cut -d'|' -f1,2)" 'succeeded|1'
+ok 'ไม่มี GET ของ a5' bash -c "! tail -n +$((reads_before + 1)) '$FAKE_B2_LOG' | grep -q a5.pdf"
+ok 'GET เฉพาะ a3 ที่ดึงซ่อม' eq "$(tail -n +$((reads_before + 1)) "$FAKE_B2_LOG" | tr '
+' ' ')" 'GET kemi-dev-files/files/e2e/a3.pdf?versionId=v-a3.pdf '
+ok 'detail บอกมีใน Drive แล้ว 1' bash -c "[[ '$(last_run)' == *'มีใน Drive แล้ว 1'* ]]"
+
 echo "e2e: ผ่าน $pass ไม่ผ่าน $fail"
 [ "$fail" = 0 ]

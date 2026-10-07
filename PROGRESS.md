@@ -401,7 +401,7 @@
 - [ ] P7-04 **[effort สูง]** รายการความปลอดภัย BUILD_PLAN ส่วน 11 + แก้สิ่งที่พบ
 - [ ] P7-05 ทดสอบภาระ อุปกรณ์จริง และการเข้าถึง
 - [ ] P7-05b หน้าแรกสาธารณะและหน้านโยบายความเป็นส่วนตัว `/privacy` (ข้อมูลที่เก็บ ที่เก็บ สิงคโปร์/สหรัฐฯ อายุข้อมูล ผู้เห็นข้อมูล ช่องทางติดต่อ) · (ต้องมี: นโยบายของโรงเรียน J9.3 และข้อความที่ผู้ใช้ตรวจแล้ว)
-- [ ] P7-06 เตรียมระบบใช้จริง (migration, seed, allowlist, caps, CORS, redirect) — จาก P3-10: deploy `process-jobs` + ตั้งรหัสลับด้วย `ops/jobs/set-secret.mjs` (ตอนนี้ยอมเฉพาะ kemi-dev ต้องเพิ่มโหมด prod) + ตรวจว่า pg_cron/pg_net เปิดบน kemi-prod; + ใส่ homepage/privacy URL แล้วเผยแพร่ OAuth consent ของ Google เป็น In production · (ต้องได้รับอนุญาตจากผู้ใช้ทุกขั้น)
+- [ ] P7-06 เตรียมระบบใช้จริง (migration, seed, allowlist, caps, CORS, redirect) — จาก P3-10: deploy `process-jobs` + ตั้งรหัสลับด้วย `ops/jobs/set-secret.mjs` (ตอนนี้ยอมเฉพาะ kemi-dev ต้องเพิ่มโหมด prod) + ตรวจว่า pg_cron/pg_net เปิดบน kemi-prod; + ใส่ homepage/privacy URL แล้วเผยแพร่ OAuth consent ของ Google เป็น In production; **หน้า `/privacy` ต้องมีจริง** — แอป OAuth `kemi-backup rclone` (P3-11b, Branding) ชี้ `https://kemi-classroom.pages.dev/privacy` อยู่แล้ว · (ต้องได้รับอนุญาตจากผู้ใช้ทุกขั้น)
 - [ ] P7-07 ตรวจรับระยะ 7 (จุดสาธิต 4)
 
 ## ระยะ 8 — นำร่องและเปิดใช้

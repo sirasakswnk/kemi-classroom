@@ -64,6 +64,12 @@ key_ok() { [[ "$1" =~ $KEY_RE ]] && [[ "$1" != *..* ]]; }
 # ETag ของ PUT/CopyObject ชิ้นเดียวคือ MD5 (BUILD_PLAN 13 ข้อ 9) — ค่าแบบอื่นตรวจแค่ขนาด
 md5_comparable() { [[ "$1" =~ ^[0-9a-fA-F]{32}$ ]]; }
 
+# ไฟล์ใหม่ที่ยังไม่มีใน Drive ขนาดตรง (csv ไม่มีหัว) — ที่มีแล้วคือของเหลือจากรอบที่ล้มหลังคัดลอก ไม่ต้องอ่าน B2 ซ้ำ
+not_in_drive() { # $1 new.csv $2 drive.tsv
+  awk 'FILENAME == ARGV[1] { split($0, d, "\t"); have[d[1]] = d[2]; next }
+       { split($0, f, ","); if (!(f[1] in have) || have[f[1]] != f[3]) print }' "$2" "$1"
+}
+
 # เทียบรายการ manifest (key,size) กับรายการใน Drive (key<TAB>size) → พิมพ์ key ที่หายหรือขนาดไม่ตรง
 missing_or_mismatch() { # $1 manifest.csv (มีหัว) $2 drive.tsv
   awk 'FILENAME == ARGV[1] { split($0, d, "\t"); have[d[1]] = d[2]; next }
@@ -289,9 +295,17 @@ log "ไฟล์ใหม่ $NEW_COUNT ไฟล์"
 # 5. ไฟล์ใหม่: อ่าน B2 ครั้งเดียวลงเครื่อง (ตามเวอร์ชันที่บันทึก) ตรวจกับ manifest → คัดลอกขึ้น Drive (เข้ารหัส)
 # ---------------------------------------------------------------------------
 STEP=copy_new
+"${RCLONE[@]}" mkdir gcrypt:files
+SKIP_COUNT=0
 if [ "$NEW_COUNT" -gt 0 ]; then
+  drive_listing
+  not_in_drive "$WORK/new.csv" "$WORK/drive.tsv" >"$WORK/fetch.csv"
+  SKIP_COUNT=$((NEW_COUNT - $(wc -l <"$WORK/fetch.csv")))
+  [ "$SKIP_COUNT" = 0 ] || log "ไฟล์ใหม่ที่มีใน Drive แล้วขนาดตรง (จากรอบที่ล้ม) $SKIP_COUNT ไฟล์ → ไม่อ่าน B2"
+fi
+if [ -s "$WORK/fetch.csv" ]; then
   fetch_ok=1
-  fetch_list "$WORK/new.csv" "$WORK/new" || fetch_ok=0
+  fetch_list "$WORK/fetch.csv" "$WORK/new" || fetch_ok=0
   record_usage
   [ "$fetch_ok" = 1 ] || die 'อ่านไฟล์ใหม่จาก B2 ไม่ครบหรือเนื้อไม่ตรง manifest'
   "${RCLONE[@]}" copy "$WORK/new" gcrypt: --no-traverse
@@ -304,7 +318,6 @@ fi
 # 6. ความครบ: ทุกไฟล์ใน manifest ต้องอยู่ใน Drive ขนาดตรง — ไม่ครบให้ดึงตาม version_id มาแทน แล้วตรวจอีกครั้ง
 # ---------------------------------------------------------------------------
 STEP=verify
-"${RCLONE[@]}" mkdir gcrypt:files
 drive_listing
 missing_or_mismatch "$WORK/run/manifest.csv" "$WORK/drive.tsv" >"$WORK/repair.keys"
 REPAIR_COUNT=$(wc -l <"$WORK/repair.keys")
@@ -339,7 +352,7 @@ RUN_UPLOADED=1
 "${RCLONE[@]}" cryptcheck "$WORK/run" "gcrypt:runs/$STAMP" --one-way
 
 STEP=finish
-detail="ไฟล์ใหม่ $NEW_COUNT · ดึงซ่อม $REPAIR_COUNT · อ่าน B2 $USAGE_REQUESTS คำขอ $USAGE_BYTES ไบต์"
+detail="ไฟล์ใหม่ $NEW_COUNT (มีใน Drive แล้ว $SKIP_COUNT) · ดึงซ่อม $REPAIR_COUNT · อ่าน B2 $USAGE_REQUESTS คำขอ $USAGE_BYTES ไบต์"
 sql "select private.backup_finish('$RUN_ID', true, '$STAMP', $FILE_COUNT, $TOTAL_BYTES, $NEW_COUNT, :'detail')" \
   -v detail="$detail" >/dev/null
 FINISHED=1
