@@ -14,7 +14,7 @@
 | ตรวจรูปแบบข้อมูล | zod | ใช้ทั้งหน้าเว็บและ Edge Function |
 | หน้าตา | CSS ธรรมดา + CSS variables ย้ายจาก `style.css` ของแบบ v2, CSS Modules รายคอมโพเนนต์, `lucide-react` | ไม่ใช้ UI framework เพื่อให้ตรงแบบ |
 | ฟอนต์ | Anuphan และ Mitr ผ่าน `@fontsource` | โฮสต์เอง ไม่เรียก Google Fonts ตอนใช้งาน (เร็วขึ้นและไม่ส่งข้อมูลผู้ใช้ออก); Mali ใช้เฉพาะภาพตัวอย่างในแบบ ไม่ใช้ในระบบจริง (UX_DESIGN ส่วน 13) |
-| รูปภาพ | `createImageBitmap` + canvas ย่อทีละขั้น; ตัวถอด HEIC (เช่น `heic2any` หรือ libheif) โหลดเมื่อพบ HEIC เท่านั้น | TECHNICAL_DESIGN ส่วน 9.2 ข้อ 7 |
+| รูปภาพ | `createImageBitmap` (หมุนตาม EXIF) + canvas ย่อทีละครึ่ง เริ่มด้านยาว 2560 px จนไม่เกิน 2 MB; JPEG/HEIC เข้ารหัสใหม่เป็น JPEG เสมอเพื่อตัด EXIF/GPS, PNG ที่ไม่เกินเพดานคงเดิม; ตัวถอด HEIC = `libheif-js` (LGPL-3.0) เป็นไฟล์ worker แยก same-origin (3.17 MB, gzip 776 KB) โหลดเมื่อพบ HEIC ที่เบราว์เซอร์ถอดเองไม่ได้เท่านั้น — ไม่ใช้ `heic2any`/`heic-to` เพราะสร้าง worker จาก `blob:` ซึ่ง CSP บล็อก (P3-06a) | ไฟล์แจ้งสัญญาอนุญาต `third-party-licenses.txt` สร้างตอน build (25 แพ็กเกจ ข้อความเต็ม รวม LGPL-3.0 ของ libheif-js + แหล่งซอร์ส; P3-06a) — ต้องมีลิงก์จากหน้าเว็บ (UX_DESIGN ส่วน 9) |
 | PDF | `pdfjs-dist` แสดงในหน้าตรวจ, `pdf-lib` รวมเป็นไฟล์ดาวน์โหลด | ส่วน 9 ของ TECHNICAL_DESIGN |
 | ZIP | `client-zip` แบบ stream + File System Access API บนคอมพิวเตอร์ | ถ้าเบราว์เซอร์ไม่รองรับ แบ่ง ZIP ตามห้อง/งาน **[ข้อเสนอ]** |
 | อ่าน Excel | ไลบรารีอ่าน .xlsx ฝั่งเบราว์เซอร์ เช่น SheetJS (ติดตั้งจากแหล่งทางการของ SheetJS เพราะรุ่นบน npm ไม่อัปเดต) | อ่านเลขประจำตัวเป็นข้อความเสมอ |
@@ -53,7 +53,7 @@ Classroom/                     # root ของ repo
       uploads/                 # create batch, complete
       files/                   # sign GET, ไฟล์ของการส่ง, รายการส่งออก
       process-jobs/            # งานเบื้องหลัง
-      _shared/                 # b2.ts (aws4fetch), auth.ts, errors.ts
+      _shared/                 # b2.ts (aws4fetch), http.ts (CORS/คำตอบ/ข้อผิดพลาด), rpc.ts (เรียก RPC ด้วย JWT ของผู้ใช้)
     tests/                     # pgTAP *.test.sql
     seed.sql                   # ระดับ 60/25/10/5, เครื่องราง 12 ชิ้น, ค่าพื้นที่, ข้อมูลทดสอบ (เฉพาะ dev)
   ops/
@@ -74,8 +74,8 @@ Classroom/                     # root ของ repo
 
 - **ระยะ 1–6 ยังไม่มี `kemi-prod`:** ตัวแปร Production ของ Pages ชี้ `kemi-dev` ชั่วคราว (ตัดสินใจ 2 ต.ค. 2026) เพื่อให้ `https://<ชื่อ>.pages.dev` ใช้สาธิตได้; หน้าเว็บแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” ทุกหน้า เว้นแต่ build ตั้ง `VITE_DEPLOY_ENV=prod` (ลืมตั้งแล้วแถบยังขึ้น ไม่ใช่หายไปเงียบ ๆ) และห้ามนำเข้ารายชื่อหรือข้อมูลนักเรียนจริงจนกว่าจะสลับไป prod ในระยะ 7 ซึ่งเป็นช่วงเดียวกับที่เผยแพร่ OAuth (P7-06) ก่อนหน้านั้นมีแค่บัญชีใน Test users ที่ล็อกอินได้
 - แผนฟรีของ Supabase มีได้ 2 โปรเจกต์ (prod + dev) จึงไม่กู้ข้อมูลจริงเข้า `kemi-dev` ซึ่งมีลิงก์ preview และบัญชีทดสอบ แต่กู้เข้า Supabase ชั่วคราวในงาน Actions แทน **[ต้องพิสูจน์]**
-- พื้นที่ฟรี 10 GB ของ B2 นับรวมทุก bucket ในบัญชี: ให้ bucket ทดสอบใช้ไฟล์เล็ก ล้างเป็นระยะ และ **ตั้ง `quota_bytes` ของระบบจริงเป็น 10 GB ลบพื้นที่ที่กันไว้ให้ bucket ทดสอบ** (เช่น 9,500,000,000 ไบต์ เมื่อกันไว้ 0.5 GB) เพื่อให้ระบบหยุดรับตาม J10.2 ก่อนเพดานรวมของบัญชี; `restore-test` รอบรายเดือนกู้ไฟล์เป็นตัวอย่างและลบทันที
-- **ภูมิภาค B2 เลือกตอนสมัครบัญชีและเปลี่ยนภายหลังไม่ได้** (ต้องเปิดบัญชีใหม่) และไม่มีเอเชีย: ในระยะ 0 วัดเวลาเชื่อมต่อ (`curl -w '%{time_connect} %{time_appconnect}'`) ไปยัง endpoint S3 ของทุกภูมิภาคตามเอกสาร B2 จาก Wi-Fi โรงเรียนและเน็ตมือถือหลายรอบ แล้วเลือกที่เร็วสุดตาม SYSTEM_SPEC ส่วน 12 ก่อนสมัคร และวัดซ้ำด้วยการอัปโหลดจริงที่จุดสาธิต 2
+- พื้นที่ฟรี 10 GB ของ B2 นับรวมทุก bucket ในบัญชี: ให้ bucket ทดสอบใช้ไฟล์เล็ก ล้างเป็นระยะ และ **ตั้ง `quota_bytes` ของระบบจริงเป็น 10 GB ลบพื้นที่ที่กันไว้ให้ bucket ทดสอบ** (เช่น 9,500,000,000 ไบต์ เมื่อกันไว้ 0.5 GB) เพื่อให้ระบบหยุดรับตาม J10.2 ก่อนเพดานรวมของบัญชี; **ส่วน `kemi-dev` ตั้ง `quota_bytes` เท่าพื้นที่ที่กันไว้ให้ bucket ทดสอบ (เช่น 500,000,000 ไบต์) และ `hard_stop_margin_bytes` เล็กตามสัดส่วน (เช่น 50,000,000)** เพราะ bucket dev ใช้ 10 GB ก้อนเดียวกับ prod; ค่าที่ migration ใส่เป็นค่าเริ่มต้นให้ใช้ค่าฝั่ง dev (ลืมแก้บน prod แล้วหยุดรับเร็ว ดีกว่าเกินเพดานบัญชี) แล้วตั้งค่า prod ในงานเตรียม prod ระยะ 7 (ทบทวน 4 ต.ค. 2026); `restore-test` รอบรายเดือนกู้ไฟล์เป็นตัวอย่างและลบทันที
+- **ภูมิภาค B2 เลือกตอนสมัครบัญชีและเปลี่ยนภายหลังไม่ได้** (ต้องเปิดบัญชีใหม่) และไม่มีเอเชีย: ในระยะ 0 วัดเวลาเชื่อมต่อ (`curl -w '%{time_connect} %{time_appconnect}'`) ไปยัง endpoint S3 ของทุกภูมิภาคตามเอกสาร B2 จาก Wi-Fi โรงเรียนและเน็ตมือถือหลายรอบ แล้วเลือกที่เร็วสุดตาม SYSTEM_SPEC ส่วน 12 ก่อนสมัคร และวัดซ้ำด้วยการอัปโหลดจริงที่จุดสาธิต 2; **ผลวัด 4 ต.ค. 2026** (`ops/b2-latency.mjs`, เน็ตมือถือของผู้พัฒนา, มัธยฐานเวลาตอบแรก 5 รอบ): EU Central 665 ms (638–695), US West 761 ms, CA East 2,167 ms, US East 2,702 ms → **เลือก EU Central** (`s3.eu-central-003.backblazeb2.com`); Wi-Fi โรงเรียนยังไม่ได้วัดเพราะผู้พัฒนาไม่ได้อยู่ที่โรงเรียน จึงให้ครูลองอัปโหลดจริงจาก Wi-Fi โรงเรียนที่จุดสาธิต 2 (P3-12) — ถ้าช้าผิดปกติ ก่อนระยะ 7 ยังไม่มีข้อมูลจริงใน B2 จึงเปิดบัญชีใหม่ในภูมิภาค US West ได้โดยไม่ต้องย้ายข้อมูล; **ผลจุดสาธิต 2 (8 ต.ค. 2026, เวลาจาก batch ถึงไฟล์ ready ในฐานข้อมูล ไม่รวมเวลาย่อรูปในเครื่อง):** ครูอัปโหลดผ่าน Wi-Fi โรงเรียน 3 ชุด ชุดละ 1 รูป (0.23–0.37 MB) ใช้ 4–5 วินาที และครูบอกว่าใช้ได้; การทดสอบบน iPhone/laptop วันเดียวกัน 1–3 ไฟล์ (0.4–3.5 MB) ใช้ 4–14 วินาที → **คง EU Central** และวัดซ้ำช่วงคาบที่นักเรียนใช้เน็ตพร้อมกันตอนนำร่อง
 
 **ที่เก็บความลับ** (ห้ามอยู่ในโค้ดหรือไฟล์ build)
 
@@ -84,8 +84,9 @@ Classroom/                     # root ของ repo
 | Supabase URL + publishable key (`sb_publishable_…`) | ตัวแปร build ของ Pages (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) — เปิดเผยได้ตามแบบ ความปลอดภัยมาจาก RLS; ตอน build ใส่ URL นี้ลงใน CSP `connect-src` ให้เอง |
 | Google OAuth client secret (ล็อกอิน) | ตั้งค่า Auth ของ Supabase |
 | B2 key อ่าน/เขียน/ลบ (เฉพาะ bucket) | secret ของ Edge Functions (`B2_KEY_ID`, `B2_APP_KEY`, `B2_BUCKET`, `B2_ENDPOINT`) |
+| service role ของ Supabase (Edge Function ใช้เขียนข้อมูลที่ระบบเชื่อ เช่นผล complete) | `SUPABASE_SERVICE_ROLE_KEY` ที่ Edge Function ได้อัตโนมัติ (กุญแจแบบ legacy) — **ห้ามปิด legacy API keys ใน Dashboard จนกว่าจะเปลี่ยนฟังก์ชันไปใช้ secret key แบบใหม่ (`sb_secret_…`)**; ไม่ใส่ใน Pages หรือ GitHub |
 | รหัสลับที่ `pg_cron` ใช้เรียก `process-jobs` | Supabase Vault + secret ของ Edge Function |
-| connection string ของ Session pooler, B2 key อ่านอย่างเดียว, rclone config, รหัส crypt + salt, URL ping ของ Healthchecks.io, `SUPABASE_ACCESS_TOKEN`, B2 key สำหรับ `restore-test` (เขียน/ลบได้เฉพาะ `kemi-dev-files`) | GitHub Actions secrets |
+| งานสำรอง (P3-11, ชื่อตาม `backup.yml`): `BACKUP_DB_PASSWORD` (รหัสผ่านฐานข้อมูลอย่างเดียว — host/user ของ Session pooler ไม่ใช่ความลับ เขียนใน workflow), `RCLONE_CONFIG` (ทั้งไฟล์: token ของ Drive, กุญแจ B2 อ่านอย่างเดียวใน remote `b2ro`, รหัส crypt + salt แบบถอดกลับได้ — จึงไม่มี secret crypt แยก), `HC_PING_URL`, `SUPABASE_PING_KEY` (secret key `sb_secret_…` ชื่อ `github_backup` (ชื่อรับเฉพาะตัวพิมพ์เล็ก ตัวเลข `_`) ใช้เฉพาะเรียก `ping()` ไม่บังคับ); ระยะ 7 เพิ่ม `SUPABASE_ACCESS_TOKEN`, B2 key สำหรับ `restore-test` (เขียน/ลบได้เฉพาะ `kemi-dev-files`) และชุดของ prod | GitHub Actions secrets |
 | รหัส crypt + salt, recovery codes ของทุกบัญชี | ตัวจัดการรหัสผ่านของผู้พัฒนา + สำเนาออฟไลน์ |
 
 ## 4. ฐานข้อมูล
@@ -98,7 +99,7 @@ Classroom/                     # root ของ repo
 4. เวลาเก็บเป็น `timestamptz` (UTC) และตัดสินด้วย `clock_timestamp()` หลังล็อกแถว; คะแนนและโทเคนเป็นจำนวนเต็ม คำนวณหักสายด้วย `(raw * (100 - pct) + 99) / 100`
 5. ลำดับล็อก: `term_control` → `assignments` → `submissions` → `wallets`; ห้ามเรียกบริการภายนอกระหว่างถือล็อก
 6. คำสั่งที่เสี่ยงกดซ้ำรับ `p_request_key uuid` และบันทึกใน `operation_receipts` (อายุ 24 ชม.) คำขอซ้ำคืนผลเดิม
-7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN ส่วน 7.1; migration ที่เพิ่มรหัสใหม่ต้องแจ้งให้เพิ่มแถวในตารางนั้นก่อนหน้าเว็บจะใช้ และรหัสที่ไม่มีในตารางแสดงข้อความสำรองของตาราง
+7. ข้อผิดพลาดตามกติกา `RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = '<รหัส>'` เช่น `storage_full`, `term_ended`, `full_score_locked`, `reason_required`, `stale_revision`, `rate_limited` แล้วหน้าเว็บแปลงเป็นข้อความตาม UX_DESIGN ส่วน 7.1; migration ที่เพิ่มรหัสใหม่ต้องแจ้งให้เพิ่มแถวในตารางนั้นก่อนหน้าเว็บจะใช้ และรหัสที่ไม่มีในตารางแสดงข้อความสำรองของตาราง
 8. ทุก migration มีไฟล์ทดสอบ pgTAP คู่กันก่อน merge
 9. `accounts.auth_user_id` **ไม่ใส่ foreign key ไป `auth.users`** เพราะ dump ไม่รวม schema `auth` และต้องกู้ข้ามโปรเจกต์ได้ ตอนกู้ตั้งค่านี้เป็น NULL แล้ว `ensure_account()` จับคู่ใหม่ด้วย `provider_subject` (TECHNICAL_DESIGN ส่วน 3.1 ข้อ 7)
 
@@ -134,8 +135,21 @@ grant execute on function public.grade_submission to authenticated;
 | 5b | `0007_student_classrooms.sql` (push แล้ว 4 ต.ค. 2026) | RPC `my_classrooms()` และ `classroom_view(uuid)` ให้นักเรียนเห็นชื่อห้อง ชื่อครู จำนวนสมาชิก และชื่อ + เลขที่ของเพื่อนในห้อง โดยไม่เปิด RLS ของตารางให้กว้างขึ้น (ไม่คืนเลขประจำตัว อีเมล หรือห้องตามรายชื่อของคนอื่น) | 2 |
 | 5c | `0008_rebind.sql` (push แล้ว 4 ต.ค. 2026) | `roster_overview`, `rebind_preview`, `rebind_student`, `unbind_student`: แก้การผูก 2 แบบ ลบ `auth.sessions` และ refresh token ของบัญชีเดิมใน transaction เดียว ไม่แตะ membership งาน คะแนน โทเคน | 2 |
 | 5d | `0009_teacher_admin.sql` (push แล้ว 4 ต.ค. 2026) | `admin_teachers`, `admin_add_teacher`, `admin_remove_teacher`: จัดการ allowlist ใน D01 ต้องเหลือครูอย่างน้อย 1 รายการ เอาออกแล้วสิทธิ์ครูหายทันที | 2 |
-| 6 | `…_posts_files.sql` | `posts`, `assignments`, `solutions`, `assets`, `attachments`, `upload_batches`, `storage_settings`, `backup_runs`, `backup_manifests`; สร้าง/แก้โพสต์ (K1, I4 lock, N2 + `content_updated_at`), จอง/ปล่อยพื้นที่, บันทึกรอบสำรอง | 3 |
-| 7 | `…_submissions.sql` | `submissions`, `revision_permissions`; `submit_assignment` ตามตารางรับการส่ง, ส่งแก้แบบเก็บไฟล์เดิม, เพิ่มงานลบไฟล์ที่ถูกแทนลง `jobs`, ตั้ง `pg_cron` + `pg_net` เรียก `process-jobs` | 3 |
+| 6 | `0010_posts.sql` (push แล้ว 4 ต.ค. 2026) | `posts`, `assignments`, `solutions`; ตัวกันช่องที่ล็อกเป็น trigger ระดับตาราง (I4 `reward_locked`, J2/L4/K2 `full_score_locked`, รับหลังเฉลย `after_solution_locked`, ชนิดโพสต์และเวลาเผยแพร่เฉลยแรก K4); RLS อ่านผ่าน `is_member`/`can_teach_classroom` และ `private.post_access`; GRANT แค่ SELECT ยังไม่มี RPC เขียน | 3 |
+| 6a | `0011_files.sql` (push แล้ว 4 ต.ค. 2026) | `assets`, `attachments`, `upload_batches`, `storage_settings` (แถวเดียว ค่า dev); `private.storage_used_bytes()`, `private.reserve_storage()` (ล็อกแถวตั้งค่าก่อนนับ ตอบ `storage_full`), `private.can_read_solution(uuid)`; แถวผูกหายตามโพสต์/เฉลยแต่ asset อยู่ต่อ; สถานะไฟล์เดินหน้าอย่างเดียว; GRANT แค่ SELECT และไม่เปิดคอลัมน์ key/เวอร์ชัน/checksum/เจ้าของ | 3 |
+| 6b | `0012_backups.sql` (push แล้ว 4 ต.ค. 2026) | `backup_runs` (public, ผู้ดูแลอ่าน, เก็บเป็นประวัติ), `private.backup_manifests`; ฟังก์ชันสำรอง 6 ตัวใน `private` เรียกได้เฉพาะ postgres (เริ่มรอบพร้อมตั้ง `maintenance_locks`, บันทึก manifest จาก snapshot แบบ REPEATABLE READ, จบรอบ, ปลดล็อก, บันทึก restore_test, ล้าง manifest เก่า); **ตาราง manifest แบบแถวต่อไฟล์ต่อรอบจะเปลี่ยนเป็นไฟล์ละแถวใน P3-01d (แถวถัดไป)** | 3 |
+| 6c | `0013_backup_manifest.sql` (P3-01d, push แล้ว 4 ต.ค. 2026) | `private.backup_manifests` เป็นไฟล์ละแถว (`final_key` PK, `version_id`, ขนาด, checksum, รอบสำเร็จแรกและล่าสุดที่เห็นไฟล์) + `private.backup_run_files` รายการชั่วคราวของรอบที่กำลังทำ (ล้างเมื่อจบรอบไม่ว่าผลใด); รวมเข้าตารางถาวรเฉพาะรอบสำเร็จ; `backup_run_file_list`, `backup_new_files`, `backup_prune_candidates` → `backup_prune_confirm` (แทน `backup_prune_manifests`); ไม่ล้างไฟล์ของรอบสำเร็จล่าสุด; ตามที่ตัดสินในส่วน 8 | 3 |
+| 6d | `0014_post_rpcs.sql` (push แล้ว 4 ต.ค. 2026) | `create_post(p_classroom_id, p_post jsonb, p_request_key, p_admin_mode)` — เนื้อหาเป็น jsonb ก้อนเดียวเพื่อเพิ่มคีย์ไฟล์ภายหลังโดยไม่เปลี่ยน signature; กติกา K5 (ภาคเรียน ended: การบ้านไม่ได้ ประกาศได้; ห้องเทอมก่อน: ไม่ได้ทั้งคู่); `close_at` ≥ `due_at`; เวลาต้องระบุเขตเวลา | 3 |
+| 6e | `0015_post_update.sql` (push แล้ว 5 ต.ค. 2026) | `update_post(p_post_id, p_post jsonb, p_expected_version, p_request_key, p_admin_mode)` — ตรวจ request key ก่อนเทียบ version (ส่งซ้ำได้ผลเดิม) แล้ว `stale_revision`; แก้ชื่อ/รายละเอียดได้ตลอด ช่องงานแก้ได้จนล็อก; `due_at`/`close_at` รับเฉพาะค่าเดิม (เปลี่ยนผ่าน M1/M2 ใน P4-03) ต่างตอบ `invalid_request`; `content_updated_at` ขยับเฉพาะชื่อ/รายละเอียดเปลี่ยนจริง บันทึกโดยไม่เปลี่ยนไม่ขยับ version; ไม่จำกัดตามภาคเรียน; โพสต์ที่ไม่มีหรือไม่มีสิทธิ์ตอบ `forbidden` | 3 |
+| 6f | `0016_upload_batch.sql` (push แล้ว 5 ต.ค. 2026) | `create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)` — ครูเจ้าของห้อง/ผู้ดูแลในโหมดผู้ดูแล, วัตถุประสงค์ post/solution (submission มากับกลุ่ม submissions, charm ระยะ 5), J4–J6 (10 ไฟล์, รูป ≤ 2 MiB, PDF ≤ 10 MiB, รวม ≤ 20 MiB ต่อชุด), request key, เพดาน 30 ครั้ง/10 นาที/บัญชี, `reserve_storage` + batch ใน transaction เดียว, key `staging/{batch_id}/{uuid}`, batch อายุ 120 นาที | 3 |
+| 6g | `0017_upload_complete.sql` (push แล้ว 5 ต.ค. 2026) | `upload_complete_target` (authenticated, อ่านอย่างเดียว) + `upload_complete_begin`/`finish`/`abort` และ `record_b2_usage` (service_role เท่านั้น — รายการแยกใน `function_privileges`); ตาราง `b2_daily_usage` ตามวัน UTC × แหล่ง (view/complete/backup): คำขอ Class B, ไบต์ดาวน์โหลด, `copy_bytes`; ค่างบเปิดดูใน `storage_settings` (750 MB / 1,800 คำขอ) | 3 |
+| 6h | `0018_files_sign.sql` (push แล้ว 5 ต.ค. 2026) | `authorize_files(uuid[])` (authenticated: คืนเฉพาะ id ที่พร้อมใช้และมีสิทธิ์ ไม่ครบทั้งชุดตอบ `forbidden`) + `files_sign_begin(uuid[])` (service_role: ล็อกแถวตัวนับของวัน ตรวจ+นับงบเปิดดูในขั้นเดียว คืน key/เวอร์ชัน/ขนาด/ชื่อไฟล์) | 3 |
+| 6i | `0019_post_files.sql` (push แล้ว 6 ต.ค. 2026) | `create_post`/`update_post` signature เดิม รับ `p_post.files` (asset id ตามลำดับ) — ผิดเงื่อนไข `post_file_unavailable`, ซ้ำ `invalid_request`, เกิน `too_many_files`/`batch_too_large`; ประกาศต้องมีข้อความหรือไฟล์ (`post_body_required`); batch `consumed` เมื่อผูกครบ; ผลคืนมีคีย์ `files` | 3 |
+| 7 | `0020_submissions.sql` (6 ต.ค. 2026) | `submissions`, `revision_permissions`, `attachments.submission_id`; `create_upload_batch` วัตถุประสงค์ submission; `authorize_files` ไฟล์งานส่ง = เจ้าของ + ครู/ผู้ดูแล; `submit_assignment` ตามตารางรับการส่ง (TECHNICAL_DESIGN ส่วน 5 รวมลำดับตรวจที่ทำจริง), ส่งแก้แบบเก็บไฟล์เดิม, ไฟล์ที่ถูกแทนเป็น `deleting` + งาน `delete_asset` ใน `jobs` พร้อม `version_id`; ล็อกแถวงานแบบผูกขาดเฉพาะก่อนส่งแรก (ตั้ง `reward_locked_at`) หลังจากนั้นล็อกแบบใช้ร่วม | 3 |
+| 7b | `0021_submission_status.sql` (6 ต.ค. 2026) | `private.submission_outcome` เป็นที่เดียวของกติกาตารางรับการส่ง ใช้ร่วมโดย `submit_assignment`, `create_upload_batch` (นักเรียน: ปฏิเสธเมื่อส่งไม่ได้แน่นอนด้วยรหัสเดียวกัน), RPC อ่าน `submission_status` (S03) และ `my_work` (S01/S02) | 3 |
+| 7c | `0022_teacher_work.sql` (P3-09) | RPC อ่านสำหรับครู/ผู้ดูแล: ยอดต่องานของ T08 และรายชื่อสถานะของงานหนึ่งสำหรับ T03 (สมาชิกขณะนี้ ∪ นักเรียนที่ถูกเอาออกแต่มีงานส่ง เรียงเลขที่) ไม่ต้องส่ง admin mode; คนอื่นได้ `forbidden` | 3 |
+| 7d | `0023_jobs.sql` (P3-10) | คิว `jobs`: ดึงแบบ `SKIP LOCKED` ทีละชุด, สำเร็จ/ล้ม + ลองใหม่เว้น 1→2→4→8→16 นาที ครบ 6 ครั้งเป็น `failed`, งาน running ค้างเกิน 10 นาทีดึงใหม่ได้; `delete_asset` ตรวจ `maintenance_locks` และไม่ลบ asset ที่ยังผูก; sweeper `copying` > 15 นาที; งานประจำใน SQL: batch เลยเวลาเป็น `expired`, asset กำพร้า (ไม่มีแถวผูก + batch หมดอายุเกิน 24 ชม. หรือไม่มี batch แล้วนับ 24 ชม. จากเวลาพร้อมใช้) เข้าคิวลบ, ล้าง `b2_daily_usage` > 30 วัน, งาน `done` > 30 วัน และใบรับคำขอที่หมดอายุ (`failed` เก็บไว้); RPC เป็น service role ยกเว้น `storage_status` และ `admin_b2_usage` | 3 |
+| 7e | `0024_jobs_cron.sql` (P3-10) | `pg_cron` ทุก 2 นาที: ทำงานประจำใน SQL แล้วปลุก `process-jobs` ผ่าน `pg_net` เฉพาะเมื่อมีงาน (URL + รหัสลับจาก Vault; ตั้งรหัสด้วย `ops/jobs/set-secret.mjs` ที่ไม่พิมพ์ค่า) | 3 |
 | 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
 | 9 | `…_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
 | 10 | `…_terms.sql` | `terms_start`, `terms_end` (J9, K5, I5), epoch และล้างยอด | 5 |
@@ -144,7 +158,7 @@ grant execute on function public.grade_submission to authenticated;
 
 เลขไฟล์จริงเรียงตามลำดับที่ push และ migration ที่ push แล้วแก้ไม่ได้ ตารางนี้จึงใส่เลขเฉพาะไฟล์ที่ push แล้ว ไฟล์ที่ยังไม่ทำเขียนเป็น `…_ชื่อ.sql` ให้ใช้เลขถัดไปตอนสร้าง และแยกไฟล์ย่อยได้ตามงาน; ส่วนแผนรายระยะอ้างกลุ่มเนื้อหาด้วยชื่อ ไม่อ้างเลข
 
-`seed.sql`: ระดับ 4 ระดับน้ำหนัก 60/25/10/5, เครื่องราง 12 ชิ้นตาม UX_DESIGN ส่วน 11 (J8), `storage_settings` (`quota_bytes` = 10 GB แบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) ลบส่วนที่กันไว้ให้ bucket ทดสอบตามส่วน 3, 80/90%, `hard_stop_margin_bytes` **[ข้อเสนอ]** 300,000,000 ไบต์), `term_control` เริ่มต้น; บน prod ใส่เฉพาะข้อมูลตั้งต้น ไม่ใส่นักเรียนทดสอบ
+`seed.sql`: ระดับ 4 ระดับน้ำหนัก 60/25/10/5, เครื่องราง 12 ชิ้นตาม UX_DESIGN ส่วน 11 (J8), `storage_settings` (ค่า prod: `quota_bytes` = 10 GB แบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) ลบส่วนที่กันไว้ให้ bucket ทดสอบตามส่วน 3 ส่วน dev ใช้ค่าตามส่วน 3, 80/90%, `hard_stop_margin_bytes` **[ข้อเสนอ]** 300,000,000 ไบต์), `term_control` เริ่มต้น; บน prod ใส่เฉพาะข้อมูลตั้งต้น ไม่ใส่นักเรียนทดสอบ
 
 ## 5. RPC และ Edge Functions
 
@@ -155,11 +169,11 @@ grant execute on function public.grade_submission to authenticated;
 | ฟังก์ชัน | เส้นทาง | ขั้นตอน |
 | --- | --- | --- |
 | `uploads` | `POST /uploads` | RPC `create_upload_batch` (ตรวจสิทธิ์ งาน `ended` พื้นที่ จำนวน/ขนาด J4–J6, เพดานครั้ง) → ลงลายเซ็น PUT ต่อไฟล์ใต้ `staging/` อายุ 5 นาที พร้อม `content-type` และ `content-length` |
-| `uploads` | `POST /uploads/:id/complete` | HEAD เก็บ `staging_version_id` → GET แบบ Range ตรวจ magic number → ตั้ง `copying` → CopyObject ระบุเวอร์ชันต้นทาง + `REPLACE` content-type → เก็บ `version_id` ปลายทาง → ลบ staging ระบุเวอร์ชัน → RPC `finalize_attachment` (service role) |
-| `files` | `POST /files/sign` | RPC `authorize_files(ids)` ตรวจสิทธิ์ตามวัตถุประสงค์ไฟล์ → presigned GET 10 นาทีระบุ `versionId` + `response-content-disposition` |
+| `uploads` | `POST /uploads/:batch_id/complete` (body `{ item }`) | RPC `upload_complete_target` ด้วย JWT ผู้ใช้ (ตรวจเจ้าของ batch คืน staging key/ชนิด/ขนาดจากแถว batch — หน้าเว็บส่ง key เองไม่ได้) → GET แบบ Range 0–15 ครั้งเดียว (`staging_version_id` จาก `x-amz-version-id`, ขนาดจาก `Content-Range`, magic number) → `upload_complete_begin` (service role: ตรวจซ้ำ ล็อกแถว batch สร้าง asset `copying` — เรียกซ้ำ/พร้อมกันได้ asset เดิม) → CopyObject ระบุ `versionId` ต้นทาง + `REPLACE` content-type ไปที่ `files/{asset_id}.{jpg|png|pdf}` → `upload_complete_finish` (version/ETag ปลายทาง → `ready`) → ลบ staging ระบุเวอร์ชัน; CopyObject ได้ 4xx → `upload_complete_abort` ลบแถว, ผลไม่แน่นอน (5xx/เน็ตหลุด) ปล่อย sweeper; ทุกขั้นนับ `record_b2_usage`; ฟังก์ชันที่เขียนข้อมูลที่ระบบเชื่อ GRANT ให้ `service_role` เท่านั้น (`0017_upload_complete`) |
+| `files` | `POST /files/sign` (`{ asset_ids, mode: view|download }`) | เพดาน 120 ครั้ง/10 นาที/บัญชี (นับก่อนตรวจสิทธิ์ กันไล่เดา id) และไม่เกิน 20 ไฟล์ต่อคำขอ → RPC `authorize_files(ids)` ด้วย JWT ผู้ใช้ คืนเฉพาะ id ที่ `ready` และมีสิทธิ์ (ไม่ครบทั้งชุดตอบ `forbidden` ไม่บอกว่ามีไฟล์อยู่หรือไม่; key/เวอร์ชัน/checksum ไม่เปิดให้ผู้ใช้) → `files_sign_begin(ids)` ด้วย service role อ่าน `final_key`/`version_id`/ขนาด/ชื่อไฟล์ และตรวจ+นับงบเปิดดูรายวันในขั้นเดียว (ไฟล์ละ 1 คำขอ + ขนาดเต็ม ทั้งเปิดดูและดาวน์โหลด นับทุกครั้งที่ออกลิงก์; ชุดที่รวมแล้วเกินงบถูกปฏิเสธทั้งชุดด้วย `download_budget_reached`) → presigned GET 600 วินาทีระบุ `versionId` + `response-content-type` + `response-content-disposition` (`inline`/`attachment`, ชื่อไทยแบบ `filename*=UTF-8''…`) + `response-cache-control: private,max-age=600`; การลงลายเซ็นไม่เรียก B2; ผู้ดูแลขอได้โดยไม่ต้องส่ง `p_admin_mode` เพราะเป็นการอ่าน (หน้าเว็บแสดงไฟล์ให้ผู้ดูแลเฉพาะในโหมดผู้ดูแล) |
 | `files` | `GET /submissions/:id/files` | RPC ครู/ผู้ดูแลในโหมดผู้ดูแล → รายการไฟล์ตามลำดับ + ลิงก์ + ชื่อ PDF `{เลขที่ 2 หลัก}_{ชื่อ}_{นามสกุล}.pdf` |
 | `files` | `POST /exports` | RPC ครู → รายการไฟล์ภาคเรียนเป็นหน้า ๆ พร้อมลิงก์ สำหรับ ZIP ฝั่งเบราว์เซอร์ |
-| `process-jobs` | เรียกจาก `pg_cron` | ตรวจรหัสลับจาก Vault → ดึงงานด้วย `FOR UPDATE SKIP LOCKED` → ทำงานตาม `kind` (ส่วน 10 ระยะ 6) |
+| `process-jobs` | เรียกจาก `pg_cron` ผ่าน `pg_net` (ทุก 2 นาทีเฉพาะเมื่อมีงาน) | เทียบรหัสลับแบบเวลาคงที่ → ดึงงานด้วย `FOR UPDATE SKIP LOCKED` → ทำงานตาม `kind`: `delete_asset` = DeleteObject ระบุ `version_id` (สำเร็จหรือ 404 = ลบแล้ว ยืนยันด้วยคำตอบนี้ ไม่ HEAD/List ซ้ำ), sweeper `copying` = HEAD ปลายทาง (นับ Class B) → ทำงานเพิ่มในระยะ 6 |
 
 ทุกฟังก์ชันตั้ง CORS รับเฉพาะ origin ของเว็บเรา ตรวจ JWT ของผู้ใช้ (ยกเว้น `process-jobs` ที่ตรวจรหัสลับ) และไม่บันทึกเนื้อหาไฟล์/ความคิดเห็นลง log
 
@@ -220,13 +234,13 @@ grant execute on function public.grade_submission to authenticated;
 [{"corsRuleName": "web",
   "allowedOrigins": ["https://<ชื่อ>.pages.dev", "https://*.<ชื่อ>.pages.dev", "http://localhost:5173"],
   "allowedOperations": ["s3_get", "s3_head", "s3_put"],
-  "allowedHeaders": ["content-type", "authorization", "x-amz-*"],
+  "allowedHeaders": ["content-type", "content-length"],
   "exposeHeaders": ["ETag", "x-amz-version-id"],
   "maxAgeSeconds": 3600}]
 ```
 
-   bucket ใช้จริงควรเอา `localhost` และ preview ออกเมื่อเปิดใช้; ตรวจรูปแบบ wildcard กับเอกสาร B2 **[ต้องพิสูจน์]**
-5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (list/read เฉพาะ bucket) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง
+   ลายเซ็นอยู่ใน query string จึงไม่ต้องอนุญาต `authorization`/`x-amz-*`; bucket ใช้จริงควรเอา `localhost` และ preview ออกเมื่อเปิดใช้; **พิสูจน์แล้ว 5 ต.ค. 2026:** B2 รับ origin แบบ wildcard และ preflight ผ่านเฉพาะ production/preview/localhost (ตั้งด้วย `ops/b2/apply-settings.mjs` ใช้กุญแจชั่วคราว `listBuckets`+`writeBuckets` แล้วลบทิ้ง)
+5. Application keys: `kemi-edge` (list/read/write/delete เฉพาะ bucket), `kemi-backup-ro` (Read Only เฉพาะ bucket **จำกัด prefix `files/`** — dev ใช้ `kemi-backup-ro-dev` ของ `kemi-dev-files` สร้างจากหน้าเว็บใน P3-11) — ชื่อ capability ใช้ตาม B2 CLI รุ่นที่ติดตั้ง; dev ใช้ `kemi-edge-dev` ที่สร้างจากหน้าเว็บแบบ Read and Write เฉพาะ bucket — **ตรวจจากหน้า B2 5 ต.ค. 2026 กว้างกว่าที่ใช้มาก:** มี `writeBuckets` และ `write/readBucket*` (Encryption, LifecycleRules, Logging, Notifications, Replications) นอกจาก `readFiles`/`writeFiles`/`deleteFiles`/`listFiles`/`shareFiles` — ถ้ากุญแจนี้รั่วจะเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS/lifecycle ได้; **ของ prod ในระยะ 7 ต้องสร้างผ่าน API ให้เหลือ `readFiles`, `writeFiles`, `deleteFiles` (+ `listFiles` ถ้า sweeper ต้องใช้) เฉพาะ bucket** และพิจารณาเปลี่ยนกุญแจ dev แบบเดียวกันตอนนั้น
 
 **Cloudflare Pages**
 
@@ -236,9 +250,9 @@ grant execute on function public.grade_submission to authenticated;
 
 **Google Drive สำรอง + rclone**
 
-1. บัญชี Google แยกของโปรเจกต์ เปิดยืนยันสองขั้น สร้างโฟลเดอร์ `kemi-backup` ไม่แชร์ให้ใคร
-2. โปรเจกต์ Google Cloud ในบัญชีนี้ → OAuth client แบบ Desktop สำหรับ rclone, scope `drive.file`, consent screen production (กัน token หมดอายุ 7 วัน)
-3. `rclone config`: remote `gdrive` (drive, `drive.file`) → remote `gcrypt` (crypt ครอบ `gdrive:kemi-backup` เข้ารหัสชื่อไฟล์และเนื้อหา) และ remote `b2ro` (B2 ด้วยกุญแจอ่านอย่างเดียว); เก็บ config เป็น GitHub secret
+1. บัญชี Google แยกของโปรเจกต์ เปิดยืนยันสองขั้น; **ไม่สร้างโฟลเดอร์เองจากหน้าเว็บ Drive** เพราะสิทธิ์ `drive.file` เห็นเฉพาะสิ่งที่ rclone สร้าง — ให้ `rclone mkdir gcrypt:` สร้าง `kemi-backup` (ไม่แชร์ให้ใคร ห้ามย้าย/เปลี่ยนชื่อ) (P3-11a, 7 ต.ค. 2026)
+2. โปรเจกต์ Google Cloud ในบัญชีนี้ → OAuth client แบบ Desktop สำหรับ rclone, scope `drive.file`, consent screen production (กัน token หมดอายุ 7 วัน); **ตั้งแต่ปลาย ส.ค. 2026 Google ไม่ให้กด Publish app จนกว่าหน้า Branding จะมี homepage URL + privacy policy URL** — ใช้ `https://kemi-classroom.pages.dev` กับ `https://kemi-classroom.pages.dev/privacy` (หน้าจริงสร้างใน P7-06 ร่วมกับแอปล็อกอิน) และ Authorized domain `kemi-classroom.pages.dev`; ไม่ใส่โลโก้ (ใส่แล้วต้องส่งตรวจ); สถานะเป็น In production แบบไม่ผ่านการตรวจได้เพราะ `drive.file` ไม่ต้องตรวจ (ทำแล้ว 7 ต.ค. 2026 กับ dev)
+3. `rclone config` บนเครื่องผู้พัฒนา: remote `gdrive` (drive, `drive.file`) → remote `gcrypt` (crypt ครอบ `gdrive:kemi-backup` เข้ารหัสชื่อไฟล์และเนื้อหา รหัส + salt ให้ rclone สุ่ม 256 บิต) และ remote `b2ro` (B2 ด้วยกุญแจอ่านอย่างเดียว — สคริปต์ใช้เป็นที่เก็บกุญแจให้ `aws s3api` ไม่ได้อ่าน B2 ผ่าน rclone ดูส่วน 8 ข้อ 5); ห้ามตั้งรหัสผ่านให้ไฟล์ config; เก็บทั้งไฟล์เป็น GitHub secret แล้วลบไฟล์ในเครื่อง; ขั้นตอนละเอียดอยู่ใน `ops/backup-setup.md`
 
 **Healthchecks.io**
 
@@ -251,22 +265,24 @@ grant execute on function public.grade_submission to authenticated;
 | --- | --- | --- |
 | `ci.yml` | ทุก push/PR | ติดตั้ง, lint, typecheck, Vitest, build หน้าเว็บ; เมื่อแก้ `supabase/**` รัน pgTAP กับฐานข้อมูลชั่วคราวใน runner (Supabase CLI เปิด Postgres ใน Docker แล้วใส่ migration ของ commit นั้น) — ไม่ใช้ secret และไม่แตะ `kemi-dev` |
 | `deploy-db.yml` | กดรันเอง (`workflow_dispatch`) เลือก dev/prod | `supabase db push` และ `supabase functions deploy`; รอบ dev รัน pgTAP กับ `kemi-dev` หลัง push (รวมข้อที่พึ่ง automatic RLS ซึ่งฐานข้อมูลใน runner ไม่มี); prod รันหลังผ่าน dev แล้วเท่านั้น และ**ห้ามรัน pgTAP กับ prod เด็ดขาด** (บางเทสต์แก้แถวจริงชั่วคราวใน transaction ที่ย้อนกลับ เช่นเทสต์ครูคนสุดท้าย) สคริปต์รันเทสต์ต้องตรวจ project ref ว่าเป็น `kemi-dev` หรือฐานข้อมูลในเครื่องก่อนรัน |
-| `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง | สำรองตาม TECHNICAL_DESIGN ส่วน 12 |
+| `backup.yml` | `30 19 * * *`, `30 7 * * *` (02:30/14:30 น. ไทย) + กดรันเอง (input `simulate_failure` ไว้ทดสอบการล้ม) | สำรองตาม TECHNICAL_DESIGN ส่วน 12; GitHub สั่งรันด้วยมือได้เฉพาะ workflow ที่มีไฟล์บน branch หลัก จึงวางไฟล์แบบ `workflow_dispatch` อย่างเดียว (ไม่มีตารางเวลา) บน `main` ก่อน แล้วสั่ง `--ref phase-3` ซึ่งใช้ไฟล์ของ branch นั้น; ตารางเวลาเริ่มเมื่อ merge ระยะ 3 |
 | `restore-test.yml` | กดรันเอง เลือกจุดกู้คืนและชุดไฟล์ | กู้เข้า Supabase ชั่วคราวใน runner + ไฟล์ใน `kemi-dev-files` แล้วตรวจ ลบทิ้ง และบันทึกผลลง prod |
 
-ประมาณการนาที: สำรอง ~5 นาที × 60 รอบ ≈ 300 นาที/เดือน + CI ≈ 300–500 นาที + `restore-test` ~15 นาทีต่อครั้ง รวมต่ำกว่า 2,000 นาทีฟรีของ repo private
+ประมาณการนาที: สำรอง 2–4 นาทีต่อรอบ (วัด 7 ต.ค. 2026 กับ kemi-dev; repo private ปัดขึ้นเป็นนาทีเต็มต่อ job; ช้าสุดคือ `pg_dump` ผ่าน pooler 60–80 วินาที) × 60 รอบ ≈ 150–250 นาที/เดือน + CI ≈ 300–500 นาที + `restore-test` ~15 นาทีต่อครั้ง รวมต่ำกว่า 2,000 นาทีฟรีของ repo private
 
-**ขั้นตอน `backup.yml`** (สคริปต์ `ops/backup.sh`, ทุกขั้นล้มเหลวแล้ว ping `/fail` และปลดล็อก):
+**ขั้นตอน `backup.yml`** (สคริปต์ `ops/backup.sh`, ทุกขั้นล้มเหลวแล้ว ping `/fail` และปลดล็อก ยกเว้นข้อ 8; ก่อนระยะ 7 สคริปต์เขียน project ref และ bucket ของ `kemi-dev` ตายไว้ project อื่นถูกกันก่อนต่อฐานข้อมูล `target_not_allowed`):
 
-1. `concurrency: backup`; ping `/start`; ติดตั้ง `postgresql-client` รุ่นหลักตรงกับเซิร์ฟเวอร์จาก PGDG และ rclone
-2. RPC: ตั้ง `maintenance_locks` (หมดอายุ 2 ชม.) และสร้าง `backup_runs` สถานะกำลังทำ
-3. เปิด session A ผ่าน Session pooler: `BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT pg_export_snapshot();` แล้วใน session เดียวกันรัน `ops/manifest.sql` (รายการ `final_key`, `version_id`, ขนาด, checksum ของ attachments/assets สถานะ `ready`)
-4. session B: `pg_dump --snapshot=<id> --schema=public --schema=private` แยกไฟล์ schema และ data จากนั้น COMMIT session A — dump กับ manifest จึงมาจากจุดเดียวกัน **[ต้องพิสูจน์ผ่าน pooler]**
-5. หาไฟล์ใหม่ = manifest ลบรายการที่มีในสำรองแล้ว → `rclone copy b2ro:<bucket> gcrypt:files --files-from new.txt`
-6. `rclone cryptcheck b2ro:<bucket> gcrypt:files --files-from new.txt` + ตรวจการมีอยู่/ขนาดของไฟล์เดิมจาก `rclone lsjson`; ไฟล์ที่ขนาดไม่ตรง manifest ดึงตาม `version_id` ด้วย `aws s3api get-object --version-id` (endpoint B2) แล้วคัดลอกแทน; ยังไม่ครบ = ล้มเหลว
-7. อัปโหลด dump + manifest ไป `gcrypt:runs/<เวลา>/` → RPC บันทึก `backup_runs` สำเร็จพร้อมจำนวน/ขนาด → ping สำเร็จ
-8. ล้างรอบเก่ากว่า 7 วัน และไฟล์ที่ไม่มี manifest ใน 7 วันอ้างถึง ด้วย `--drive-use-trash=false` เฉพาะในโฟลเดอร์สำรอง
-9. RPC ปลดล็อก และเรียก `ping()` ผ่าน Data API (ช่วยกันโปรเจกต์หลับ)
+1. `concurrency: backup` (ไม่ยกเลิกรอบที่กำลังทำ); ตรวจว่ามี secret ครบ; ping `/start`; ติดตั้ง `postgresql-client` รุ่นหลักตรงกับเซิร์ฟเวอร์จาก PGDG และ rclone รุ่นที่ตรึงไว้พร้อมตรวจ SHA-256 (`aws` CLI มีใน runner อยู่แล้ว); **ห้ามตั้งตัวแปรสภาพแวดล้อมที่ขึ้นต้นด้วย `RCLONE_` เว้นแต่ตั้งใจให้เป็นค่าตั้งของ rclone** เพราะ rclone อ่านเป็นแฟล็ก (`RCLONE_VERSION` กลายเป็น `--version`, P3-11c)
+2. psql เรียก `private.backup_start` (ตั้ง `maintenance_locks` หมดอายุ 2 ชม. + สร้าง `backup_runs` สถานะกำลังทำ ใน transaction เดียว; รอบค้างที่ธงหมดอายุแล้วถูกปิดเป็น failed) — ฟังก์ชันสำรองทุกตัวเรียกได้เฉพาะ postgres ผ่าน connection string เดียวกับ pg_dump จึงไม่ต้องมี service role key ใน GitHub; สคริปต์ตั้ง `trap` ให้เรียก `private.backup_release_lock` ทุกครั้งที่ออก เพราะจบรอบไม่ปลดธงเอง
+3. เปิด session A ผ่าน Session pooler: `BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT pg_export_snapshot();` แล้วใน session เดียวกันรัน `ops/manifest.sql` ซึ่งเรียกฟังก์ชันบันทึก manifest (ดึง asset สถานะ `ready` จาก snapshot นี้เอง ไม่ใช่ใน REPEATABLE READ ตอบ `snapshot_required`) แล้วอ่านรายการ `final_key`, `version_id`, ขนาด, checksum ออกมาเป็นไฟล์ manifest
+4. session B: `pg_dump --snapshot=<id> --schema=public --schema=private --exclude-table-data=private.backup_manifests --exclude-table-data=private.backup_run_files` (manifest อัปโหลดเป็นไฟล์แยกอยู่แล้ว ไม่ต้องอยู่ใน dump) แยกไฟล์ schema และ data จากนั้น COMMIT session A — dump กับ manifest จึงมาจากจุดเดียวกัน **[ต้องพิสูจน์ผ่าน pooler]**
+5. หาไฟล์ใหม่ = ไฟล์ในรอบนี้ที่ยังไม่เคยอยู่ในรอบสำเร็จใด (`backup_new_files`; ส่วนไฟล์ manifest ของรอบใช้ `backup_run_file_list` — ทั้งสองเรียกได้เฉพาะระหว่างรอบ ต้องเรียกก่อนจบรอบ) → **ข้ามไฟล์ใหม่ที่มีอยู่ใน `gcrypt:files` แล้วและขนาดตรง** (เหลือจากรอบที่ล้มหลังคัดลอก; ตรวจแบบเดียวกับไฟล์เดิมในข้อ 6 — เพิ่ม 7 ต.ค. 2026) → ดึงที่เหลือไฟล์ละ 1 GET ด้วย `aws s3api get-object --version-id` (endpoint S3 ของ B2, กุญแจจาก remote `b2ro`) ซึ่งอ่านเวอร์ชันที่บันทึกตรง ๆ และไม่มีคำขอ HEAD/List เพิ่มแบบ `rclone copy b2ro:` (**อ่านจาก B2 ครั้งเดียว** ตาม TECHNICAL_DESIGN 9.3; P3-11a) ตรวจขนาด/MD5 กับ manifest → `rclone copy ./new gcrypt: --no-traverse`; บันทึกไบต์/คำขอที่อ่านลงงบรายวันผ่าน psql ทั้งตอนสำเร็จและล้มเหลว
+6. `rclone cryptcheck ./new gcrypt: --one-way` (ต้นทางเป็นสำเนาในเครื่อง ไม่อ่าน B2 ซ้ำ) + ตรวจการมีอยู่/ขนาดของทุกไฟล์ใน manifest จาก `rclone lsjson -R gcrypt:files`; ไฟล์ที่หายหรือขนาดไม่ตรงดึงตาม `version_id` ด้วยวิธีเดียวกับข้อ 5 แล้วคัดลอก + cryptcheck + ตรวจซ้ำ; ยังไม่ครบ = ล้มเหลว
+7. อัปโหลด dump + manifest ไป `gcrypt:runs/<YYYYMMDDTHHMMSSZ>/` = `schema.dump`, `data.dump` (`pg_dump -Fc`), `manifest.csv`, `meta.json` (รอบ, snapshot, จำนวน, ขนาด, รุ่น Postgres — ไม่มีข้อมูลนักเรียน) แล้ว cryptcheck; ไฟล์อยู่ที่ `gcrypt:files/<asset_id>.<ext>` ตาม `final_key` → psql เรียกฟังก์ชันจบรอบสำเร็จพร้อมชื่อจุดกู้คืน จำนวน และขนาด (ไม่ตรงกับ manifest ตอบ `manifest_mismatch` = รอบล้มเหลว) → ping สำเร็จ; รอบที่ล้มหลังอัปโหลดแล้วลบ `runs/<เวลา>` ของรอบนั้นทิ้ง (ไฟล์ใน `files/` คงไว้ให้รอบถัดไปใช้ตามข้อ 5)
+8. ล้าง dump/manifest ของรอบเก่ากว่า 7 วัน**ยกเว้นรอบสำเร็จล่าสุดเสมอ** และไฟล์จาก `backup_prune_candidates` (รอบสำเร็จล่าสุดที่เห็นไฟล์เก่ากว่า 8 วัน ไม่รวมไฟล์ในรอบสำเร็จล่าสุด) ด้วย `--drive-use-trash=false` เฉพาะในโฟลเดอร์สำรอง แล้วจึงส่งรายการที่ลบสำเร็จให้ `backup_prune_confirm` (ลบจาก Drive ก่อน ค่อยลบแถว); **ข้อนี้ล้มเหลวหลังจบรอบสำเร็จแล้ว:** workflow ล้มให้ GitHub ส่งอีเมล แต่ไม่ ping `/fail` และ `backup_runs` ยังเป็นสำเร็จ เพราะจุดกู้คืนของรอบนั้นใช้ได้ (ล้างไม่สำเร็จนาน ๆ ทำให้ Drive เต็ม จึงต้องแก้เมื่อได้อีเมล)
+9. ปลดล็อก (`private.backup_release_lock` จาก trap ในข้อ 2) และเรียก `ping()` ผ่าน Data API ด้วย `SUPABASE_PING_KEY` (secret key แยกของงานนี้ เพราะ anon เรียกฟังก์ชันใดไม่ได้; ช่วยกันโปรเจกต์หลับ) — ไม่มี key หรือเรียกไม่สำเร็จขึ้นแค่คำเตือน ไม่ทำให้รอบล้ม; ยืนยันใน P3-11c ว่าเรียกสำเร็จจริงเมื่อใส่ key
+
+**ตาราง manifest ในฐานข้อมูล (ตัดสิน 4 ต.ค. 2026 จากขนาดที่วัดใน P3-01c; ทำแล้วใน P3-01d วัดได้รวมประมาณ 9–19 MB ที่ 10,000–20,000 ไฟล์):** แบบแถวต่อไฟล์ต่อรอบใช้ประมาณ 468 ไบต์ต่อแถว เก็บ 16 รอบแล้วกิน 75–150 MB (15–30% ของ 500 MB ฟรี) จึงเปลี่ยนเป็น**ไฟล์ละแถว** เก็บ `final_key`, `version_id`, ขนาด, checksum, รอบสำเร็จแรกและรอบสำเร็จล่าสุดที่เห็นไฟล์ (ประมาณ 5–10 MB) ใช้ได้เพราะ `final_key` ไม่ถูกใช้ซ้ำและ asset ไม่ย้อนเป็น `ready` ไฟล์จึงอยู่ในรอบติดกันเสมอ; รายการของรอบที่กำลังทำเก็บชั่วคราวได้แต่ต้องล้างเมื่อจบรอบไม่ว่าผลใด; รอบแรก/ล่าสุดขยับเฉพาะตอนจบรอบสำเร็จ; รายการเต็มของแต่ละจุดกู้คืนอยู่ในไฟล์ manifest บน Drive ซึ่งเป็นสิ่งที่ `restore-test` และการกู้จริงใช้
 
 **ขั้นตอน `restore-test.yml`** (สคริปต์ `ops/restore-test.sh`, input: จุดกู้คืน และ `files: sample|all`):
 
@@ -275,7 +291,7 @@ grant execute on function public.grade_submission to authenticated;
 3. อัปโหลดไฟล์จาก manifest (`sample` = สุ่มประมาณ 50 ไฟล์สำหรับรอบรายเดือน, `all` = ทุกไฟล์ ใช้ก่อนเปิดใช้จริงเมื่อข้อมูลยังเล็ก) เข้า `final_key` เดิมใน `kemi-dev-files` เก็บ `version_id` ใหม่ → อัปเดตในฐานข้อมูลชั่วคราวตาม TECHNICAL_DESIGN ส่วน 12 ตรวจขนาด/checksum
 4. ตรวจยอดแถวหลัก ยอดโทเคน owned_charms และสร้าง presigned GET ของไฟล์ที่กู้แล้วดาวน์โหลดเทียบ checksum
 5. ลบไฟล์ที่อัปโหลดในข้อ 3 จาก `kemi-dev-files` โดยระบุ `version_id` (ทำแม้ขั้นก่อนหน้าล้มเหลว) และหยุด `supabase stop`
-6. บันทึกผล (ผ่าน/ไม่ผ่าน จุดกู้คืน จำนวนไฟล์ที่ตรวจ) ลง `backup_runs` ของ prod เป็นชนิด `restore_test` ผ่าน RPC เพื่อแสดง “ทดสอบกู้คืนล่าสุด” ใน D01 แล้ว ping `kemi-restore-test`
+6. บันทึกผล (ผ่าน/ไม่ผ่าน จุดกู้คืน จำนวนไฟล์ที่ตรวจ) ลง `backup_runs` ของ prod เป็นชนิด `restore_test` ด้วย psql เรียก `private.backup_record_restore_test` (บันทึกครั้งเดียวตอนจบ) เพื่อแสดง “ทดสอบกู้คืนล่าสุด” ใน D01 แล้ว ping `kemi-restore-test`
 
 **งาน `guard`** (อยู่ใน `backup.yml` แยก job): ตรวจว่า `private.settings` ของ prod ไม่มี `allow_test_logins = on` ถ้ามีให้ job นี้ล้มเหลวเพื่อให้ GitHub ส่งอีเมล โดยงานสำรองยังทำต่อตามปกติ
 
@@ -331,7 +347,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 3 — งานและไฟล์
 
-งาน: migration กลุ่ม posts_files, submissions; Edge Functions `uploads`, `files` และ `process-jobs` ขั้นต่ำ (ลบไฟล์ที่ถูกแทน, sweeper `copying` และ batch ค้าง) พร้อม `pg_cron`; ตั้ง CORS/lifecycle/keys ของ B2; โมดูลอัปโหลด; T02 (K1: คะแนนเต็มจำนวนเต็ม ≥ 1 ไม่มีเพดาน 100, ปุ่มตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + โหมดแก้ไข (N2, N1), S02, S03 (ไฟล์โจทย์เปิดดู/ดาวน์โหลด, ส่ง/ส่งแก้/สถานะ), T08 รายการงาน, T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น; ระบบนับพื้นที่ + แถบพื้นที่เต็ม; **ตั้ง `backup.yml` แบบพื้นฐานกับ dev** (ใช้ `maintenance_locks` จาก `0001_base` และ `backup_runs` จากกลุ่ม posts_files)
+งาน: migration กลุ่ม posts_files, submissions; Edge Functions `uploads`, `files` และ `process-jobs` ขั้นต่ำ (ลบไฟล์ที่ถูกแทน, sweeper `copying`, batch ค้าง และ asset ที่ไม่มีแถวผูกแล้ว) พร้อม `pg_cron`; ตั้ง CORS/lifecycle/keys ของ B2; โมดูลอัปโหลด; T02 (K1: คะแนนเต็มจำนวนเต็ม ≥ 1 ไม่มีเพดาน 100, ปุ่มตัวห้อย/ตัวยก, รายละเอียด/ไฟล์ไม่บังคับ) + โหมดแก้ไข (N2, N1), S02, S03 (ไฟล์โจทย์เปิดดู/ดาวน์โหลด, ส่ง/ส่งแก้/สถานะ), T08 รายการงาน, T03 รายการสถานะ + การ์ดโจทย์และไฟล์ + ตัวดูไฟล์เบื้องต้น; ระบบนับพื้นที่ + แถบพื้นที่เต็ม; **ตั้ง `backup.yml` แบบพื้นฐานกับ dev** (ใช้ `maintenance_locks` จาก `0001_base` และ `backup_runs` จากกลุ่ม posts_files)
 
 ตรวจรับ:
 - [ ] PUT ที่ขนาดไม่ตรงลายเซ็นถูก B2 ปฏิเสธ; ไฟล์ที่ magic number ไม่ใช่ JPEG/PNG/PDF ถูกปฏิเสธตอน complete
@@ -342,6 +358,9 @@ grant execute on function public.grade_submission to authenticated;
 - [ ] ตารางรับการส่งทั้ง 7 แถวผ่าน pgTAP; ส่งแก้ล้มเหลวชุดเดิมและเวลาเดิมอยู่ครบ
 - [ ] ส่งแก้โดยเก็บรูปเดิม 2 รูปเปลี่ยนรูปที่ 3: ไม่อัปโหลด 2 รูปเดิมซ้ำ และลบเฉพาะรูปที่ถูกแทน (ระบุเวอร์ชัน)
 - [ ] ตั้ง quota ต่ำบน dev: อัปโหลดใหม่ถูกหยุดพร้อมข้อความ J10.3 แต่ดู/ตรวจงานได้
+- [ ] `backup.yml` กับ dev: รอบแรกสำเร็จ (dump + manifest + ไฟล์อยู่ใน Drive แบบเข้ารหัส, `pg_dump --snapshot` ผ่าน pooler = ส่วน 13 ข้อ 12); รอบสองไม่อ่าน B2 ซ้ำ; รอบล้มโดยตั้งใจได้อีเมล Healthchecks.io (ข้อ 5) และธง `maintenance_locks` ถูกปลด; `ping()` ผ่าน Data API สำเร็จ
+- [ ] ตั้งงบดาวน์โหลดรายวันต่ำบน dev: เปิดดูไฟล์ถูกหยุดพร้อมข้อความ `download_budget_reached` แต่การส่งงานยังผ่าน; เปิดไฟล์เดิมซ้ำภายใน 10 นาทีไม่เพิ่มตัวนับและไม่โหลดจาก B2 ซ้ำ (ดูแท็บ Network); complete ใช้คำขอ B2 ครั้งเดียวต่อไฟล์
+- [ ] จุดสาธิต 2: จดตัวเลขจากหน้า Caps & Alerts ของ B2 หลังวันใช้งานจริง เทียบกับตัวนับในฐานข้อมูล แล้วปรับงบใน TECHNICAL_DESIGN 9.3
 - [ ] อุปกรณ์จริง: HEIC จาก iPhone, รูปต้นฉบับเกิน 20 MB ถูกปฏิเสธก่อนย่อแต่รูปที่ไม่เกินผ่าน, ตัวห้อย/ตัวยกอ่านชัดหลังย่อ, วัดเวลาอัปโหลดผ่าน Wi-Fi โรงเรียน (จุดสาธิต 2)
 
 ### ระยะ 4 — ตรวจงานและคะแนน
@@ -385,7 +404,7 @@ grant execute on function public.grade_submission to authenticated;
 
 ### ระยะ 7 — สำรองและความพร้อม
 
-งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`
+งาน: `backup.yml` ฉบับเต็ม + job `guard` + `restore-test.yml`; แผงสำรองและ “ทดสอบกู้คืนล่าสุด” ใน D01 จาก `backup_runs`; รายการความปลอดภัยส่วน 11; ทดสอบภาระ; ทดสอบอุปกรณ์และการเข้าถึง; เตรียม prod (migration, seed, allowlist ครู, storage settings, caps, bucket `kemi-files` + กุญแจ B2 ของ prod แบบสิทธิ์แคบผ่าน API, redirect, CORS เฉพาะโดเมนจริง); ชื่อภาคเรียนแรกใน seed ของ prod ตั้งตามภาคเรียนจริงตอนเปิดใช้ (ถามครู); สลับตัวแปร Production ของ Pages เป็น `kemi-prod` พร้อม `VITE_DEPLOY_ENV=prod` แล้ว deploy ใหม่ และเอาโดเมน production ออกจาก Redirect URLs ของ `kemi-dev`; สลับ `backup.yml` ไป prod (ตัวกันในสคริปต์, secret ชุด prod, กุญแจอ่านอย่างเดียวของ `kemi-files`) **ห้ามให้สำรอง dev กับ prod ปนในโฟลเดอร์ Drive เดียวกัน** (ใช้ remote crypt ใหม่ที่ชี้โฟลเดอร์ใหม่ หรือ purge สำรอง dev ก่อนรอบแรกของ prod) แล้วหยุดสำรอง dev เพราะใช้เพดานรายวันของ B2 ก้อนเดียวกับ prod
 
 ตรวจรับ:
 - [ ] สำรองสำเร็จต่อเนื่อง 6 รอบ; ลองทำให้งานไม่รันแล้วได้อีเมลจาก Healthchecks.io
@@ -428,22 +447,24 @@ grant execute on function public.grade_submission to authenticated;
 
 | # | เรื่อง | ทดสอบในระยะ | ถ้าไม่ผ่าน |
 | --- | --- | --- | --- |
-| 1 | B2 ต้องผูกบัตรไหม และ caps ตั้งที่ปริมาณฟรีได้ (ตรวจตอนสมัครข้อ 1) | 0 | ทบทวนแผนเก็บไฟล์กับผู้ใช้ก่อนทำต่อ |
-| 2 | `pg_cron` + `pg_net` ใช้ในแผนฟรีได้ (ข้อ 2, 8) | 0 | ให้ GitHub Actions เรียก `process-jobs` แทน |
+| 1 | B2 ต้องผูกบัตรไหม และ caps ตั้งที่ปริมาณฟรีได้ (ตรวจตอนสมัครข้อ 1) — **ตั้งแล้ว 5 ต.ค. 2026:** caps ทั้ง 4 ชนิดเป็น $0 (ผู้ใช้ไม่ได้แจ้งว่าถูกขอบัตร); ปริมาณฟรีจริงเป็นรายวัน ดูข้อ 19 และ TECHNICAL_DESIGN 9.3 | 0 | ทบทวนแผนเก็บไฟล์กับผู้ใช้ก่อนทำต่อ |
+| 2 | `pg_cron` + `pg_net` ใช้ในแผนฟรีได้ (ข้อ 2, 8) — **พิสูจน์แล้ว 6 ต.ค. 2026** บน kemi-dev (`pg_cron` 1.6.4, `pg_net` 0.20.4, Vault มีแล้ว) cron ลบไฟล์จริงสำเร็จ | 0 | ให้ GitHub Actions เรียก `process-jobs` แทน |
 | 3 | บัญชี Google ของโรงเรียนล็อกอินได้ (ข้อ 3) | 1 | ใช้บัญชีส่วนตัว หรือขอโรงเรียนอนุญาต |
 | 4 | Supabase ใช้ฟรีโดยไม่ผูกบัตร (ข้อ 4) | 0 | — |
-| 5 | Healthchecks.io ส่งอีเมลจริง (ข้อ 5) | 3, 7 | เปลี่ยนช่องทางแจ้ง |
-| 6 | Lifecycle rules แยก `files/` กับ `staging/` ได้ตามส่วน 7 (ข้อ 6) | 0, 3 | ใช้งานลบตามรอบใน `process-jobs` เป็นหลัก |
-| 7 | CORS, ลายเซ็น `content-length`, CopyObject ระบุเวอร์ชันต้นทาง, เพดานดาวน์โหลดเดือนแรก (ข้อ 7) | 3 | ตรวจขนาดตอน complete อย่างเดียว / ดาวน์โหลดแล้วอัปโหลดแทนการคัดลอก / ปรับเพดาน |
+| 5 | Healthchecks.io ส่งอีเมลจริง (ข้อ 5) — **ส่วน /fail พิสูจน์แล้ว 7 ต.ค. 2026 (P3-11c):** รอบ `simulate_failure` ได้อีเมล DOWN และรอบปกติถัดมาได้อีเมล UP; **ส่วนงานไม่รันตามเวลาผ่านแล้ว:** ได้อีเมล “DOWN | kemi-backup” 01:27 น. 8 ต.ค. 2026 (success signal did not arrive on time, grace time passed) ≈ 15 ชม. หลังรอบสุดท้าย — **ผ่านครบทั้งสองกรณี** | 3, 7 | เปลี่ยนช่องทางแจ้ง |
+| 6 | Lifecycle rules แยก `files/` กับ `staging/` ได้ตามส่วน 7 (ข้อ 6) — **พิสูจน์แล้ว 5 ต.ค. 2026** (`apply-settings.mjs` อ่านกลับตรง) | 0, 3 | ใช้งานลบตามรอบใน `process-jobs` เป็นหลัก |
+| 7 | CORS, ลายเซ็น `content-length`, CopyObject ระบุเวอร์ชันต้นทาง, เพดานดาวน์โหลดเดือนแรก (ข้อ 7) — **พิสูจน์แล้ว 5 ต.ค. 2026:** CORS และลายเซ็น `content-length`/`content-type` (ขนาดเกิน 1 ไบต์ หรือชนิดต่าง → 403) ผ่าน; CopyObject ระบุเวอร์ชันต้นทางได้ (อัปทับไฟล์พักก่อน complete แล้วไฟล์จริงยังเป็นเนื้อเวอร์ชันที่ตรวจ) และ `REPLACE` ตั้งชนิดไฟล์ได้; อัปทับไฟล์พักหลัง complete ไม่กระทบไฟล์ใน `files/` (`proof-complete.mjs` 16/16); เรื่องเพดานดาวน์โหลดย้ายไปข้อ 19 | 3 | ตรวจขนาดตอน complete อย่างเดียว / ดาวน์โหลดแล้วอัปโหลดแทนการคัดลอก / ปรับเพดาน |
 | 8 | เวอร์ชัน Postgres, ต่อ Session pooler จาก Actions, rate limit ของ Auth (ข้อ 8) | 1, 3, 7 | ปรับวิธี dump / ปรับค่าใน Dashboard |
-| 9 | ชนิดของ ETag ที่ B2 ส่งกลับ (ใช้เป็น checksum) | 3 | ใช้ขนาด + `cryptcheck` เป็นหลัก |
-| 10 | `response-content-type` / `response-content-disposition` บน presigned GET ของ B2 | 3–4 | ตั้งชื่อไฟล์ฝั่งหน้าเว็บด้วย Blob |
+| 9 | ชนิดของ ETag ที่ B2 ส่งกลับ (ใช้เป็น checksum) — **พิสูจน์แล้ว 5 ต.ค. 2026:** PUT ชิ้นเดียวได้ ETag = MD5 hex ของเนื้อไฟล์ (ในเครื่องหมายคำพูด) GET ส่งค่าเดียวกัน; ETag ของ CopyObject เท่ากับ MD5 ของไฟล์และตรงกับที่ GET ส่งกลับ (5 ต.ค. 2026) | 3 | ใช้ขนาด + `cryptcheck` เป็นหลัก |
+| 10 | `response-content-type` / `response-content-disposition` บน presigned GET ของ B2 — **พิสูจน์แล้ว 5 ต.ค. 2026** รวมชื่อไฟล์ไทยแบบ `filename*=UTF-8''…` | 3–4 | ตั้งชื่อไฟล์ฝั่งหน้าเว็บด้วย Blob |
 | 11 | Safari บน iPhone แปลง HEIC เป็น JPEG เองเมื่อเลือกไฟล์ | 3 | โหลดตัวถอด HEIC ตามแผน |
-| 12 | `pg_dump --snapshot` ผ่าน Session pooler | 3, 7 | dump ก่อนแล้วสร้าง manifest จาก dump ที่ restore ชั่วคราว หรืออาศัย `maintenance_locks` |
+| 12 | `pg_dump --snapshot` ผ่าน Session pooler — **ผ่านแล้ว 7 ต.ค. 2026 (P3-11c):** รันบน GitHub Actions กับ kemi-dev สำเร็จ 3 รอบ (PG 17, session A `REPEATABLE READ` + `pg_export_snapshot` แล้ว `pg_dump --snapshot` อีก session ผ่าน pooler พอร์ต 5432) | 3, 7 | dump ก่อนแล้วสร้าง manifest จาก dump ที่ restore ชั่วคราว หรืออาศัย `maintenance_locks` |
 | 13 | การต่อฐานข้อมูลผ่าน pooler อย่างเดียวกันโปรเจกต์หลับได้ไหม | 7–8 (สังเกตช่วงปิดเทอม) | `ping()` ผ่าน Data API ทุกรอบสำรองอยู่แล้ว |
-| 14 | token ของ rclone (`drive.file`, consent production) ไม่หมดอายุ 7 วัน | 0, 7 | ตรวจสถานะ consent screen และสร้าง token ใหม่; Healthchecks.io จะเตือนถ้าสำรองล้มเหลว |
+| 14 | token ของ rclone (`drive.file`, consent production) ไม่หมดอายุ 7 วัน — **7 ต.ค. 2026:** Publish เป็น In production ได้หลังใส่ homepage/privacy URL (ส่วน 7); พิสูจน์เมื่อรอบสำรองยังผ่านหลังวันที่ 14 ต.ค. 2026 | 0, 7 | ตรวจสถานะ consent screen และสร้าง token ใหม่; Healthchecks.io จะเตือนถ้าสำรองล้มเหลว |
 | 15 | สร้าง ZIP ภาคเรียนขนาดหลาย GB ในเบราว์เซอร์ของครู | 6 | แบ่ง ZIP ตามห้อง/งาน |
 | 16 | `supabase start` ใน runner ของ GitHub Actions ใช้ restore dump ของ prod ได้ (roles/ส่วนขยายตรงกัน) | 7 | ใช้ Postgres container รุ่นเดียวกันพร้อมสร้าง role ที่ต้องใช้เอง |
-| 17 | ความเร็วจากประเทศไทยไปแต่ละภูมิภาคของ B2 | 0 (ก่อนสมัคร) | เลือกภูมิภาคที่เร็วรองลงมาที่ผ่านการวัด |
+| 17 | ความเร็วจากประเทศไทยไปแต่ละภูมิภาคของ B2 — **วัดแล้ว 4 ต.ค. 2026:** เลือก EU Central (ส่วน 3) | 0 (ก่อนสมัคร) | เลือกภูมิภาคที่เร็วรองลงมาที่ผ่านการวัด |
+| 18 | B2 รับ GET แบบ Range แล้วส่ง `x-amz-version-id` + `Content-Range`; presigned GET รับ `response-cache-control`; ข้อความ 403 เมื่อเกินเพดานรายวัน — **พิสูจน์แล้ว 5 ต.ค. 2026:** Range GET ได้ 206 + `x-amz-version-id` ตรงกับตอน PUT + `Content-Range: bytes 0-15/<ขนาดเต็ม>`; `response-cache-control` ใช้ได้; รูปแบบ 403 ยืนยันจากเอกสาร B2 (ไม่ทดลองจริงตามข้อห้าม) — Native `download_cap_exceeded`/`transaction_cap_exceeded`, S3 เป็น XML ข้อความ “cap exceeded” | 3 | HEAD + GET แบบเดิม (2 คำขอ); แคชลิงก์ฝั่งหน้าเว็บอย่างเดียว |
+| 19 | ดาวน์โหลด 1 GB / Class B 2,500 ต่อวันพอสำหรับวันใช้งานจริง (TECHNICAL_DESIGN 9.3) | 3 (จุดสาธิต 2), 7 | ลดงบเปิดดู, ให้ครูใช้ไฟล์โจทย์เล็กลง, ลดความละเอียดภาพหลังย่อ |
 
 ผลการพิสูจน์แต่ละข้อให้บันทึกกลับใน SYSTEM_SPEC ส่วน 12 หรือ TECHNICAL_DESIGN ส่วนที่เกี่ยวข้องพร้อมวันที่

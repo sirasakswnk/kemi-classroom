@@ -17,7 +17,7 @@ set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
 
-select plan(7);
+select plan(11);
 
 -- รายการที่ตั้งใจให้ authenticated เรียกได้ (เรียงตาม migration)
 create temp table expected_authenticated (fn text primary key);
@@ -47,7 +47,74 @@ insert into expected_authenticated values
   ('public.unbind_student(uuid,boolean)'),
   ('public.admin_teachers()'),
   ('public.admin_add_teacher(text,uuid,text)'),
-  ('public.admin_remove_teacher(uuid)');
+  ('public.admin_remove_teacher(uuid)'),
+  -- 0010_posts
+  ('private.post_access(uuid)'),                                    -- ใช้ใน RLS policy
+  -- 0011_files
+  ('private.can_read_solution(uuid)'),                              -- ใช้ใน RLS policy
+  -- 0012_backups
+  ('private.is_admin()'),                                           -- ใช้ใน RLS policy
+  -- 0014_post_rpcs
+  ('public.create_post(uuid,jsonb,uuid,boolean)'),
+  -- 0015_post_update
+  ('public.update_post(uuid,jsonb,integer,uuid,boolean)'),
+  -- 0016_upload_batch
+  ('public.create_upload_batch(text,uuid,uuid,jsonb,uuid,boolean)'),
+  -- 0017_upload_complete (ยืนยันเจ้าของ batch ด้วย JWT ของผู้ใช้ — อ่านอย่างเดียว)
+  ('public.upload_complete_target(uuid,integer)'),
+  -- 0018_files_sign (คืนเฉพาะ id ที่เปิดได้ + เพดานครั้ง — ไม่คืน key/เวอร์ชัน)
+  ('public.authorize_files(uuid[])'),
+  -- 0020_submissions
+  ('private.can_read_submission(uuid)'),                            -- ใช้ใน RLS policy
+  ('public.submit_assignment(uuid,uuid[],integer,uuid)'),
+  -- 0021_submission_status (อ่านสถานะงานของนักเรียน)
+  ('public.submission_status(uuid)'),
+  ('public.my_work(uuid)'),
+  -- 0022_teacher_work (ครู/ผู้ดูแลอ่านยอดและรายชื่อสถานะการส่ง)
+  ('public.teacher_work_summary(uuid)'),
+  ('public.teacher_submission_list(uuid)'),
+  -- 0023_jobs (ยอดพื้นที่ทุกบทบาท — นักเรียนเห็นแค่ระดับ; ตัวนับ B2 เฉพาะผู้ดูแล)
+  ('public.storage_status()'),
+  ('public.admin_b2_usage()');
+
+-- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
+-- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
+create temp table expected_service_only (fn text primary key);
+insert into expected_service_only values
+  -- 0001_base (keep-alive ของ GitHub Actions)
+  ('public.ping()'),
+  -- 0017_upload_complete
+  ('public.upload_complete_begin(uuid,uuid,integer,text,bigint,text,integer)'),
+  ('public.upload_complete_finish(uuid,text,text)'),
+  ('public.upload_complete_abort(uuid)'),
+  ('public.record_b2_usage(text,integer,bigint,bigint)'),
+  -- 0018_files_sign (ข้อมูลลงลายเซ็น + ตรวจและนับงบเปิดดูรายวัน)
+  ('public.files_sign_begin(uuid[])'),
+  -- 0023_jobs (ตัวทำงานเบื้องหลัง process-jobs)
+  ('public.jobs_claim(integer)'),
+  ('public.jobs_complete(bigint,text)'),
+  ('public.jobs_fail(bigint,text)'),
+  ('public.delete_asset_begin(bigint)'),
+  ('public.delete_asset_finish(bigint)'),
+  ('public.copying_stale(integer)'),
+  ('public.sweep_copying_finish(uuid,text)'),
+  ('public.jobs_maintenance()');
+
+-- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
+create temp table postgres_only (fn text primary key);
+insert into postgres_only values
+  ('private.backup_start()'),
+  ('private.backup_running_run(uuid)'),
+  ('private.backup_record_manifest(uuid)'),
+  ('private.backup_finish(uuid,boolean,text,integer,bigint,integer,text)'),
+  ('private.backup_release_lock()'),
+  ('private.backup_record_restore_test(boolean,text,integer,text)'),
+  -- 0013_backup_manifest (backup_prune_manifests ถูกแทนด้วยการล้างสองขั้น)
+  ('private.backup_run_file_list(uuid)'),
+  ('private.backup_new_files(uuid)'),
+  ('private.backup_prune_eligible(uuid)'),
+  ('private.backup_prune_candidates()'),
+  ('private.backup_prune_confirm(text[])');
 
 -- ฟังก์ชันจริงทุกตัวใน public/private ที่บทบาทนั้นเรียกได้
 -- เทียบด้วย OID (regprocedure) จึงแยก overload และไม่ขึ้นกับ search_path; fn ใช้แสดงผลแบบมีชื่อ schema
@@ -69,6 +136,23 @@ select is_empty(
   $$ select fn from callable where role = 'public' $$,
   'PUBLIC ไม่มีสิทธิ์เรียกฟังก์ชันใน public/private'
 );
+-- service_role (กุญแจของ Edge Function / ping) ไม่ต้องเรียกฟังก์ชันใน private — งานสำรองต่อด้วย postgres
+select is_empty(
+  $$ select p.oid::regprocedure::text
+       from pg_proc p
+      where p.pronamespace = 'private'::regnamespace
+        and has_function_privilege('service_role', p.oid, 'EXECUTE') $$,
+  'service_role เรียกฟังก์ชันใน private ไม่ได้ (รวมฟังก์ชันสำรอง)'
+);
+select is_empty(
+  $$ select format('%s %s', r, o.fn)
+       from postgres_only o
+       cross join unnest(array['public', 'anon', 'authenticated', 'service_role']) r
+      where to_regprocedure(o.fn) is null
+         or has_function_privilege(r, to_regprocedure(o.fn), 'EXECUTE')
+         or not has_function_privilege('postgres', to_regprocedure(o.fn), 'EXECUTE') $$,
+  'ฟังก์ชันสำรองมีอยู่จริงและเรียกได้เฉพาะ postgres'
+);
 select is_empty(
   $$ select c.fn from callable c
       where c.role = 'authenticated'
@@ -84,6 +168,25 @@ select is_empty(
 select is_empty(
   $$ select fn from expected_authenticated where to_regprocedure(fn) is null $$,
   'ทุกชื่อในรายการเป็น signature ที่มีอยู่จริง'
+);
+
+select is_empty(
+  $$ select p.oid::regprocedure::text
+       from pg_proc p
+      where p.pronamespace = 'public'::regnamespace
+        and has_function_privilege('service_role', p.oid, 'EXECUTE')
+        and not has_function_privilege('authenticated', p.oid, 'EXECUTE')
+        and not exists (select 1 from expected_service_only e where to_regprocedure(e.fn) = p.oid) $$,
+  'ฟังก์ชันใน public ที่ service_role เรียกได้แต่ผู้ใช้เรียกไม่ได้ อยู่ในรายการ service_role ทั้งหมด'
+);
+select is_empty(
+  $$ select format('%s %s', r, e.fn)
+       from expected_service_only e
+       cross join unnest(array['public', 'anon', 'authenticated']) r
+      where to_regprocedure(e.fn) is null
+         or has_function_privilege(r, to_regprocedure(e.fn), 'EXECUTE')
+         or not has_function_privilege('service_role', to_regprocedure(e.fn), 'EXECUTE') $$,
+  'RPC ของ service_role มีอยู่จริง service_role เรียกได้ และ PUBLIC/anon/authenticated เรียกไม่ได้'
 );
 
 -- SECURITY DEFINER ทุกตัวต้องตั้ง search_path (กันการแทรกวัตถุใน schema ที่ค้นหา)

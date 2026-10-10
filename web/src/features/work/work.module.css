@@ -1,0 +1,586 @@
+/* งานของนักเรียน — แบบ v2 .work-head / .meta-grid / .meta-box / .work-layout / .done-card / .locked / .sticky-submit /
+   .filters / .due-card / .date-tile / .home-cols; จุดเปลี่ยนตาม UX 13: 600 px กล่องกำหนดส่ง · ปิดรับ · รางวัลแถวเดียว
+   และปุ่มส่งกว้างไม่เกิน 420 px, 960 px แบ่ง 2 คอลัมน์ (S03 ซ้ายโจทย์ ขวางานของฉัน · S01 ใกล้กำหนดส่ง | ชั้นเรียน)
+   ลำดับใน DOM = ลำดับที่เห็น (ไม่ใช้ order) */
+
+/* ---------- S03 หัวงาน ---------- */
+.head {
+  display: grid;
+  gap: 10px;
+}
+
+.head h1 {
+  font-size: 1.5625rem;
+  line-height: 1.3;
+  color: var(--purple-deep);
+  overflow-wrap: anywhere;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.metaBox {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.metaBox dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}
+
+.metaBox dt svg {
+  width: 15px;
+  height: 15px;
+}
+
+.metaBox dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.metaBox small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.reward {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #f1ddae;
+  border-radius: 16px;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.reward svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  color: var(--gold);
+}
+
+@media (min-width: 600px) {
+  .metaGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reward {
+    grid-column: auto;
+  }
+}
+
+/* ---------- S03 สองคอลัมน์ ---------- */
+.layout,
+.main,
+.side {
+  display: grid;
+  gap: 22px;
+  align-content: start;
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 36px;
+    align-items: start;
+  }
+
+  .main,
+  .side {
+    gap: 26px;
+  }
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.sectionHead h2 {
+  font-size: 1.125rem;
+}
+
+.sectionHead h2:focus {
+  outline: none;
+}
+
+.prose {
+  white-space: pre-line;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.edited {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
+.edited svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- งานของฉัน ---------- */
+.card {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.doneTop {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.ok {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.ok[data-tone='red'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.doneTop b {
+  display: block;
+  font-weight: 600;
+}
+
+.times {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.locked {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.locked svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.note > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.note > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.note[data-tone='purple'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.note[data-tone='red'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.note[data-tone='plain'] {
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+/* ปุ่มส่ง: มือถือ/แท็บเล็ตแนวตั้งติดล่างจอ (ไม่เกิน 420 px ตั้งแต่ 600 px) · ตั้งแต่ 960 px อยู่ใต้ไฟล์ ไม่ลอย */
+.submitBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: grid;
+  gap: 8px;
+  margin: 0 -16px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(transparent, var(--bg) 30%);
+}
+
+.submitBar > button,
+.submitBar > span {
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .submitBar {
+    margin: 0 -32px;
+    padding-inline: 32px;
+    justify-items: center;
+  }
+
+  .submitBar > button,
+  .submitBar > span {
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 960px) {
+  .submitBar {
+    position: static;
+    margin: 0;
+    padding: 0;
+    background: none;
+    justify-items: stretch;
+  }
+
+  .submitBar > button,
+  .submitBar > span {
+    max-width: none;
+  }
+}
+
+.submitHint {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.error svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.error > span {
+  flex: 1;
+  min-width: 12em;
+}
+
+/* ---------- S02 ตัวกรอง + การ์ดงาน ---------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .filter {
+    min-height: var(--tap-min);
+  }
+}
+
+.filter[aria-pressed='true'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.filter:focus-visible,
+.workCard:focus-visible,
+.dueCard:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.filter .n {
+  margin-left: 3px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.workList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 960px) {
+  .workList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.workList > li {
+  min-width: 0;
+}
+
+.workCard,
+.dueCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  height: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+}
+
+.workCard:hover,
+.dueCard:hover {
+  border-color: var(--purple-mid);
+}
+
+.wIc {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.wIc[data-tone='purple'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.wIc[data-tone='red'] {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.wIc[data-tone='plain'] {
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+.wIc svg {
+  width: 20px;
+  height: 20px;
+}
+
+.text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.chev {
+  width: 20px;
+  height: 20px;
+  color: var(--ink-3);
+}
+
+.empty {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.empty svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- S01 ใกล้กำหนดส่ง ---------- */
+.dateTile {
+  width: 58px;
+  padding: 8px 0 6px;
+  border-radius: 16px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  text-align: center;
+  line-height: 1.1;
+}
+
+.dateTile b {
+  display: block;
+  font-family: var(--f-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.dateTile span {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dueList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calm {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.calm b {
+  display: block;
+  font-weight: 600;
+}
+
+.calm .wIc {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+/* S01 สองคอลัมน์ “ใกล้กำหนดส่ง | ชั้นเรียนของฉัน” ตั้งแต่ 960 px (UX 13) */
+.homeCols {
+  display: grid;
+  gap: 22px;
+  align-content: start;
+}
+
+@media (min-width: 960px) {
+  .homeCols {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+.homeCols[data-single] {
+  grid-template-columns: minmax(0, 1fr);
+}

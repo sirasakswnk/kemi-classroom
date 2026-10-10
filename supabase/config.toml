@@ -413,3 +413,25 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# Edge Function `uploads` (P3-03): ส่ง JWT ของผู้ใช้ต่อให้ PostgREST ตรวจเอง และ RPC ตรวจสิทธิ์ทุกครั้ง
+# จึงปิดการตรวจ JWT ที่ gateway (รองรับ JWT signing keys แบบใหม่) — ไม่มี JWT ที่ถูกต้อง RPC ไม่ทำงานและไม่ลงลายเซ็น
+[functions.uploads]
+enabled = true
+verify_jwt = false
+import_map = "./functions/uploads/deno.json"
+entrypoint = "./functions/uploads/index.ts"
+
+# Edge Function `files` (P3-05): แบบเดียวกับ uploads — authorize_files ตรวจสิทธิ์ด้วย JWT ของผู้ใช้
+[functions.files]
+enabled = true
+verify_jwt = false
+import_map = "./functions/files/deno.json"
+entrypoint = "./functions/files/index.ts"
+
+# Edge Function `process-jobs` (P3-10): pg_cron + pg_net เรียกด้วยรหัสลับ x-jobs-secret (ไม่มี JWT ผู้ใช้) — ฟังก์ชันตรวจเอง
+[functions.process-jobs]
+enabled = true
+verify_jwt = false
+import_map = "./functions/process-jobs/deno.json"
+entrypoint = "./functions/process-jobs/index.ts"

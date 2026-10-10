@@ -1,20 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  FilePlus,
-  Link2,
-  Lock,
-  LockOpen,
-  Maximize2,
-  Megaphone,
-  TriangleAlert,
-  Users,
-} from 'lucide-react'
+import { Link2, Lock, LockOpen, Maximize2, TriangleAlert, Users } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
 import { Tabs, useToast } from '../../ui'
 import { useTabParam } from '../../lib/useTabParam'
 import { initialOf as initialOfTeacher } from '../../lib/initial'
+import { RoomPosts } from '../posts/RoomPosts'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import {
@@ -34,7 +26,7 @@ import { MembersPanel } from './MembersPanel'
 const TABS = ['general', 'work', 'members'] as const
 
 // T08 ห้องเรียนของครู: แถบบนมีรหัส (กด → T10) ปิด/เปิดการเข้าห้อง คัดลอกลิงก์เชิญ; สามแท็บเดียวกับนักเรียน
-// งานและประกาศมาในระยะ 3 — ตอนนี้แท็บสมาชิกใช้งานได้จริง
+// แท็บงาน/ประกาศ: รายการโพสต์ + ปุ่มสร้าง (T02) — ยอดส่ง/รอตรวจและ T03 มากับ P3-09
 export default function ClassroomPage() {
   const { classId: id = '' } = useParams()
   const { term, adminMode, classrooms } = useTeacher()
@@ -86,6 +78,7 @@ export default function ClassroomPage() {
         tone={tone}
         termName={term?.name ?? ''}
         termId={term?.id}
+        termActive={term?.status === 'active'}
         teacherName={teacherName}
         adminMode={adminMode}
       />
@@ -98,6 +91,7 @@ function Room({
   tone,
   termName,
   termId,
+  termActive,
   teacherName,
   adminMode,
 }: {
@@ -105,6 +99,7 @@ function Room({
   tone: number
   termName: string
   termId: string | undefined
+  termActive: boolean
   teacherName: string
   adminMode: boolean
 }) {
@@ -237,20 +232,14 @@ function Room({
             onOpenCode={openFull}
           />
         ) : (
-          <>
-            <h2 className={styles.panelTitle}>
-              {tab === 'general' ? copy.generalHead : copy.workHead}
-            </h2>
-            <div className={styles.empty}>
-              {tab === 'general' ? (
-                <Megaphone aria-hidden="true" />
-              ) : (
-                <FilePlus aria-hidden="true" />
-              )}
-              <b>{tab === 'general' ? copy.generalEmptyTitle : copy.workEmptyTitle}</b>
-              <span>{tab === 'general' ? copy.generalEmptyBody : copy.postsLater}</span>
-            </div>
-          </>
+          // K5: ห้องของภาคเรียนก่อนโพสต์ไม่ได้; ภาคเรียนจบแล้วสร้างได้เฉพาะประกาศ
+          <RoomPosts
+            classroomId={c.id}
+            kind={tab === 'work' ? 'homework' : 'announcement'}
+            audience="teacher"
+            teacherName={teacherName}
+            canCreate={c.term_id === termId && (tab !== 'work' || termActive)}
+          />
         )}
       </Tabs>
 

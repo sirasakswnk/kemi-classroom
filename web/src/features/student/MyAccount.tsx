@@ -84,6 +84,10 @@ export default function MyAccount() {
           {th.common.signOut}
         </Button>
       </section>
+      {/* UX 9: ไฟล์แจ้งสัญญาอนุญาต (LGPL-3.0 ของ libheif-js) สร้างตอน build */}
+      <a href="/third-party-licenses.txt" className={styles.licenses}>
+        {th.licenses}
+      </a>
     </main>
   )
 }

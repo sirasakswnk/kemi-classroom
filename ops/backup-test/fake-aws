@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# aws ปลอมสำหรับ e2e.sh: รับเฉพาะ `aws s3api get-object ... --key K --version-id V <ไฟล์ปลายทาง>`
+# อ่านจาก $FAKE_B2_DIR/<bucket>/<K>@<V> และบันทึกทุกครั้งที่เรียกลง $FAKE_B2_LOG (นับคำขอ Class B)
+set -euo pipefail
+[ "${1:-} ${2:-}" = 's3api get-object' ] || {
+  echo "fake-aws: ไม่รองรับ $*" >&2
+  exit 2
+}
+shift 2
+bucket='' key='' version='' out=''
+while [ $# -gt 0 ]; do
+  case $1 in
+  --bucket) bucket=$2 && shift 2 ;;
+  --key) key=$2 && shift 2 ;;
+  --version-id) version=$2 && shift 2 ;;
+  --endpoint-url) shift 2 ;;
+  *) out=$1 && shift ;;
+  esac
+done
+[ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] || {
+  echo 'fake-aws: ไม่มีกุญแจ' >&2
+  exit 255
+}
+echo "GET $bucket/$key?versionId=$version" >>"$FAKE_B2_LOG"
+src="$FAKE_B2_DIR/$bucket/$key@$version"
+[ -f "$src" ] || {
+  echo 'fake-aws: An error occurred (NoSuchKey)' >&2
+  exit 254
+}
+cp "$src" "$out"
+echo '{"ETag": "\"fake\""}'

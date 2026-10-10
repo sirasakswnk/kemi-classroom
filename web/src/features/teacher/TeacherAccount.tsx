@@ -44,6 +44,10 @@ export default function TeacherAccount() {
           <Button variant="ghost" block icon={<LogOut />} onClick={signOut}>
             {th.common.signOut}
           </Button>
+          {/* UX 9: ไฟล์แจ้งสัญญาอนุญาต (LGPL-3.0 ของ libheif-js) สร้างตอน build */}
+          <a href="/third-party-licenses.txt" className={styles.licenses}>
+            {th.licenses}
+          </a>
         </section>
         <section className={styles.panel} aria-labelledby="t12Classes">
           <h2 id="t12Classes">{copy.classesTitle}</h2>

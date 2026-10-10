@@ -1,0 +1,603 @@
+/* T02 สร้างโพสต์ + รายการโพสต์ใน T08/S02 — แบบ v2 .create / .form-card / .seg / .fsec / .fgrid / .dt / .switch-row /
+   .reward-edit / .mini-phone / .work-card / .post · จุดเปลี่ยนตาม UX 13 (ฟอร์ม 2 คอลัมน์ ≥ 1100 px,
+   งานของนักเรียน 2 คอลัมน์ ≥ 960 px, ประกาศกว้างไม่เกิน 760 px) */
+
+/* ---------- ใช้ร่วมกับหน้าครูอื่น ---------- */
+.head {
+  composes: head from '../classrooms/classrooms.module.css';
+  display: grid;
+  gap: 4px;
+}
+
+.eyebrow {
+  composes: eyebrow from '../classrooms/classrooms.module.css';
+}
+
+.muted {
+  composes: muted from '../classrooms/classrooms.module.css';
+}
+
+.small {
+  composes: small from '../classrooms/classrooms.module.css';
+  margin: 0;
+}
+
+.alert {
+  composes: alert from '../classrooms/classrooms.module.css';
+}
+
+.note {
+  composes: note from '../classrooms/classrooms.module.css';
+  margin: 0;
+}
+
+.note[data-tone='amber'] {
+  background: var(--amber-soft);
+  color: var(--ink);
+}
+
+.note[data-tone='amber'] > svg {
+  color: var(--amber);
+}
+
+.ghostLink {
+  composes: ghostLink from '../classrooms/classrooms.module.css';
+  justify-self: start;
+}
+
+.submit {
+  composes: submit from '../classrooms/classrooms.module.css';
+}
+
+.formFoot {
+  composes: formFoot from '../classrooms/classrooms.module.css';
+}
+
+.groupLabel {
+  composes: groupLabel from '../classrooms/classrooms.module.css';
+}
+
+/* ---------- T02 ---------- */
+.createGrid {
+  composes: createGrid from '../classrooms/classrooms.module.css';
+}
+
+.form {
+  composes: form from '../classrooms/classrooms.module.css';
+}
+
+.group {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--bg-2);
+}
+
+.seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--paper);
+  color: var(--purple-deep);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.seg button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.seg button:focus-visible,
+.tool:focus-visible,
+.switch:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.toolRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tool {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .tool {
+    min-height: 44px;
+  }
+}
+
+@media (hover: hover) {
+  .tool:hover {
+    background: var(--purple-tint);
+  }
+}
+
+.fsec {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.fsec h2 {
+  font-size: 1.0625rem;
+}
+
+.fgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .fgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* วันที่ + เวลา (UX 13: ตัวเลือกของระบบ) — ตั้งแต่ 600 px วางคู่กัน */
+.dt {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+}
+
+@media (min-width: 600px) {
+  .dt {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.switchRow > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.switchRow b {
+  font-weight: 600;
+}
+
+.switchRow > span > span {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+/* สวิตช์จากช่องติ๊ก (role="switch") — ขนาดแตะ 44 px ทั้งแถวเพราะ label ห่อทั้งแถว */
+.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--line-2);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transition: transform 0.15s;
+}
+
+.switch:checked {
+  background: var(--purple);
+}
+
+.switch:checked::after {
+  transform: translateX(18px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .switch::after {
+    transition: none;
+  }
+}
+
+.rewardEdit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--gold-soft);
+}
+
+.coin {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+.coin svg {
+  width: 20px;
+  height: 20px;
+}
+
+.rewardText {
+  flex: 1 1 180px;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rewardText b {
+  font-weight: 600;
+}
+
+.rewardText span {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.fieldError {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--red);
+  font-size: 0.84375rem;
+}
+
+.fieldError svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+/* ตัวอย่างฝั่งนักเรียน */
+.previewWrap {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper-2);
+}
+
+.previewWrap h2 {
+  font-size: 1.0625rem;
+}
+
+.miniPhone {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.previewDetail {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+/* ---------- รายการงาน (T08/S02) ---------- */
+.workList,
+.postList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workList > li,
+.postList > li {
+  min-width: 0;
+}
+
+.workCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+
+.wIc {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.wIc svg {
+  width: 20px;
+  height: 20px;
+}
+
+.workText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.workTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* ---------- ประกาศ ---------- */
+.postList {
+  max-width: 760px;
+}
+
+.post {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+
+.postHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.postHead > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.postHead b {
+  font-weight: 600;
+}
+
+.postHead time,
+.postHead > span:last-child > span {
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 700;
+}
+
+.postTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.postBody {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+/* หน้านักเรียนจอกว้าง: งานในห้อง 2 คอลัมน์ (UX 13) — เรียงตามแถว ลำดับ DOM เท่ากับลำดับที่เห็น */
+@media (min-width: 960px) {
+  .workList[data-columns='2'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- แท็บโพสต์ในห้อง ---------- */
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.panelHead h2 {
+  font-size: 1.125rem;
+}
+
+.newLink {
+  composes: btn primary sm from '../../ui/Button.module.css';
+  text-decoration: none;
+}
+
+.newLink svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.empty {
+  composes: empty from '../classrooms/classrooms.module.css';
+}
+
+/* ---------- T02 โหมดแก้ไข (N2) และปุ่มแก้ไขบนการ์ด ---------- */
+.readonlyList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--bg-2);
+}
+
+.readonlyList dt {
+  font-size: 0.84375rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.readonlyList dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .readonlyList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.lockHint {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.lockHint svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switchRow[data-locked],
+.rewardEdit[data-locked] {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.alertAction {
+  composes: btn soft sm from '../../ui/Button.module.css';
+  margin-left: auto;
+}
+
+.alertAction svg {
+  width: 16px;
+  height: 16px;
+}
+
+.workCard[data-action] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.cardAction {
+  composes: btn ghost sm from '../../ui/Button.module.css';
+  text-decoration: none;
+  align-self: start;
+}
+
+.cardAction svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.postHead > .cardAction {
+  margin-left: auto;
+}
+
+/* จอแคบ: ปุ่มแก้ไขเหลือแต่ไอคอน (ชื่อปุ่มเต็มอยู่ใน aria-label) */
+@media (max-width: 480px) {
+  .cardAction > span {
+    display: none;
+  }
+}

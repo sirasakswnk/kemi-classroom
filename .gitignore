@@ -11,6 +11,9 @@ coverage/
 *.pem
 *.key
 
+# ค่าตั้ง Claude Code เฉพาะเครื่อง (อาจมีสิทธิ์/ค่าเฉพาะตัว)
+.claude/settings.local.json
+
 # Supabase CLI local state
 supabase/.temp/
 supabase/.branches/

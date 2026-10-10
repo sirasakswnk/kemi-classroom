@@ -4,6 +4,7 @@
   "description": "เครื่องมือระดับ repo (Supabase CLI) — หน้าเว็บอยู่ใน web/",
   "type": "module",
   "devDependencies": {
+    "aws4fetch": "^1.0.20",
     "supabase": "^2.118.0"
   },
   "scripts": {
@@ -14,6 +15,8 @@
     "db:push": "supabase db push",
     "db:advisors": "supabase db advisors --linked --type security",
     "db:types": "supabase gen types typescript --linked --schema public > web/src/lib/database.types.ts",
-    "ops:test": "node --test \"ops/*.test.mjs\""
+    "ops:test": "node --test \"ops/**/*.test.mjs\"",
+    "functions:test": "node --test \"supabase/functions/**/*.test.ts\"",
+    "functions:typecheck": "node web/node_modules/typescript/bin/tsc -p supabase/functions/tsconfig.json"
   }
 }

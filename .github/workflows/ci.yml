@@ -51,6 +51,9 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm test
+      # Edge Functions: ตรวจ type ด้วย TypeScript ของ web (ติดตั้งแพ็กเกจที่ root แบบไม่รันสคริปต์ เพื่อหา aws4fetch)
+      - run: npm ci --ignore-scripts && npm run functions:typecheck
+        working-directory: .
       - run: npm run build
         env:
           # ค่าสมมติเพื่อตรวจว่า build ผ่านเท่านั้น — ค่าจริงเป็นตัวแปร build ของ Cloudflare Pages
@@ -58,7 +61,7 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
       # CSP ใน dist/_headers ต้องถูกแทนค่าแล้วและไม่เปิด inline/eval
       - run: |
-          grep -q "connect-src 'self' https://example.supabase.co;" dist/_headers
+          grep -q "connect-src 'self' https://example.supabase.co https://s3.eu-central-003.backblazeb2.com;" dist/_headers
           ! grep -qE "__SUPABASE_ORIGIN__|unsafe-inline|unsafe-eval" dist/_headers
 
   db:
@@ -75,5 +78,6 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci # Supabase CLI รุ่นเดียวกับในเครื่อง
+      - run: npm run functions:test # unit test ของ Edge Function (ไม่เรียก B2 จริง)
       - run: npx supabase db start # เปิดแค่ Postgres แล้วใส่ migration ของ commit นี้
       - run: npm run db:test

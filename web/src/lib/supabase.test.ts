@@ -56,10 +56,79 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
     action: 'storage_full_notice',
   },
   term_ended: { message: 'ภาคเรียนนี้ปิดแล้ว ทำรายการนี้ไม่ได้', action: 'reload' },
-  score_locked: {
+  full_score_locked: {
     message:
       'เปลี่ยนคะแนนเต็มและการหักคะแนนส่งช้าไม่ได้แล้ว เพราะบันทึกคะแนนไปแล้ว ปรับรายคนได้ที่หน้าตรวจงาน',
     action: 'field',
+  },
+  reward_locked: {
+    message: 'เปลี่ยนจำนวนโทเคนไม่ได้แล้ว เพราะมีนักเรียนส่งงานนี้แล้ว',
+    action: 'field',
+  },
+  after_solution_locked: {
+    message: 'เปลี่ยนการรับงานหลังเฉลยไม่ได้แล้ว เพราะเผยแพร่เฉลยไปแล้ว',
+    action: 'field',
+  },
+  post_title_invalid: { message: 'ใส่ชื่อ 1–120 ตัวอักษร', action: 'focus_field' },
+  post_body_required: {
+    message: 'ใส่ข้อความหรือแนบไฟล์อย่างน้อยหนึ่งอย่างก่อนโพสต์',
+    action: 'field',
+  },
+  post_file_unavailable: {
+    message: 'ไฟล์บางไฟล์ใช้ไม่ได้แล้ว นำไฟล์นั้นออกแล้วแนบใหม่',
+    action: 'field',
+  },
+  post_body_too_long: { message: 'ข้อความยาวเกิน 10,000 ตัวอักษร ตัดให้สั้นลง', action: 'field' },
+  full_score_invalid: {
+    message: 'คะแนนเต็มต้องเป็นจำนวนเต็มตั้งแต่ 1 ถึง 1,000,000',
+    action: 'field',
+  },
+  late_penalty_invalid: { message: 'ใส่ 0–100 (0 = ไม่หัก)', action: 'field' },
+  reward_tokens_invalid: {
+    message: 'จำนวนโทเคนไม่ถูกต้อง ใส่จำนวนเต็มไม่เกิน 1,000',
+    action: 'field',
+  },
+  due_at_invalid: { message: 'วันเวลาไม่ถูกต้อง เลือกใหม่อีกครั้ง', action: 'field' },
+  close_at_invalid: { message: 'วันเวลาไม่ถูกต้อง เลือกใหม่อีกครั้ง', action: 'field' },
+  close_before_due: { message: 'วันปิดรับต้องไม่ก่อนกำหนดส่ง', action: 'field' },
+  too_many_files: { message: 'แนบได้สูงสุด 10 ไฟล์', action: 'field' },
+  file_too_large: {
+    message: 'ไฟล์นี้ใหญ่เกินกำหนด · รูปหลังย่อไม่เกิน 2 MB · PDF ไม่เกิน 10 MB',
+    action: 'field',
+  },
+  file_type_not_allowed: { message: 'รับเฉพาะไฟล์ JPG · PNG · HEIC · PDF', action: 'field' },
+  batch_too_large: { message: 'ไฟล์รวมเกิน 20 MB นำบางไฟล์ออกก่อน', action: 'field' },
+  upload_not_found: { message: 'ยังไม่พบไฟล์ที่อัปโหลด ลองอัปโหลดใหม่อีกครั้ง', action: 'field' },
+  upload_in_progress: { message: 'ระบบกำลังบันทึกไฟล์นี้ รอสักครู่แล้วลองใหม่', action: 'field' },
+  upload_expired: { message: 'การอัปโหลดนี้หมดเวลาแล้ว กรุณาเลือกไฟล์อีกครั้ง', action: 'field' },
+  upload_size_mismatch: {
+    message: 'ไฟล์ที่อัปโหลดไม่ครบหรือขนาดไม่ตรง กรุณาอัปโหลดใหม่',
+    action: 'field',
+  },
+  upload_type_mismatch: {
+    message: 'ไฟล์นี้ไม่ใช่รูป JPG/PNG หรือ PDF จริง กรุณาเลือกไฟล์อื่น',
+    action: 'field',
+  },
+  upload_failed: { message: 'บันทึกไฟล์ไม่สำเร็จ กรุณาอัปโหลดไฟล์นี้ใหม่', action: 'field' },
+  // S03 ส่งงาน (UX 7.1, P3-07/P3-08)
+  submission_closed: {
+    message: 'งานนี้ปิดรับแล้ว ส่งงานไม่ได้ ถ้าจำเป็นให้แจ้งคุณครู',
+    action: 'reload',
+  },
+  resubmit_not_allowed: {
+    message:
+      'เลยกำหนดส่งหรือคุณครูตรวจแล้ว ส่งแก้ได้เมื่อคุณครูเปิดสิทธิ์แก้ไข งานชุดเดิมยังอยู่ครบ',
+    action: 'reload',
+  },
+  submission_files_required: { message: 'แนบไฟล์อย่างน้อย 1 ไฟล์ก่อนส่งงาน', action: 'field' },
+  submission_file_unavailable: {
+    message: 'มีไฟล์ที่ใช้ส่งไม่ได้แล้ว โหลดหน้าใหม่แล้วแนบไฟล์อีกครั้ง งานชุดเดิมยังอยู่ครบ',
+    action: 'field',
+  },
+  download_budget_reached: {
+    message:
+      'วันนี้เปิดไฟล์ครบโควตาของระบบแล้ว เปิดได้อีกครั้งเวลา 07:00 น. ไม่ใช่ปัญหาจากเครื่องของคุณ',
+    action: 'retry_later',
   },
   reason_required: { message: 'กรุณาใส่เหตุผล', action: 'focus_field' },
   stale_revision: { message: 'ข้อมูลนี้ถูกแก้จากหน้าจออื่นแล้ว', action: 'reload_latest' },

@@ -1,0 +1,711 @@
+/* ฝั่งครู T08 การ์ดงาน / T03 สถานะการส่งงาน / ตัวดูไฟล์ — แบบ v2 .twork / .prog-bar / .page-head / .prob-card / .summary /
+   .tbl-card / .srow / .pager; ต่ำกว่า 768 px แถวตารางเป็นการ์ดสองบรรทัด (UX 13) ลำดับใน DOM = ลำดับที่เห็น */
+
+/* ---------- T08 ---------- */
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.twork {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+
+@media (min-width: 1100px) {
+  .twork {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 20px;
+  }
+}
+
+.twMain {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.wIc {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.wIc[data-tone='purple'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.wIc[data-tone='plain'],
+.wIc[data-tone='green'] {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.wIc svg {
+  width: 20px;
+  height: 20px;
+}
+
+.twText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.twTitle {
+  justify-self: start;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.twTitle:hover {
+  color: var(--purple-deep);
+  text-decoration: underline;
+}
+
+.twTitle:focus-visible,
+.link:focus-visible,
+.seg button:focus-visible,
+.pg button:focus-visible,
+.toggle:focus-visible,
+.fileBtn:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.meta {
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.prog {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.progTop {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84375rem;
+  color: var(--ink-2);
+}
+
+.progTop b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-2);
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+}
+
+.bar .graded {
+  background: var(--green);
+}
+
+.bar .waiting {
+  background: var(--purple-mid);
+}
+
+.act {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--tap-min);
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link:hover {
+  border-color: var(--purple-mid);
+}
+
+.link svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- T03 ---------- */
+.page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap-min);
+  color: var(--purple);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.head {
+  display: grid;
+  gap: 6px;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.head h1 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  color: var(--purple-deep);
+  overflow-wrap: anywhere;
+}
+
+.head p {
+  color: var(--ink-2);
+}
+
+.card {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  min-width: 0;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardHead h2 {
+  font-size: 1.0625rem;
+}
+
+.cardAct {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--bg-2);
+}
+
+.toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.prose {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.84375rem;
+}
+
+.edited {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
+.edited svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .summary {
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  }
+}
+
+.sumMain {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .sumMain {
+    grid-column: auto;
+  }
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.stat span {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.stat b {
+  font-family: var(--f-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat small {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+/* ตาราง */
+.tblBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bg-2);
+}
+
+.seg button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .seg button {
+    min-height: var(--tap-min);
+  }
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--paper);
+  color: var(--purple-deep);
+  box-shadow: var(--shadow-sm);
+}
+
+.n {
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.range {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* มือถือ: เลขที่ | ชื่อ+สถานะ+เวลา | ปุ่ม */
+.srow {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'no name act'
+    'no st act'
+    'no tm act';
+  gap: 2px 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.srow.headRow {
+  display: none;
+}
+
+.no {
+  grid-area: no;
+  align-self: start;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.nm {
+  grid-area: name;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.st {
+  grid-area: st;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tm {
+  grid-area: tm;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.ac {
+  grid-area: act;
+}
+
+@media (min-width: 768px) {
+  .srow {
+    grid-template-columns: 52px minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    grid-template-areas: 'no name st tm act';
+    gap: 12px;
+  }
+
+  .no {
+    align-self: center;
+  }
+
+  .srow.headRow {
+    display: grid;
+    border-top: 0;
+    font-size: 0.78125rem;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+
+  .srow.headRow .nm {
+    font-weight: 600;
+  }
+}
+
+.noFile {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.pg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pg button {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.pg button[aria-current='true'] {
+  border-color: var(--purple);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 600;
+}
+
+.pg button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pg svg {
+  width: 16px;
+  height: 16px;
+}
+
+.empty {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.empty svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+.error svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.error > span {
+  flex: 1;
+  min-width: 12em;
+}
+
+/* ---------- ตัวดูไฟล์ ---------- */
+.viewer {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 1100px) {
+  .viewer {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+  }
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: #fffdf8;
+  overflow: hidden;
+}
+
+.stage img {
+  display: block;
+  max-width: 100%;
+  max-height: 75vh;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.side {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.files {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fileBtn {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fileBtn[aria-current='true'] {
+  border-color: var(--purple);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-weight: 600;
+}
+
+.fileBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fileBtn span {
+  overflow-wrap: anywhere;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.pdfNote {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  max-width: 420px;
+  text-align: center;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.pdfNote > svg {
+  width: 40px;
+  height: 40px;
+  color: var(--red);
+}
+
+.pdfNote > div {
+  width: 100%;
+  text-align: left;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 0.84375rem;
+  line-height: 1.55;
+}
+
+.note svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.twHeading {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
