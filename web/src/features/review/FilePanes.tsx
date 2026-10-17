@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Info,
   RotateCcw,
   RotateCw,
   TriangleAlert,
@@ -15,6 +16,7 @@ import { th } from '../../copy/th'
 import { loadSignedFile, signedFileKey, signedFileOptions } from '../../lib/files'
 import { appErrorOf } from '../../lib/request'
 import type { AttachmentRef } from '../uploads/AttachmentList'
+import { hasUnsupportedImages } from './pdfImages'
 import styles from './review.module.css'
 
 // ตัวดูไฟล์ของหน้าตรวจ (P4-04b/c, TECHNICAL_DESIGN 9.3): โหลดเฉพาะไฟล์ที่กำลังดู ไม่โหลดล่วงหน้า ไม่มีรูปย่อจาก B2
@@ -200,6 +202,7 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
   const { blob, retry } = useFileBlob(file)
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null)
   const [openError, setOpenError] = useState(false)
+  const [partial, setPartial] = useState(false)
   const [page, setPage] = useState(1)
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -215,6 +218,8 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
       try {
         const { openDocument } = await import('./pdfjs')
         const data = new Uint8Array(await blob.data.arrayBuffer())
+        // ตรวจก่อนส่งให้ pdf.js (worker รับโอน buffer ไป) — ภาพ JPX/JBIG2 แสดงไม่ได้ (ทาง A ผู้ใช้เลือก 18 ต.ค.)
+        if (!cancelled) setPartial(hasUnsupportedImages(data))
         if (cancelled) return
         task = openDocument(data)
         const opened = await task.promise
@@ -281,6 +286,13 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
   const pages = doc.numPages
   return (
     <div className={styles.pane}>
+      {partial && (
+        <p className={styles.partial} role="note">
+          <Info aria-hidden="true" />
+          <span>{copy.partialImages}</span>
+          <OpenOriginal file={file} />
+        </p>
+      )}
       <Tools
         zoom={zoom}
         setZoom={setZoom}

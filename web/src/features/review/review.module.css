@@ -686,6 +686,31 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* แถบเตือน PDF ที่มีภาพซึ่งหน้าตรวจแสดงไม่ได้ (JPX/JBIG2) — ไม่บล็อกการตรวจ */
+.partial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--amber-soft, var(--bg-2));
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.partial > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.partial > span {
+  flex: 1;
+  min-width: 14em;
+}
+
 .pdfCanvas {
   display: block;
   background: #fff;
