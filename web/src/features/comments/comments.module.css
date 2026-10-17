@@ -1,0 +1,176 @@
+/* ความคิดเห็นส่วนตัว (แบบ v2 thread / bubble / composer / private-tag) */
+.thread {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.head h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+.privateTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 0.78125rem;
+  font-weight: 500;
+}
+
+.privateTag svg {
+  width: 14px;
+  height: 14px;
+}
+
+.muted {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bubble {
+  display: grid;
+  gap: 4px;
+  max-width: 86%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.bubble[data-side='them'] {
+  justify-self: start;
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 6px;
+  background: var(--paper);
+}
+
+.bubble[data-side='me'] {
+  justify-self: end;
+  border-bottom-right-radius: 6px;
+  background: var(--purple);
+  color: #fff9f0;
+}
+
+.bubble[data-gone] {
+  border: 1px dashed var(--line-2);
+  background: transparent;
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta small {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* ปุ่มเมนูบนบับเบิลสีม่วงใช้สีตัวอักษรของบับเบิล */
+.menu button {
+  color: inherit;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.input {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  resize: vertical;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.send {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--purple);
+  color: #fff9f0;
+  cursor: pointer;
+}
+
+.send:disabled {
+  background: #cdbde0;
+  cursor: default;
+}
+
+.send svg {
+  width: 20px;
+  height: 20px;
+}
+
+.counter {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
+.counter[data-over] {
+  color: var(--red);
+}
+
+.error {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+.error svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}

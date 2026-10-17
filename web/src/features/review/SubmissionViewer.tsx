@@ -15,6 +15,7 @@ import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
+import { CommentThread } from '../comments/CommentThread'
 import { GradePanel } from '../grading/GradePanel'
 import { postQuery } from '../posts/api'
 import { TeacherPage } from '../teacher/TeacherLayout'
@@ -132,6 +133,13 @@ export default function SubmissionViewer() {
                 row={{ ...row, submission_id: submissionId }}
                 adminMode={adminMode}
               />
+              <CommentThread
+                mode="teacher"
+                assignmentId={postId}
+                studentId={row.student_id}
+                studentName={row.display_name}
+                adminMode={adminMode}
+              />
             </aside>
           </div>
         ) : (
@@ -192,6 +200,13 @@ export default function SubmissionViewer() {
               <GradePanel
                 postId={postId}
                 row={{ ...row, submission_id: submissionId }}
+                adminMode={adminMode}
+              />
+              <CommentThread
+                mode="teacher"
+                assignmentId={postId}
+                studentId={row.student_id}
+                studentName={row.display_name}
                 adminMode={adminMode}
               />
             </aside>

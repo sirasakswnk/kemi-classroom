@@ -6,6 +6,7 @@ import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate } from '../../lib/thaiTime'
 import { Button, Steps } from '../../ui'
+import { CommentThread } from '../comments/CommentThread'
 import { postQuery } from '../posts/api'
 import { myClassroomsQuery } from '../student/api'
 import { AttachmentList } from '../uploads/AttachmentList'
@@ -155,6 +156,7 @@ export default function WorkPage() {
         </div>
         <div className={styles.side}>
           <MyWork post={p} status={s} />
+          <CommentThread mode="student" assignmentId={p.id} />
         </div>
       </div>
     </main>

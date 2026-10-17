@@ -772,6 +772,29 @@ export const th = {
       revision: (n: number) => `ชุดที่ส่ง ครั้งที่ ${n}`,
     },
   },
+  // ความคิดเห็นส่วนตัว (P4-05, UX 8 + แบบ v2 thread) — [ข้อเสนอถ้อยคำ] ที่ไม่มีในแบบ: menu, closedStudent (รวมกรณีไม่ได้อยู่ในห้อง), closedTeacher, admin
+  comments: {
+    title: 'ความคิดเห็นส่วนตัว',
+    privateStudent: 'เห็นเฉพาะคุณและคุณครู',
+    privateTeacher: (name: string) => `ครูกับ${name}`,
+    emptyStudent: 'ยังไม่มีข้อความ ถามครูเรื่องงานนี้ได้ที่นี่',
+    emptyTeacher: 'ยังไม่มีข้อความในงานนี้',
+    placeholderStudent: 'เขียนถึงคุณครู…',
+    placeholderTeacher: 'เขียนถึงนักเรียน…',
+    ariaStudent: 'เขียนความคิดเห็นถึงคุณครู',
+    ariaTeacher: 'เขียนความคิดเห็นถึงนักเรียน',
+    send: 'ส่งข้อความ',
+    you: 'คุณ',
+    teacher: 'คุณครู',
+    admin: 'ผู้ดูแลระบบ',
+    menu: 'ตัวเลือกของข้อความ',
+    retract: 'ยกเลิกข้อความ',
+    retracted: 'ข้อความนี้ถูกยกเลิก',
+    left: (n: number) => `เหลือ ${n} ตัวอักษร`,
+    closedStudent:
+      'เขียนความคิดเห็นใหม่ไม่ได้แล้ว เพราะภาคเรียนจบแล้วหรือคุณไม่ได้อยู่ในชั้นเรียนนี้',
+    closedTeacher: 'เขียนความคิดเห็นในช่องนี้ไม่ได้',
+  },
   // แผงผลตรวจ T03 (P4-04, UX 9 + แบบ v2 g-panel) — [ข้อเสนอถ้อยคำ] ที่ไม่มีในแบบ: rawHint, needSomething, oldRevision
   grading: {
     title: 'ผลตรวจ',
