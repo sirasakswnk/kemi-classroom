@@ -6,8 +6,9 @@
 
 ## สถานะล่าสุด
 
-- ระยะปัจจุบัน: 4 (ยังไม่เริ่ม — รอผู้ใช้ตกลงแผน) · ระยะ 3 ปิดแล้ว 11 ต.ค. 2026: merge `phase-3` เข้า `main` @ `ea48714` (CI + Cloudflare Pages ผ่าน, production ยังมีแถบระบบทดสอบและต่อ kemi-dev, ตาราง `backup.yml` 02:30/14:30 น. เริ่มทำงาน) · ระยะ 2 ปิด 4 ต.ค. @ `aff3cb5` · ระยะ 1 ปิด 2 ต.ค. @ `137ea08`
-- งานถัดไป: เสนอแผนระยะ 4 แล้ว รอผู้ใช้ตกลง (branch `phase-4` จาก `main`) · ตรวจรอบสำรองตามตารางรอบแรก (Healthchecks ต้องกลับ UP) · P3-12e รอตัวเลข B2 · migration ถัดไป `0025_…`
+- ระยะปัจจุบัน: 4 (เริ่ม 17 ต.ค. 2026 บน branch `phase-4` — ผู้ใช้ตกลงแผน P4-01–P4-10 แล้ว; preview `https://phase-4.kemi-classroom.pages.dev` build ผ่าน) · ระยะ 3 ปิดแล้ว 11 ต.ค. 2026: merge `phase-3` เข้า `main` @ `ea48714` (CI + Cloudflare Pages ผ่าน, production ยังมีแถบระบบทดสอบและต่อ kemi-dev, ตาราง `backup.yml` 02:30/14:30 น. เริ่มทำงาน) · ระยะ 2 ปิด 4 ต.ค. @ `aff3cb5` · ระยะ 1 ปิด 2 ต.ค. @ `137ea08`
+- งานถัดไป: P4-02 **[effort สูง]** สิทธิ์แก้ + ความคิดเห็น/ยกเลิก · P3-12e รอตัวเลข B2 · migration ถัดไป `0026_…`
+- สำรองตามตาราง (ตรวจ 17 ต.ค.): สำเร็จทุกรอบตั้งแต่ 12 ต.ค. (GitHub เริ่มรอบช้ากว่า cron 2.5–5.5 ชม.) · รอบ 02:30 น. 17 ต.ค. เริ่ม 05:09 น. ใช้ ~2 นาที อ่าน B2 0 คำขอ ping สำเร็จไม่มี warning · ล้าง Drive แล้ว: จุดกู้คืน 7 ต.ค. 3 จุดลบในรอบ 14 ต.ค. 19:58 น., PDF จริงของ P3-12d ลบในรอบ 15 ต.ค. 19:46 น. (`ขอ 1 ยืนยัน 1`, `backup_manifests` ไม่มี key นั้นแล้ว 0/20) — §13 ข้อ 14 (token ไม่หมดอายุ 7 วัน) ผ่าน
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
 - Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
@@ -15,7 +16,7 @@
 - **ดีไซน์ (ผู้ใช้ตัดสิน 30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`) ตามเดิม — P1-03/P1-04 ไม่ต้องรอแล้ว
 - บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
 - งานค้าง: —
-- ⚠️ **ห้ามลืม — ตรวจ log รอบสำรองตามตารางรอบแรกหลัง 10:30 น. 15 ต.ค. 2026** (merge ระยะ 3 แล้ว 11 ต.ค. — ตารางรันเอง; จุดกู้คืน 7 ต.ค. พ้น 7 วันที่รอบ 14:30 น. 14 ต.ค., ไฟล์ PDF พ้น 8 วันที่รอบ 14:30 น. 15 ต.ค.): ตรวจ log สองรอบนี้ ใช้พิสูจน์ §13 ข้อ 14 (token ไม่หมดอายุ 7 วัน) และล้าง PDF เอกสารจริงจาก P3-12d (`files/8150f9a4-….pdf`) กับจุดกู้คืน 7 ต.ค. ออกจาก Drive — ตรวจใน log: `ลบจุดกู้คืนเก่า runs/20261007T…` + `ล้างไฟล์ที่พ้นอายุ: ขอ n ยืนยัน n` และ `backup_manifests` ไม่มี key นั้นแล้ว
+- Healthchecks `kemi-backup`: ping /start + success ส่งได้ทุกรอบ (ดูจาก log) — สถานะ UP บนหน้า Healthchecks ให้ผู้ใช้ยืนยัน (Claude ไม่มี API key)
 - รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
 - ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · prod URL — (สร้างในระยะ 7) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค eu-central-003 (S3 endpoint `https://s3.eu-central-003.backblazeb2.com`; bucket dev `kemi-dev-files` แบบ private ยืนยันแล้ว 5 ต.ค.) · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
 
@@ -389,9 +390,13 @@
 
 ## ระยะ 4 — ตรวจงานและคะแนน
 
-- [ ] P4-01 **[effort สูง]** migration กลุ่ม grading (grades/comments) + `grade_submission` (L2, L4, K1, K2) + ทดสอบชุดสูตรคะแนน
-    - จาก P3-09: เมื่อมีผลตรวจจริง เพิ่มเทสต์ยอด “รอตรวจ” ของ `teacher_work_summary` และ `graded` ของ `teacher_submission_list` (ตอนนี้ false ทุกแถว mutation จึงจับไม่ได้)
-    - จาก P3-07: แทนที่ `private.submission_latest_graded(uuid)` (ตอนนี้คืน false) ด้วยการถาม `grades` ของ `content_revision` ล่าสุด — `submit_assignment` เรียกฟังก์ชันนี้ที่เดียว; เพิ่มเทสต์แถว 5/6 ที่มีผลตรวจจริง
+- [x] P4-01 **[effort สูง]** migration กลุ่ม grading (grades/comments) + `grade_submission` (L2, L4, K1, K2) + ทดสอบชุดสูตรคะแนน → 17 ต.ค. 2026: `0025_grading` + pgTAP 53 ข้อ ผ่านทั้งในเครื่องและ kemi-dev; advisors ไม่มี error
+    - [x] P4-01a migration + pgTAP: `grades` หนึ่งแถวต่องานส่ง (เก็บ `graded_revision`; ส่งแก้แล้วผลเดิมคงอยู่เป็นของรุ่นก่อน = รอตรวจใหม่) — **ภาพกติกา `grade_timing` เก็บเป็นคอลัมน์ `timing_*` ใน `grades` ไม่แยกตาราง** (1:1); `comments` (ยกเลิก = ล้างข้อความ + `retracted_at` รองรับ P4-02); `submission_latest_graded` ถาม `grades` ของรุ่นล่าสุดแล้ว (แถว 5/6, รอตรวจ T08, graded T03 มีเทสต์ด้วยผลตรวจจริง); `grade_submission(…, p_seen_revision, p_expected_version, p_request_key, p_admin_mode)` — เพิ่ม `p_expected_version` (รุ่นผลตรวจ) จากโครงใน BUILD_PLAN 4.1 ตาม TECHNICAL_DESIGN ส่วน 6 ข้อ 1; ล็อก `term_control` (share) → `assignments` (no key update เฉพาะตอนจะล็อกคะแนนเต็ม) → `submissions` → `grades` ไม่ล็อกแถวห้อง; จุดต่อขั้นให้รางวัลระยะ 5 ทำเครื่องหมายไว้ในฟังก์ชัน
+    - [x] P4-01b ชุดสูตรคะแนนร่วม `supabase/tests/fixtures/score_cases.json` (12 แถว) + `web/src/features/grading/score.ts` — Vitest ตรวจทั้งสูตรและว่าชุดที่ฝังใน `0025_grading.test.sql` ตรงกับไฟล์
+    - [x] P4-01c `db:push` kemi-dev → `db:test:dev` ผ่าน + `db:types`
+    - กติกาที่ตีความเพิ่ม (บอกผู้ใช้แล้ว): ผ่าน/ไม่ผ่านบังคับทุกครั้ง คะแนนว่างได้; ปรับ % รายคนกับงานที่ทันถูกปฏิเสธ (`penalty_not_late`); งานที่กลายเป็นทันล้าง override เดิมโดยไม่ต้องมีเหตุผล; ส่งเหตุผลโดยไม่เปลี่ยน % ถูกปฏิเสธ (`invalid_request`); ความคิดเห็นยาวไม่เกิน 2,000 ตัว (`comment_too_long`)
+    - รหัสใหม่ที่ต้องเพิ่มใน UX_DESIGN 7.1 (ผู้ใช้แก้ใน Claude app): `score_invalid`, `penalty_not_late`, `comment_too_long`
+    - ต่อใน P4-04/P4-06: `teacher_submission_list` และ `submission_status` ยังไม่คืนผลตรวจ — หน้าเว็บอ่าน `grades`/`comments` ผ่าน RLS ได้ หรือเพิ่มในงานนั้น
 - [ ] P4-02 **[effort สูง]** สิทธิ์แก้ (K3) + ความคิดเห็น/ยกเลิก (F5) + ทดสอบ
     - จาก P3-07: ตาราง `revision_permissions` มีแล้ว (สถานะ open/used/revoked, unique index เปิดค้างได้ทีละหนึ่ง) — เหลือ RPC เปิด (และยกเลิกถ้าต้องการ) สิทธิ์ของครู; มีสิทธิ์ได้เฉพาะงานที่เคยส่งแล้ว (แถว 7)
 - [ ] P4-03 **[effort สูง]** เปลี่ยนกำหนดส่งสองทิศ (N3, I2) / ปิดรับ / เฉลย (K4) + ทดสอบ

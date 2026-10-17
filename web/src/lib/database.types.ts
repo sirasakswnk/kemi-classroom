@@ -350,6 +350,137 @@ export type Database = {
           },
         ]
       }
+      comments: {
+        Row: {
+          assignment_id: string
+          author_account_id: string
+          body: string | null
+          created_at: string
+          id: string
+          retracted_at: string | null
+          student_id: string
+        }
+        Insert: {
+          assignment_id: string
+          author_account_id: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          retracted_at?: string | null
+          student_id: string
+        }
+        Update: {
+          assignment_id?: string
+          author_account_id?: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          retracted_at?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "comments_author_account_id_fkey"
+            columns: ["author_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grades: {
+        Row: {
+          applied_penalty_pct: number
+          deduction: number | null
+          graded_at: string
+          graded_by_account_id: string
+          graded_revision: number
+          net_score: number | null
+          override_comment_id: string | null
+          passed: boolean
+          penalty_override_pct: number | null
+          raw_score: number | null
+          submission_id: string
+          timing: string
+          timing_basis_at: string
+          timing_due_at: string
+          timing_i1: boolean
+          version: number
+        }
+        Insert: {
+          applied_penalty_pct: number
+          deduction?: number | null
+          graded_at: string
+          graded_by_account_id: string
+          graded_revision: number
+          net_score?: number | null
+          override_comment_id?: string | null
+          passed: boolean
+          penalty_override_pct?: number | null
+          raw_score?: number | null
+          submission_id: string
+          timing: string
+          timing_basis_at: string
+          timing_due_at: string
+          timing_i1: boolean
+          version?: number
+        }
+        Update: {
+          applied_penalty_pct?: number
+          deduction?: number | null
+          graded_at?: string
+          graded_by_account_id?: string
+          graded_revision?: number
+          net_score?: number | null
+          override_comment_id?: string | null
+          passed?: boolean
+          penalty_override_pct?: number | null
+          raw_score?: number | null
+          submission_id?: string
+          timing?: string
+          timing_basis_at?: string
+          timing_due_at?: string
+          timing_i1?: boolean
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_graded_by_account_id_fkey"
+            columns: ["graded_by_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_override_comment_id_fkey"
+            columns: ["override_comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           classroom_id: string
@@ -884,6 +1015,20 @@ export type Database = {
       delete_asset_finish: { Args: { p_job_id: number }; Returns: boolean }
       ensure_account: { Args: never; Returns: Json }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
+      grade_submission: {
+        Args: {
+          p_admin_mode?: boolean
+          p_expected_version: number
+          p_override_pct: number
+          p_pass: boolean
+          p_raw: number
+          p_reason: string
+          p_request_key: string
+          p_seen_revision: number
+          p_submission_id: string
+        }
+        Returns: Json
+      }
       jobs_claim: { Args: { p_limit?: number }; Returns: Json }
       jobs_complete: {
         Args: { p_job_id: number; p_note?: string }
