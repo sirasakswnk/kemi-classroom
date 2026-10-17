@@ -88,7 +88,9 @@ insert into expected_authenticated values
   ('public.close_assignment(uuid,timestamp with time zone,uuid,boolean)'),
   -- 0029_solutions (ครู/ผู้ดูแล: บันทึกและเผยแพร่เฉลย)
   ('public.save_solution(uuid,text,uuid[],integer,uuid,boolean)'),
-  ('public.publish_solution(uuid,integer,uuid,boolean)');
+  ('public.publish_solution(uuid,integer,uuid,boolean)'),
+  -- 0030_reopen (ครู/ผู้ดูแล: เปิดรับอีกครั้ง / เปลี่ยนหรือยกเลิกเวลาปิดรับ)
+  ('public.reopen_assignment(uuid,timestamp with time zone,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**

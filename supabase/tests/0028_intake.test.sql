@@ -221,8 +221,8 @@ select is(public.submission_status('8c000000-0000-4000-8000-000000000003') -> 'b
 
 -- ตัวกัน: ปิดแล้วเปิดใหม่ไม่ได้
 set local role postgres;
-select throws_ok($$ update public.assignments set closed_at = null where post_id = '8c000000-0000-4000-8000-000000000002' $$,
-  'P0001', 'immutable_field', 'ปิดรับแล้วล้าง closed_at ไม่ได้');
+select throws_ok($$ update public.assignments set closed_at = closed_at - interval '1 hour' where post_id = '8c000000-0000-4000-8000-000000000002' $$,
+  'P0001', 'immutable_field', 'ปิดรับแล้วเลื่อนเวลา closed_at ไม่ได้ (ล้างเพื่อเปิดรับอีกครั้งได้ตั้งแต่ 0030)');
 select throws_ok($$ update public.assignments set after_solution_closed_at = null where post_id = '8c000000-0000-4000-8000-000000000003' $$,
   'P0001', 'immutable_field', 'ปิดช่วงหลังเฉลยแล้วล้างไม่ได้');
 
