@@ -109,6 +109,7 @@ Classroom/                     # root ของ repo
 create or replace function public.grade_submission(
   p_submission_id uuid, p_raw int, p_pass boolean,
   p_override_pct int, p_reason text, p_seen_revision int,
+  p_expected_version int,             -- รุ่นของแถว grades ที่หน้าจอเห็น (null = ยังไม่มีผลตรวจ) กันบันทึกทับ
   p_request_key uuid, p_admin_mode boolean default false)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare v_acc record;
@@ -150,7 +151,7 @@ grant execute on function public.grade_submission to authenticated;
 | 7c | `0022_teacher_work.sql` (P3-09) | RPC อ่านสำหรับครู/ผู้ดูแล: ยอดต่องานของ T08 และรายชื่อสถานะของงานหนึ่งสำหรับ T03 (สมาชิกขณะนี้ ∪ นักเรียนที่ถูกเอาออกแต่มีงานส่ง เรียงเลขที่) ไม่ต้องส่ง admin mode; คนอื่นได้ `forbidden` | 3 |
 | 7d | `0023_jobs.sql` (P3-10) | คิว `jobs`: ดึงแบบ `SKIP LOCKED` ทีละชุด, สำเร็จ/ล้ม + ลองใหม่เว้น 1→2→4→8→16 นาที ครบ 6 ครั้งเป็น `failed`, งาน running ค้างเกิน 10 นาทีดึงใหม่ได้; `delete_asset` ตรวจ `maintenance_locks` และไม่ลบ asset ที่ยังผูก; sweeper `copying` > 15 นาที; งานประจำใน SQL: batch เลยเวลาเป็น `expired`, asset กำพร้า (ไม่มีแถวผูก + batch หมดอายุเกิน 24 ชม. หรือไม่มี batch แล้วนับ 24 ชม. จากเวลาพร้อมใช้) เข้าคิวลบ, ล้าง `b2_daily_usage` > 30 วัน, งาน `done` > 30 วัน และใบรับคำขอที่หมดอายุ (`failed` เก็บไว้); RPC เป็น service role ยกเว้น `storage_status` และ `admin_b2_usage` | 3 |
 | 7e | `0024_jobs_cron.sql` (P3-10) | `pg_cron` ทุก 2 นาที: ทำงานประจำใน SQL แล้วปลุก `process-jobs` ผ่าน `pg_net` เฉพาะเมื่อมีงาน (URL + รหัสลับจาก Vault; ตั้งรหัสด้วย `ops/jobs/set-secret.mjs` ที่ไม่พิมพ์ค่า) | 3 |
-| 8 | `…_grading.sql` | `grades`, `grade_timing`, `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
+| 8 | `0025_grading.sql` (P4-01) และ migration ถัดไปของระยะ 4 | `grades` (ข้อมูลเวลาที่ใช้ตรวจเป็นคอลัมน์ `timing_*` ไม่แยกตาราง), `comments`; ตรวจ (L2/L4/K2), เปิดสิทธิ์แก้ (K3), ความคิดเห็น/ยกเลิก (F5), เปลี่ยนกำหนดส่งสองทิศ (N3, I2)/ปิดรับ, เฉลยบันทึก/เผยแพร่/แก้ (K4), ลบงาน/ประกาศแบบ cascade (N4), ตารางคะแนน | 4 |
 | 9 | `…_rewards.sql` | `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`; ให้รางวัลครั้งเดียว, สถานะเอฟเฟกต์ได้รับโทเคน, ปรับยอด, อัตราสุ่มจริง, สุ่ม (K6), สวมใส่, จัดการเครื่องราง | 5 |
 | 10 | `…_terms.sql` | `terms_start`, `terms_end` (J9, K5, I5), epoch และล้างยอด | 5 |
 | 11 | `…_notifications.sql` | `notifications`; สร้างแจ้งเตือนนักเรียน 5 / ครู 3 เหตุการณ์, งานเตือน 24 ชม. (J7, L5), เกณฑ์พื้นที่ | 6 |
@@ -256,7 +257,7 @@ grant execute on function public.grade_submission to authenticated;
 
 **Healthchecks.io**
 
-1. check `kemi-backup` รอบ 12 ชั่วโมง เผื่อ 3 ชั่วโมง ส่งอีเมลถึงผู้พัฒนา
+1. check `kemi-backup` รอบ 12 ชั่วโมง เผื่อ **6 ชั่วโมง** ส่งอีเมลถึงผู้พัฒนา (เดิม 3 ชม.; เพิ่ม 17 ต.ค. 2026 เพราะ GitHub เริ่มรอบตามตารางช้ากว่าเวลาที่ตั้ง 2.5–5.5 ชม. ช่วงห่างระหว่างรอบสำเร็จจึงยาวได้ถึงราว 17.5 ชม. ซึ่งเกินเส้น 15 ชม. แบบเดิม; ถ้าช้ากว่านี้จนเตือนผิดบ่อย ทางเลือกคือให้ `pg_cron` + `pg_net` เรียก `workflow_dispatch` ตรงเวลาแทน)
 2. check `kemi-restore-test` **[ข้อเสนอ]** รอบ 35 วัน เพื่อเตือนเมื่อไม่ได้ทดสอบกู้คืนตามรอบเดือน
 
 ## 8. GitHub Actions
