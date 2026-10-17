@@ -1130,6 +1130,15 @@ export type Database = {
         }
         Returns: Json
       }
+      reopen_assignment: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_close_at: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
       retract_comment: {
         Args: { p_admin_mode?: boolean; p_comment_id: string }
         Returns: Json
