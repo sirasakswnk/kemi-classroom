@@ -133,7 +133,9 @@ export type Database = {
       assignments: {
         Row: {
           accept_after_solution: boolean
+          after_solution_closed_at: string | null
           close_at: string | null
+          closed_at: string | null
           due_at: string
           full_score: number
           full_score_locked_at: string | null
@@ -144,7 +146,9 @@ export type Database = {
         }
         Insert: {
           accept_after_solution?: boolean
+          after_solution_closed_at?: string | null
           close_at?: string | null
+          closed_at?: string | null
           due_at: string
           full_score: number
           full_score_locked_at?: string | null
@@ -155,7 +159,9 @@ export type Database = {
         }
         Update: {
           accept_after_solution?: boolean
+          after_solution_closed_at?: string | null
           close_at?: string | null
+          closed_at?: string | null
           due_at?: string
           full_score?: number
           full_score_locked_at?: string | null
@@ -969,8 +975,28 @@ export type Database = {
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
+      change_due: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_due_at: string
+          p_expected_to_late: string[]
+          p_expected_to_on_time: string[]
+          p_request_key: string
+        }
+        Returns: Json
+      }
       claim_identity: { Args: { p_ref: string }; Returns: Json }
       classroom_view: { Args: { p_classroom_id: string }; Returns: Json }
+      close_assignment: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_close_at: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
       commit_roster_import: {
         Args: {
           p_admin_mode?: boolean
@@ -1062,8 +1088,21 @@ export type Database = {
         }
         Returns: Json
       }
+      preview_due_change: {
+        Args: { p_assignment_id: string; p_due_at: string }
+        Returns: Json
+      }
       preview_roster_import: {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
+        Returns: Json
+      }
+      publish_solution: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_expected_version: number
+          p_request_key: string
+        }
         Returns: Json
       }
       rebind_preview: {
@@ -1096,6 +1135,17 @@ export type Database = {
         Returns: Json
       }
       roster_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
+      save_solution: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_body: string
+          p_expected_version: number
+          p_files: string[]
+          p_request_key: string
+        }
+        Returns: Json
+      }
       search_roster: { Args: { p_query: string }; Returns: Json }
       set_join_enabled: {
         Args: {
