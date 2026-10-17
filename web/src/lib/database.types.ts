@@ -997,6 +997,10 @@ export type Database = {
         }
         Returns: Json
       }
+      comment_thread: {
+        Args: { p_assignment_id: string; p_student_id?: string }
+        Returns: Json
+      }
       commit_roster_import: {
         Args: {
           p_admin_mode?: boolean
