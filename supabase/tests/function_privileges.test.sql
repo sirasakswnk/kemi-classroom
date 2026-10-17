@@ -75,7 +75,9 @@ insert into expected_authenticated values
   ('public.teacher_submission_list(uuid)'),
   -- 0023_jobs (ยอดพื้นที่ทุกบทบาท — นักเรียนเห็นแค่ระดับ; ตัวนับ B2 เฉพาะผู้ดูแล)
   ('public.storage_status()'),
-  ('public.admin_b2_usage()');
+  ('public.admin_b2_usage()'),
+  -- 0025_grading (ครู/ผู้ดูแลในโหมดผู้ดูแลบันทึกผลตรวจ)
+  ('public.grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
