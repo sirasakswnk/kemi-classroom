@@ -3,6 +3,7 @@ import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs
 import {
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   RotateCcw,
   RotateCw,
   TriangleAlert,
@@ -39,6 +40,34 @@ function useFileBlob(file: AttachmentRef) {
     void blob.refetch()
   }
   return { blob, retry }
+}
+
+/**
+ * เปิด PDF ด้วยตัวดูของเบราว์เซอร์ในแท็บใหม่ — ใช้ลิงก์ลงลายเซ็นตัวเดียวกับที่ตัวดูโหลดไว้ (คิวรีเดียวกัน
+ * ลิงก์ยังไม่ใกล้หมดอายุจึงไม่ขอใหม่และไม่นับงบเพิ่ม); เปิดแท็บก่อน await กันตัวบล็อกป๊อปอัป
+ */
+function OpenOriginal({ file }: { file: AttachmentRef }) {
+  const queryClient = useQueryClient()
+  const open = async () => {
+    const win = window.open('', '_blank')
+    try {
+      const signed = await queryClient.fetchQuery(signedFileOptions(file.asset_id, 'view'))
+      if (win) {
+        win.opener = null
+        win.location.replace(signed.url)
+      } else {
+        window.open(signed.url, '_blank', 'noopener')
+      }
+    } catch {
+      win?.close()
+    }
+  }
+  return (
+    <button type="button" className={styles.vt} onClick={() => void open()}>
+      <ExternalLink aria-hidden="true" />
+      {copy.openOriginal}
+    </button>
+  )
 }
 
 function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
@@ -224,6 +253,7 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
       <p className={styles.error} role="alert">
         <TriangleAlert aria-hidden="true" />
         <span>{copy.pdfError}</span>
+        <OpenOriginal file={file} />
       </p>
     )
   }
@@ -264,6 +294,7 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
             <ChevronRight aria-hidden="true" />
           </button>
         </span>
+        <OpenOriginal file={file} />
       </Tools>
       <div ref={boxRef} className={styles.scroller} data-zoomed={zoom > 1 || undefined}>
         <canvas
