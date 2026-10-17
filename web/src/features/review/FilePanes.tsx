@@ -133,6 +133,7 @@ export function ImagePane({ file, owner }: { file: AttachmentRef; owner: string 
   const { blob, retry } = useFileBlob(file)
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
   // object URL ผูกกับ <img> ตรง ๆ — สร้างเมื่อได้ Blob และคืนเมื่อเปลี่ยนไฟล์/ปิดตัวดู
   const imgRef = useRef<HTMLImageElement>(null)
   useEffect(() => {
@@ -155,6 +156,9 @@ export function ImagePane({ file, owner }: { file: AttachmentRef; owner: string 
     )
   }
   const sideways = rotation % 180 !== 0
+  // กล่องห่อรูปมีขนาดเท่าภาพที่หมุนแล้ว (กว้าง = ซูม × กรอบ, สัดส่วนสลับเมื่อหมุนข้าง) แล้ววางรูปกลางกล่องและหมุน
+  // รอบจุดกึ่งกลาง — ภาพไม่ล้นหรือเยื้องไม่ว่าหมุนกี่องศา; ก่อนรู้ขนาดจริงของรูปใช้สัดส่วน 4:3
+  const ratio = natural ? natural.w / natural.h : 3 / 4
   return (
     <div className={styles.pane}>
       <Tools
@@ -163,19 +167,29 @@ export function ImagePane({ file, owner }: { file: AttachmentRef; owner: string 
         rotateLabel={copy.rotate}
         onRotate={() => setRotation((r) => (r + 90) % 360)}
       />
-      <div className={styles.scroller} data-zoomed={zoom > 1 || sideways || undefined}>
-        <img
-          ref={imgRef}
-          alt={copy.imageAlt(owner, file.file_name)}
-          className={styles.zoomImg}
+      <div className={styles.scroller} data-zoomed={zoom > 1 || undefined}>
+        <div
+          className={styles.rotBox}
           style={{
-            // ซูมด้วยความกว้าง (เลื่อนดูได้) — หมุนด้วย transform; แนวตั้ง↔แนวนอนสลับด้านจำกัดขนาด
-            // หมุนข้าง: ลดความกว้างให้ด้านยาวของรูปถ่ายแนวตั้ง (≈ 4:3) ยังอยู่ในกรอบ
-            width: `${zoom * (sideways ? 60 : 100)}%`,
-            maxWidth: zoom === 1 && !sideways ? '100%' : 'none',
-            transform: rotation ? `rotate(${rotation}deg)` : undefined,
+            width: `${zoom * 100}%`,
+            // ไม่ขยายรูปเล็กเกินขนาดจริงที่ 100% (ซูมเพิ่มได้ตามตัวคูณ)
+            maxWidth: natural ? `${(sideways ? natural.h : natural.w) * zoom}px` : undefined,
+            aspectRatio: sideways ? 1 / ratio : ratio,
           }}
-        />
+        >
+          <img
+            ref={imgRef}
+            alt={copy.imageAlt(owner, file.file_name)}
+            className={styles.zoomImg}
+            onLoad={(e) =>
+              setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+            }
+            style={{
+              width: sideways ? `${ratio * 100}%` : '100%',
+              transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+            }}
+          />
+        </div>
       </div>
     </div>
   )

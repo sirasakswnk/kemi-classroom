@@ -40,10 +40,10 @@ export function GradePanel({ postId, row, adminMode }: Props) {
   if (error || !assignment) {
     return <ErrorNote error={error} />
   }
-  // key: ร่างเริ่มใหม่เมื่อเปลี่ยนคน หรือเมื่อบันทึกสำเร็จ (version เปลี่ยน) — โหลดข้อมูลล่าสุดเองไม่ล้างสิ่งที่พิมพ์
+  // key: ร่างเริ่มใหม่เมื่อเปลี่ยนคน; บันทึกสำเร็จตั้งร่างจากผลที่บันทึก — โหลดข้อมูลล่าสุด (stale_revision) ไม่ล้างสิ่งที่พิมพ์ (UX 7.1)
   return (
     <GradeForm
-      key={`${row.submission_id}:${grade.data?.version ?? 0}`}
+      key={row.submission_id}
       postId={postId}
       row={row}
       adminMode={adminMode}
@@ -100,7 +100,8 @@ function GradeForm({
         requestKey.current = { fingerprint, key: crypto.randomUUID() }
       return gradeSubmission({ ...payload, requestKey: requestKey.current.key })
     },
-    onSuccess: async () => {
+    onSuccess: async (saved) => {
+      setDraft(initialDraft(saved, saved.timing))
       toast(copy.saved, { tone: 'success' })
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: gradeKey(row.submission_id) }),

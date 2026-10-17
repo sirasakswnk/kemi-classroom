@@ -670,8 +670,17 @@
   place-items: start;
 }
 
+.rotBox {
+  position: relative;
+  flex: none;
+}
+
 .zoomImg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: block;
+  max-width: none;
   height: auto;
   border-radius: 8px;
   box-shadow: var(--shadow-sm);
