@@ -81,7 +81,10 @@ export function DueDialog({
       const e = appErrorOf(err)
       setError(e)
       // รายชื่อเปลี่ยน: โหลดผลใหม่ในหน้าต่างเดิม
-      if (e.code === 'preview_changed') void preview.refetch()
+      if (e.code === 'preview_changed') {
+        void preview.refetch()
+        void refreshAssignment(queryClient, postId)
+      }
     },
   })
 
@@ -89,13 +92,11 @@ export function DueDialog({
   const fieldError =
     iso == null
       ? th.errors.due_at_invalid
-      : same
-        ? copy.sameDue
-        : previewError && ['due_at_invalid', 'close_before_due'].includes(previewError.code)
-          ? previewError.message
-          : undefined
+      : previewError && ['due_at_invalid', 'close_before_due'].includes(previewError.code)
+        ? previewError.message
+        : undefined
   const past = iso != null && !same && Date.parse(iso) < now
-  const ready = !!preview.data && !preview.isFetching && !fieldError
+  const ready = !!preview.data && !preview.isFetching && !fieldError && !same
 
   return (
     <Modal
@@ -124,9 +125,9 @@ export function DueDialog({
       <div className={styles.body}>
         <div className={styles.kv}>
           <span>{copy.oldDue}</span>
-          <b>{when(dueAt)}</b>
+          <b>{when(preview.data?.due_at ?? dueAt)}</b>
         </div>
-        <Field label={copy.newDue} error={fieldError}>
+        <Field label={copy.newDue} error={fieldError} hint={same ? copy.sameDue : undefined}>
           <div className={styles.dt}>
             <DatePicker label={copy.newDue} value={date} onChange={setDate} />
             <TimePicker label={copy.newDue} value={time} onChange={setTime} />
@@ -150,7 +151,7 @@ export function DueDialog({
           </p>
         )}
 
-        {!fieldError && (
+        {!fieldError && !same && (
           <div className={styles.effects} aria-live="polite">
             <b>{copy.effects}</b>
             {preview.isPending || preview.isFetching ? (

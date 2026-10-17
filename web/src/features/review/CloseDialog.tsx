@@ -50,10 +50,13 @@ export function CloseDialog({
   const requestKey = useRequestKey()
   const [mode, setMode] = useState<'now' | 'later'>(closeAt ? 'later' : 'now')
   const [confirming, setConfirming] = useState(false)
-  // ค่าเริ่ม: เวลาที่ตั้งไว้ หรือ 7 วันหลังกำหนดส่ง (เวลาเดียวกับฟอร์มสร้างงาน — P3-02)
-  const start = closeAt ? bangkokParts(closeAt) : bangkokParts(dueAt)
+  const [now] = useState(() => Date.now())
+  // ค่าเริ่ม: เวลาที่ตั้งไว้ หรือ 7 วันหลังกำหนดส่ง (แบบฟอร์มสร้างงาน — P3-02) ถ้าเลยกำหนดแล้วนับจากวันนี้
+  const start = closeAt
+    ? bangkokParts(closeAt)
+    : bangkokParts(Date.parse(dueAt) > now ? dueAt : new Date(now))
   const [date, setDate] = useState(closeAt ? start.date : addDays(start.date, 7))
-  const [time, setTime] = useState(start.time)
+  const [time, setTime] = useState(closeAt ? start.time : bangkokParts(dueAt).time)
   const [error, setError] = useState<AppError | null>(null)
   const iso = bangkokToUtcIso(date, time)
 
@@ -96,11 +99,13 @@ export function CloseDialog({
   const laterError =
     iso == null
       ? th.errors.close_at_invalid
-      : Date.parse(iso) < Date.parse(dueAt)
-        ? th.errors.close_before_due
-        : error && fieldCodes.includes(error.code)
-          ? error.message
-          : undefined
+      : Date.parse(iso) <= now
+        ? th.errors.close_at_invalid
+        : Date.parse(iso) < Date.parse(dueAt)
+          ? th.errors.close_before_due
+          : error && fieldCodes.includes(error.code)
+            ? error.message
+            : undefined
 
   const cancel = (
     <Button variant="ghost" onClick={onClose}>
