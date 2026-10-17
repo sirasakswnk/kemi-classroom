@@ -1043,7 +1043,25 @@ export type Database = {
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
       my_classrooms: { Args: never; Returns: Json }
       my_work: { Args: { p_classroom_id?: string }; Returns: Json }
+      open_revision_permission: {
+        Args: {
+          p_admin_mode?: boolean
+          p_request_key: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
       ping: { Args: never; Returns: string }
+      post_comment: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_body: string
+          p_request_key: string
+          p_student_id: string
+        }
+        Returns: Json
+      }
       preview_roster_import: {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
         Returns: Json
@@ -1071,6 +1089,10 @@ export type Database = {
           p_classroom_id: string
           p_student_id: string
         }
+        Returns: Json
+      }
+      retract_comment: {
+        Args: { p_admin_mode?: boolean; p_comment_id: string }
         Returns: Json
       }
       roster_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
