@@ -596,12 +596,90 @@
   overflow: hidden;
 }
 
-.stage img {
-  display: block;
-  max-width: 100%;
+/* เครื่องมือดูไฟล์ (แบบ v2 v-tools): ซูม หมุน เปลี่ยนหน้า PDF — ปุ่มแตะได้ 44 px */
+.pane {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  align-self: stretch;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.vt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.vt:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.vt svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pct {
+  min-width: 3.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.pageNav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* พื้นที่เลื่อนดูเมื่อซูม — ไม่ขยายทั้งหน้า (ซูมด้วยนิ้วของเบราว์เซอร์ยังใช้ได้) */
+.scroller {
+  display: grid;
+  place-items: center;
   max-height: 75vh;
+  padding: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.scroller[data-zoomed] {
+  place-items: start;
+}
+
+.zoomImg {
+  display: block;
   height: auto;
   border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.pdfCanvas {
+  display: block;
+  background: #fff;
   box-shadow: var(--shadow-sm);
 }
 
@@ -661,27 +739,6 @@
   font-size: 0.875rem;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
-}
-
-.pdfNote {
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-  max-width: 420px;
-  text-align: center;
-  color: var(--ink-2);
-  font-size: 0.875rem;
-}
-
-.pdfNote > svg {
-  width: 40px;
-  height: 40px;
-  color: var(--red);
-}
-
-.pdfNote > div {
-  width: 100%;
-  text-align: left;
 }
 
 .note {
