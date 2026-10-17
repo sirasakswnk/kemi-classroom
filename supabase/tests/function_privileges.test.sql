@@ -77,7 +77,11 @@ insert into expected_authenticated values
   ('public.storage_status()'),
   ('public.admin_b2_usage()'),
   -- 0025_grading (ครู/ผู้ดูแลในโหมดผู้ดูแลบันทึกผลตรวจ)
-  ('public.grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)');
+  ('public.grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)'),
+  -- 0027_feedback (เปิดสิทธิ์แก้ของครู + ความคิดเห็นส่วนตัวทั้งสองฝ่าย)
+  ('public.open_revision_permission(uuid,uuid,boolean)'),
+  ('public.post_comment(uuid,uuid,text,uuid,boolean)'),
+  ('public.retract_comment(uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
