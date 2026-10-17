@@ -81,6 +81,9 @@ export const ERROR_CODES = [
   'resubmit_not_allowed',
   'submission_files_required',
   'submission_file_unavailable',
+  'score_invalid',
+  'penalty_not_late',
+  'comment_too_long',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -176,6 +179,10 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   resubmit_not_allowed: 'reload',
   submission_files_required: 'field',
   submission_file_unavailable: 'field',
+  // T03 แผงผลตรวจ (P4-04): คะแนนผิดช่วง → ใต้ช่องแล้วโฟกัส; งานกลายเป็นทัน → โหลดผลตรวจล่าสุด
+  score_invalid: 'focus_field',
+  penalty_not_late: 'reload',
+  comment_too_long: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

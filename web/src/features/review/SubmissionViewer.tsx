@@ -17,8 +17,10 @@ import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
+import { GradePanel } from '../grading/GradePanel'
 import { postQuery } from '../posts/api'
 import { TeacherPage } from '../teacher/TeacherLayout'
+import { useTeacher } from '../teacher/teacherContext'
 import { AttachmentList, type AttachmentRef } from '../uploads/AttachmentList'
 import { submissionFilesQuery, submissionListQuery } from './api'
 import { isImage, rowBadges } from './reviewState'
@@ -26,7 +28,8 @@ import styles from './review.module.css'
 
 // ตัวดูไฟล์เบื้องต้นของ T03 (P3-09): ไฟล์งานส่งของนักเรียนหนึ่งคนทีละไฟล์
 // รูป: ขอลิงก์ + โหลด Blob เฉพาะไฟล์ที่เปิดอยู่ (ไม่โหลดล่วงหน้า) แสดงจาก object URL แล้วคืนเมื่อเปลี่ยนไฟล์/ปิด
-// PDF: เปิดแท็บใหม่แบบ inline (แถวไฟล์เดียวกับไฟล์แนบ) — ตัวดู PDF ในหน้า ซูม/หมุน และรวม PDF มากับ P4-04
+// PDF: เปิดแท็บใหม่แบบ inline (แถวไฟล์เดียวกับไฟล์แนบ) — ตัวดู PDF ในหน้า ซูม/หมุน มากับ P4-04b/c, รวม PDF กับ P4-08
+// แผงผลตรวจ (P4-04a) อยู่ข้างตัวดู — จอคอมแบ่งภาพราวสองในสาม กับแผงหนึ่งในสาม (UX 9)
 // กลับไปรายชื่อได้ตัวกรองและหน้าเดิม (state.back จาก T03)
 export default function SubmissionViewer() {
   const { postId = '', submissionId = '' } = useParams()
@@ -38,6 +41,7 @@ export default function SubmissionViewer() {
   const classroomId = post.data?.classroom_id ?? list.data?.classroom_id ?? ''
   const classroom = useQuery({ ...classroomQuery(classroomId), enabled: !!classroomId })
   const [index, setIndex] = useState(0)
+  const { adminMode } = useTeacher()
   const copy = th.review.viewer
 
   const statusTo = `/t/w/${postId}${backSearch}`
@@ -119,9 +123,18 @@ export default function SubmissionViewer() {
         </header>
 
         {!current ? (
-          <div className={styles.empty}>
-            <Info aria-hidden="true" />
-            <span>{copy.noFiles}</span>
+          <div className={styles.viewer}>
+            <div className={styles.empty}>
+              <Info aria-hidden="true" />
+              <span>{copy.noFiles}</span>
+            </div>
+            <aside className={styles.side}>
+              <GradePanel
+                postId={postId}
+                row={{ ...row, submission_id: submissionId }}
+                adminMode={adminMode}
+              />
+            </aside>
           </div>
         ) : (
           <div className={styles.viewer}>
@@ -184,10 +197,11 @@ export default function SubmissionViewer() {
                 ))}
               </ul>
               {isImage(current.content_type) && <AttachmentList files={[current]} />}
-              <p className={styles.note}>
-                <Info aria-hidden="true" />
-                <span>{copy.gradingSoon}</span>
-              </p>
+              <GradePanel
+                postId={postId}
+                row={{ ...row, submission_id: submissionId }}
+                adminMode={adminMode}
+              />
             </aside>
           </div>
         )}
