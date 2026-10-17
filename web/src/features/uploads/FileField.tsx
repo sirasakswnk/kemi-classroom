@@ -32,7 +32,7 @@ export function FileField({
   onChange,
   error,
 }: {
-  kind: 'homework' | 'announcement' | 'submission'
+  kind: 'homework' | 'announcement' | 'submission' | 'solution'
   target: FileFieldTarget
   /** ไฟล์เดิมของโพสต์ (โหมดแก้ไข) — เปลี่ยนชุดเริ่มต้นให้ remount ด้วย key */
   initial?: AttachmentRef[]

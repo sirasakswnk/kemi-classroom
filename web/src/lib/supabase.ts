@@ -84,6 +84,9 @@ export const ERROR_CODES = [
   'score_invalid',
   'penalty_not_late',
   'comment_too_long',
+  'preview_changed',
+  'close_required',
+  'solution_published',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -183,6 +186,12 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   score_invalid: 'focus_field',
   penalty_not_late: 'reload',
   comment_too_long: 'field',
+  // M1 (และหน้าต่างลบงาน N4): รายชื่อเปลี่ยนระหว่างเปิดหน้าต่าง — โหลดรายชื่อใหม่ในหน้าต่างเดิม ไม่ปิด
+  preview_changed: 'field',
+  // M3: เผยแพร่ขณะยังเปิดรับ — ข้อความพร้อมปุ่มไป M2
+  close_required: 'field',
+  // M2: เปิดรับอีกครั้งหลังเผยแพร่เฉลย — โหลดสถานะงานใหม่
+  solution_published: 'reload',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

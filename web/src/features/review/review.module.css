@@ -201,6 +201,14 @@
   gap: 6px;
 }
 
+/* ปุ่มหัวหน้า T03 (แบบ v2 page-head .actions) */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 .eyebrow {
   font-size: 0.75rem;
   letter-spacing: 0.06em;
