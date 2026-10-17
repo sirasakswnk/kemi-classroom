@@ -11,6 +11,7 @@ import type { StatusRow } from '../review/api'
 import { gradeKey, gradeQuery, gradeSubmission, type Grade } from './api'
 import { evaluateDraft, formulaParts, initialDraft, REASON_MAX, type GradeDraft } from './gradeForm'
 import styles from './grading.module.css'
+import { RevisionPermission } from './RevisionPermission'
 
 // แผงผลตรวจของ T03 (P4-04): คะแนนก่อนหัก + สูตรหักส่งช้า + ปรับเฉพาะคน (งานสายเท่านั้น) + ยืนยันงานครบถ้วน
 // ระยะ 4 ยังไม่มีโทเคน จึงยังไม่มีกล่องผลต่อรางวัลของแบบ v2 (มากับระยะ 5)
@@ -325,6 +326,11 @@ function GradeForm({
         <Button type="submit" icon={<Check />} disabled={blocked || save.isPending}>
           {save.isPending ? copy.saving : graded ? copy.saveEdit : copy.save}
         </Button>
+        <RevisionPermission
+          submissionId={row.submission_id}
+          postId={postId}
+          adminMode={adminMode}
+        />
       </div>
       {result.problems.includes('reason') && <p className={styles.muted}>{copy.reasonRequired}</p>}
       {result.problems.includes('empty') && <p className={styles.muted}>{copy.needSomething}</p>}
