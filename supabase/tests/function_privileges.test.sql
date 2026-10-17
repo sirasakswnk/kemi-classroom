@@ -81,7 +81,11 @@ insert into expected_authenticated values
   -- 0027_feedback (เปิดสิทธิ์แก้ของครู + ความคิดเห็นส่วนตัวทั้งสองฝ่าย)
   ('public.open_revision_permission(uuid,uuid,boolean)'),
   ('public.post_comment(uuid,uuid,text,uuid,boolean)'),
-  ('public.retract_comment(uuid,boolean)');
+  ('public.retract_comment(uuid,boolean)'),
+  -- 0028_intake (ครู/ผู้ดูแล: ดูผลก่อนเปลี่ยนกำหนดส่ง, เปลี่ยนกำหนดส่ง, ปิดรับ)
+  ('public.preview_due_change(uuid,timestamp with time zone)'),
+  ('public.change_due(uuid,timestamp with time zone,uuid[],uuid[],uuid,boolean)'),
+  ('public.close_assignment(uuid,timestamp with time zone,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
