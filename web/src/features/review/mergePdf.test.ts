@@ -148,6 +148,27 @@ describe('ชื่อไฟล์ PDF', () => {
     expect(pdfFileName(6, '  อนุชา \t อิ  นทร์แก้ว ')).toBe('6_อนุชา_อิ_นทร์แก้ว.pdf')
     expect(pdfFileName(1, 'ก\u0000ข ค')).toBe('1_กข_ค.pdf')
   })
+  it('คงสระ/วรรณยุกต์ไทยครบ (อักขระผสม U+0E31 U+0E34–U+0E3A U+0E47–U+0E4E) — ชื่อเหมือนเดิมทุกตัว', () => {
+    expect(pdfFileName(7, 'ภัสสรา อินทร์แก้ว')).toBe('7_ภัสสรา_อินทร์แก้ว.pdf')
+    expect(pdfFileName(8, 'ณัฐพงษ์ กิ่งแก้ว')).toBe('8_ณัฐพงษ์_กิ่งแก้ว.pdf')
+    expect(pdfFileName(9, 'ศุภกฤต สุขสวัสดิ์')).toBe('9_ศุภกฤต_สุขสวัสดิ์.pdf')
+    // ทุกตัวอักขระผสมในนามสกุลเดียว: ิ ี ึ ื ุ ู ั ็ ่ ้ ๊ ๋ ์
+    const marks = 'กิ กี กึ กื กุ กู กั ก็ ก่ ก้ ก๊ ก๋ ก์'.split(' ').join('')
+    expect(marks).toHaveLength(26)
+    expect(pdfFileName(1, `ชื่อ ${marks}`)).toBe(`1_ชื่อ_${marks}.pdf`)
+    // รหัสอักขระต้องไม่ถูกแตะ: เทียบทีละ code point
+    const name = 'อินทร์แก้ว'
+    const out = pdfFileName(null, name).slice(0, -'.pdf'.length)
+    expect([...out].map((c) => c.codePointAt(0))).toEqual([...name].map((c) => c.codePointAt(0)))
+  })
+  it('NFC: ชื่อที่ใส่ในรูป NFD/ลำดับอักขระผสมต่างกัน ได้ชื่อมาตรฐานเดียวกัน (ไม่ทำให้อักขระหาย)', () => {
+    const nfd = 'é' // é แบบแยก → รวมเป็นตัวเดียว
+    expect(pdfFileName(2, `${nfd} ก`)).toBe('2_é_ก.pdf')
+    expect(pdfFileName(3, 'ก้ิ')).toBe(`3_ก้ิ.pdf`) // ลำดับเดิมที่ผู้ใช้ป้อนไม่ถูกจัดใหม่
+  })
+  it('ช่องว่างที่ผู้ใช้พิมพ์ไว้ในชื่อคงเป็นตัวคั่น (ข้อมูล “อิ นทร์” จะได้ “อิ_นทร์” ตามข้อมูล — แก้ที่รายชื่อ ไม่ใช่ที่ตัวตัดชื่อ)', () => {
+    expect(pdfFileName(6, 'อนุชา อิ นทร์แก้ว')).toBe('6_อนุชา_อิ_นทร์แก้ว.pdf')
+  })
   it('ไม่มีเลขที่ → ไม่ใส่ส่วนหน้า; ไม่เหลือชื่อ → งานส่ง; ไม่ลงท้ายด้วยจุด', () => {
     expect(pdfFileName(null, 'ธนภัทร ใจดี')).toBe('ธนภัทร_ใจดี.pdf')
     expect(pdfFileName(null, '***')).toBe('งานส่ง.pdf')

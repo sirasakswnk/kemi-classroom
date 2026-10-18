@@ -12,7 +12,10 @@ function cleanPart(s: string): string {
 }
 
 export function pdfFileName(roll: number | null, displayName: string): string {
+  // NFC: ชื่อจาก Excel/แป้นพิมพ์ต่างระบบอาจเรียงอักขระผสมต่างกัน; อักขระไทยทั้งหมดรวมสระบน/ล่างและวรรณยุกต์คงอยู่
+  // (ตัดเฉพาะอักขระต้องห้ามของชื่อไฟล์ใน FORBIDDEN และยุบช่องว่าง)
   const words = displayName
+    .normalize('NFC')
     .split(/\s+/)
     .map(cleanPart)
     .filter((w) => w.length > 0)
