@@ -17,17 +17,21 @@ export function csvField(value: string | number | null): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe
 }
 
-export function gradeCsv(table: GradeTable): string {
+/** onlyPostId = ส่งออกเฉพาะคอลัมน์ของงานนั้น (CSV เก็บไว้ก่อนลบงาน — P4-09) */
+export function gradeCsv(table: GradeTable, onlyPostId?: string): string {
   const copy = th.gradebook.csv
+  const assignments = onlyPostId
+    ? table.assignments.filter((a) => a.post_id === onlyPostId)
+    : table.assignments
   const head = [
     copy.roll,
     copy.name,
     copy.membership,
-    ...table.assignments.map((a) => copy.column(a.title, a.full_score)),
+    ...assignments.map((a) => copy.column(a.title, a.full_score)),
   ]
   const lines = [head.map(csvField).join(',')]
   for (const row of table.rows) {
-    const cells = table.assignments.map((a) => {
+    const cells = assignments.map((a) => {
       const v = cellView(row.cells[a.post_id])
       if (v.kind === 'none') return copy.notSubmitted
       if (v.kind === 'waiting') return copy.waiting
@@ -44,13 +48,13 @@ export function gradeCsv(table: GradeTable): string {
 }
 
 /** ชื่อไฟล์ปลอดภัยกับ Windows: ตัดอักขระต้องห้ามออก */
-export function csvFileName(room: string, term: string | null): string {
+export function csvFileName(room: string, term: string | null, work?: string): string {
   const clean = (s: string) =>
     s
       .replace(/[\\/:*?"<>|]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-  return `${[th.gradebook.csv.filePrefix, clean(room), term ? clean(term) : ''].filter(Boolean).join('_')}.csv`
+  return `${[th.gradebook.csv.filePrefix, clean(room), term ? clean(term) : '', work ? clean(work) : ''].filter(Boolean).join('_')}.csv`
 }
 
 /** ดาวน์โหลด CSV ผ่าน Blob (ไม่ผ่านเซิร์ฟเวอร์ — ข้อมูลนักเรียนอยู่ในหน้านี้อยู่แล้ว) */

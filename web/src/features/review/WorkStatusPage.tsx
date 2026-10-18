@@ -9,16 +9,18 @@ import {
   CalendarPlus,
   Lock,
   LockOpen,
+  Trash2,
   TriangleAlert,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
 import { postQuery } from '../posts/api'
+import { DeletePostDialog } from '../posts/DeletePostDialog'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import { submissionListQuery } from './api'
@@ -54,7 +56,8 @@ export default function WorkStatusPage() {
   const [now] = useState(() => Date.now())
   const solution = useQuery(solutionQuery(postId))
   const { adminMode } = useTeacher()
-  const [dialog, setDialog] = useState<'due' | 'close' | 'solution' | null>(null)
+  const [dialog, setDialog] = useState<'due' | 'close' | 'solution' | 'delete' | null>(null)
+  const navigate = useNavigate()
   const copy = th.review
 
   const roomTo = classroomId ? `/t/c/${classroomId}?tab=work` : '/t'
@@ -190,6 +193,14 @@ export default function WorkStatusPage() {
                     ? act.prepared
                     : act.prepare}
             </Button>
+            <Button
+              variant="ghost"
+              icon={<Trash2 />}
+              className={styles.dangerAction}
+              onClick={() => setDialog('delete')}
+            >
+              {th.deletePost.open}
+            </Button>
           </div>
         </header>
         {dialog === 'due' && (
@@ -214,6 +225,15 @@ export default function WorkStatusPage() {
             notSubmitted={counts.not}
             waiting={counts.waiting}
             adminMode={adminMode}
+          />
+        )}
+        {dialog === 'delete' && (
+          <DeletePostDialog
+            open
+            onClose={() => setDialog(null)}
+            postId={postId}
+            adminMode={adminMode}
+            onDeleted={() => void navigate(roomTo, { replace: true })}
           />
         )}
         <SolutionDialog

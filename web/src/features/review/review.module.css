@@ -842,3 +842,8 @@
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* ปุ่ม “ลบงาน” หัวหน้า T03 — ตัวหนังสือแดง ไม่ใช่ปุ่มเด่น */
+.dangerAction {
+  color: var(--red);
+}

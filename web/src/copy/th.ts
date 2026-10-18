@@ -948,6 +948,35 @@ export const th = {
   // T03 หน้าต่าง M1–M3 (P4-05, UX 8–9 + แบบ v2 tModal) — [ข้อเสนอถ้อยคำ] ที่ไม่มีในแบบ: pastWarn, sameDue, checking,
   // more, confirmNote, closedHint, reopen*, cancelSchedule, afterHint, saved*, emptyHint
   // ยังไม่มีบรรทัด “นักเรียนได้รับแจ้งเตือน …” ของแบบ v2 เพราะแจ้งเตือนมากับระยะ 6
+  // ลบการบ้าน/ประกาศ (N4, P4-09) — UX 9 [ยืนยัน N4]; ถ้อยคำละเอียดเป็น [ข้อเสนอ]
+  deletePost: {
+    open: 'ลบงาน',
+    openAnnouncement: 'ลบ',
+    openAnnouncementAria: (title: string) => `ลบประกาศ ${title}`,
+    title: 'ลบงาน',
+    titleAnnouncement: 'ลบประกาศ',
+    checking: 'กำลังตรวจสิ่งที่จะถูกลบ…',
+    gone: 'ไม่พบโพสต์นี้ อาจถูกลบไปแล้ว',
+    lead: (title: string) => `ลบงาน “${title}” ถาวร งานจะหายจากหน้าห้องของนักเรียนทันที`,
+    leadAnnouncement: (title: string) =>
+      `ลบประกาศ “${title}” ถาวร ประกาศจะหายจากหน้าห้องของนักเรียนทันที`,
+    willDelete: 'สิ่งที่จะถูกลบ',
+    submissions: (n: number) => `งานที่นักเรียนส่ง ${n} ชิ้น`,
+    grades: (n: number) => `คะแนนและผลตรวจ ${n} รายการ`,
+    comments: (n: number) => `ความคิดเห็นส่วนตัว ${n} ข้อความ`,
+    files: (n: number) => `ไฟล์ ${n} ไฟล์ (โจทย์ เฉลย และงานที่นักเรียนส่ง)`,
+    announcementFiles: (n: number) => `ไฟล์แนบ ${n} ไฟล์จะถูกลบด้วย`,
+    tokensKept: 'โทเคนที่นักเรียนได้ไปแล้วไม่ถูกเรียกคืน',
+    csv: 'ดาวน์โหลด CSV คะแนนเก็บไว้ก่อนลบ',
+    csvBusy: 'กำลังเตรียมไฟล์ CSV…',
+    understood: 'เข้าใจแล้วว่าลบถาวร',
+    irreversible:
+      'ย้อนกลับจากหน้าเว็บไม่ได้ ชุดสำรอง 7 วันกู้ได้เฉพาะทั้งระบบโดยผู้พัฒนา · ไฟล์จะถูกลบออกจากที่เก็บในเบื้องหลัง',
+    confirm: 'ลบงาน',
+    confirmAnnouncement: 'ลบประกาศ',
+    deleting: 'กำลังลบ…',
+    deleted: (title: string) => `ลบ “${title}” แล้ว`,
+  },
   workActions: {
     changeDue: 'เปลี่ยนกำหนดส่ง',
     close: 'ปิดรับงาน',
