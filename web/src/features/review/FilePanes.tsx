@@ -13,9 +13,11 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { th } from '../../copy/th'
-import { loadSignedFile, signedFileKey, signedFileOptions } from '../../lib/files'
+import { fileBlobKey, loadSignedFile, signedFileKey, signedFileOptions } from '../../lib/files'
 import { appErrorOf } from '../../lib/request'
 import type { AttachmentRef } from '../uploads/AttachmentList'
+import { MergeButton, MergeNotice } from './MergeControls'
+import type { Merge } from './useMergePdf'
 import { hasUnsupportedImages } from './pdfImages'
 import styles from './review.module.css'
 
@@ -29,7 +31,7 @@ const copy = th.review.viewer
 function useFileBlob(file: AttachmentRef) {
   const queryClient = useQueryClient()
   const blob = useQuery({
-    queryKey: ['file-blob', file.asset_id],
+    queryKey: fileBlobKey(file.asset_id),
     queryFn: async () =>
       loadSignedFile(await queryClient.fetchQuery(signedFileOptions(file.asset_id, 'view'))),
     staleTime: Infinity,
@@ -94,10 +96,12 @@ interface ToolsProps {
   setZoom: (z: number) => void
   onRotate: () => void
   rotateLabel: string
+  /** ปุ่ม “ดาวน์โหลด PDF” ต่อจากปุ่มหมุน (UX 9) */
+  download?: React.ReactNode
   children?: React.ReactNode
 }
 
-function Tools({ zoom, setZoom, onRotate, rotateLabel, children }: ToolsProps) {
+function Tools({ zoom, setZoom, onRotate, rotateLabel, download, children }: ToolsProps) {
   const at = ZOOMS.indexOf(zoom)
   return (
     <div className={styles.tools} role="toolbar" aria-label={copy.toolsAria}>
@@ -125,13 +129,24 @@ function Tools({ zoom, setZoom, onRotate, rotateLabel, children }: ToolsProps) {
       <button type="button" className={styles.vt} aria-label={rotateLabel} onClick={onRotate}>
         <RotateCw aria-hidden="true" />
       </button>
+      {download}
       {children}
     </div>
   )
 }
 
 /** รูป: แสดงจาก object URL ของ Blob ที่โหลดไว้; ซูมด้วยขนาดภาพ หมุนทีละ 90° */
-export function ImagePane({ file, owner }: { file: AttachmentRef; owner: string }) {
+export function ImagePane({
+  file,
+  owner,
+  merge,
+  fileCount,
+}: {
+  file: AttachmentRef
+  owner: string
+  merge: Merge
+  fileCount: number
+}) {
   const { blob, retry } = useFileBlob(file)
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -168,7 +183,9 @@ export function ImagePane({ file, owner }: { file: AttachmentRef; owner: string 
         setZoom={setZoom}
         rotateLabel={copy.rotate}
         onRotate={() => setRotation((r) => (r + 90) % 360)}
+        download={<MergeButton merge={merge} fileCount={fileCount} />}
       />
+      <MergeNotice merge={merge} />
       <div className={styles.scroller} data-zoomed={zoom > 1 || undefined}>
         <div
           className={styles.rotBox}
@@ -198,7 +215,17 @@ export function ImagePane({ file, owner }: { file: AttachmentRef; owner: string 
 }
 
 /** PDF: วาดทีละหน้าลง canvas (หน้าที่เปิดอยู่เท่านั้น) — ซูม หมุน เปลี่ยนหน้า */
-export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string }) {
+export function PdfPane({
+  file,
+  owner,
+  merge,
+  fileCount,
+}: {
+  file: AttachmentRef
+  owner: string
+  merge: Merge
+  fileCount: number
+}) {
   const { blob, retry } = useFileBlob(file)
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null)
   const [openError, setOpenError] = useState(false)
@@ -298,6 +325,7 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
         setZoom={setZoom}
         rotateLabel={copy.rotatePage}
         onRotate={() => setRotation((r) => (r + 90) % 360)}
+        download={<MergeButton merge={merge} fileCount={fileCount} />}
       >
         <span className={styles.pageNav}>
           <button
@@ -322,6 +350,7 @@ export function PdfPane({ file, owner }: { file: AttachmentRef; owner: string })
         </span>
         <OpenOriginal file={file} />
       </Tools>
+      <MergeNotice merge={merge} />
       <div ref={boxRef} className={styles.scroller} data-zoomed={zoom > 1 || undefined}>
         <canvas
           ref={canvasRef}

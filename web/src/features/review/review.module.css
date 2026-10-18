@@ -808,3 +808,37 @@
   font-size: 1rem;
   line-height: 1.4;
 }
+
+/* ---------- ดาวน์โหลด PDF รวม (P4-08) ---------- */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ชื่อไฟล์และขนาดในรายการไฟล์ของงานส่ง */
+.fileBtn small {
+  display: block;
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}

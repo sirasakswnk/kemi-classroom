@@ -92,6 +92,9 @@ export function linkFreshMs(file: SignedFile | undefined, now: number): number {
 export const signedFileKey = (assetId: string, mode: FileMode) =>
   ['signed-file', assetId, mode] as const
 
+/** Blob ของไฟล์ที่โหลดแล้ว (ตัวดูในหน้าตรวจและการรวม PDF ใช้ร่วมกัน — ไม่โหลดจาก B2 ซ้ำ) */
+export const fileBlobKey = (assetId: string) => ['file-blob', assetId] as const
+
 // ไม่ลองซ้ำเมื่อเซิร์ฟเวอร์ตอบรหัสที่รู้จัก (ไม่มีสิทธิ์ ครบงบ ถี่เกิน) — ลองซ้ำ 1 ครั้งเฉพาะเน็ตหลุด/ไม่ทราบสาเหตุ
 const retryUnknownOnce = (count: number, error: unknown) =>
   count < 1 && error instanceof RequestError && error.appError.code === 'unknown'

@@ -21,13 +21,16 @@ import { postQuery } from '../posts/api'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import { AttachmentList } from '../uploads/AttachmentList'
+import { formatBytes } from '../uploads/rules'
 import { submissionFilesQuery, submissionListQuery } from './api'
 import { ImagePane, PdfPane } from './FilePanes'
+import { pdfFileName } from './pdfFileName'
+import { useMergePdf } from './useMergePdf'
 import { isImage, rowBadges } from './reviewState'
 import styles from './review.module.css'
 
 // หน้าตรวจ T03: ไฟล์งานส่งของนักเรียนหนึ่งคนทีละไฟล์ (P3-09) — ตัวดูรูป/PDF ซูม หมุน เปลี่ยนหน้าอยู่ใน FilePanes (P4-04b/c)
-// โหลดเฉพาะไฟล์ที่เปิดอยู่ รายการไฟล์แสดงชื่อไฟล์ไม่มีรูปย่อ (TECHNICAL_DESIGN 9.3); รวม PDF ดาวน์โหลดมากับ P4-08
+// โหลดเฉพาะไฟล์ที่เปิดอยู่ รายการไฟล์แสดงชื่อไฟล์ไม่มีรูปย่อ (TECHNICAL_DESIGN 9.3); รวม PDF ดาวน์โหลดทำใน P4-08 (useMergePdf)
 // แผงผลตรวจ (P4-04a) อยู่ข้างตัวดู — จอคอมแบ่งภาพราวสองในสาม กับแผงหนึ่งในสาม (UX 9)
 // กลับไปรายชื่อได้ตัวกรองและหน้าเดิม (state.back จาก T03)
 export default function SubmissionViewer() {
@@ -45,6 +48,11 @@ export default function SubmissionViewer() {
 
   const statusTo = `/t/w/${postId}${backSearch}`
   const row = list.data?.rows.find((r) => r.submission_id === submissionId)
+  // ปุ่มดาวน์โหลด PDF รวม — เรียก hook ก่อน return ใด ๆ ของหน้า; ชื่อไฟล์ {เลขที่}_{ชื่อ}_{นามสกุล}.pdf
+  const merge = useMergePdf(
+    submissionId,
+    pdfFileName(row?.roll_number ?? null, row?.display_name ?? ''),
+  )
   const crumbs = [
     { label: th.teacher.overview, to: '/t' },
     ...(classroom.data ? [{ label: classroom.data.name, to: `/t/c/${classroomId}?tab=work` }] : []),
@@ -168,9 +176,21 @@ export default function SubmissionViewer() {
               </div>
               <div className={styles.stage}>
                 {isImage(current.content_type) ? (
-                  <ImagePane key={current.asset_id} file={current} owner={row.display_name} />
+                  <ImagePane
+                    key={current.asset_id}
+                    file={current}
+                    owner={row.display_name}
+                    merge={merge}
+                    fileCount={all.length}
+                  />
                 ) : (
-                  <PdfPane key={current.asset_id} file={current} owner={row.display_name} />
+                  <PdfPane
+                    key={current.asset_id}
+                    file={current}
+                    owner={row.display_name}
+                    merge={merge}
+                    fileCount={all.length}
+                  />
                 )}
               </div>
             </div>
@@ -191,6 +211,7 @@ export default function SubmissionViewer() {
                       )}
                       <span>
                         {i + 1}. {f.file_name}
+                        <small>{formatBytes(f.size_bytes)}</small>
                       </span>
                     </button>
                   </li>

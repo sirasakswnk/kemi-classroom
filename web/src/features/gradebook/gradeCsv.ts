@@ -1,4 +1,5 @@
 import { th } from '../../copy/th'
+import { downloadBlob } from '../../lib/download'
 import type { GradeTable } from './api'
 import { cellView } from './gradebookState'
 
@@ -6,7 +7,7 @@ import { cellView } from './gradebookState'
 // ค่าข้อความที่ขึ้นต้นด้วย = + - @ (หรือแท็บ/ขึ้นบรรทัดใหม่ แม้มีช่องว่างนำหน้า) ถูกนำหน้าด้วย ' กันไม่ให้ Excel ตีความเป็นสูตร (CSV injection)
 // ตัวเลขคะแนนเป็นจำนวนเต็มไม่ติดลบที่เรานำเข้าเอง จึงเขียนตรง ๆ ให้ Excel นับเป็นตัวเลข
 
-export const BOM = '﻿'
+export const BOM = String.fromCharCode(0xfeff)
 const FORMULA_START = /^[\t\r\n ]*[=+\-@]|^[\t\r]/
 
 export function csvField(value: string | number | null): string {
@@ -54,12 +55,5 @@ export function csvFileName(room: string, term: string | null): string {
 
 /** ดาวน์โหลด CSV ผ่าน Blob (ไม่ผ่านเซิร์ฟเวอร์ — ข้อมูลนักเรียนอยู่ในหน้านี้อยู่แล้ว) */
 export function downloadCsv(fileName: string, csv: string) {
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  downloadBlob(fileName, new Blob([csv], { type: 'text/csv;charset=utf-8' }))
 }
