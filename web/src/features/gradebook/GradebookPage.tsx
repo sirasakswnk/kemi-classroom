@@ -111,9 +111,7 @@ function Grid({
     <div className={styles.page}>
       <header className={styles.head}>
         <div>
-          {table.term_name && (
-            <span className={styles.eyebrow}>{copy.eyebrow(table.term_name)}</span>
-          )}
+          {table.term_name && <span className={styles.eyebrow}>{table.term_name}</span>}
           <h1>{copy.heading(roomName)}</h1>
           <p>{copy.lead}</p>
         </div>

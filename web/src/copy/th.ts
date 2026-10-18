@@ -706,7 +706,6 @@ export const th = {
     title: 'ตารางคะแนน',
     openFromRoom: 'ตารางคะแนน',
     heading: (room: string) => `ตารางคะแนน · ${room}`,
-    eyebrow: (term: string) => `ภาคเรียน ${term}`,
     lead: 'คะแนนสุทธิหลังหักส่งช้า แยก “ยังไม่ส่ง” “รอตรวจ” และ “0” ออกจากกัน',
     pickTerm: 'ภาคเรียน',
     pickRoom: 'ห้อง',
