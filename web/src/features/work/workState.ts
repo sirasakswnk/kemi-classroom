@@ -1,6 +1,7 @@
 import type { ChipTone } from '../../ui'
 import { th } from '../../copy/th'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
+import type { Grade } from '../grading/api'
 import type { SubmissionStatus, WorkRow } from './api'
 
 // สถานะที่หน้าจอแสดง (UX 7) — คิดจากผลของเซิร์ฟเวอร์เท่านั้น (outcome/blocked/timing) ไม่คิดกติกาการรับงานเอง
@@ -84,9 +85,45 @@ export function mineBadge(
   return { label: copy.label.onTime, tone: 'purple' }
 }
 
-/** แถบขั้นตอน ส่งงาน → ครูตรวจ → งานครบถ้วน → ได้โทเคน (การตรวจมากับระยะ 4) */
-export function stepStates(status: SubmissionStatus): ('done' | 'now' | 'todo')[] {
-  return status.submission ? ['done', 'now', 'todo', 'todo'] : ['now', 'todo', 'todo', 'todo']
+/** ผลตรวจที่นักเรียนเห็น (S03 ส่วนคะแนน — UX 7): คิดจากแถว grades เทียบกับชุดที่ส่งล่าสุด */
+export interface GradeView {
+  /** ผลเป็นของชุดก่อนหน้า — ส่งแก้แล้วรอครูตรวจชุดใหม่ (ผลเดิมยังแสดงไว้) */
+  stale: boolean
+  /** ชุดที่ส่งที่ครูตรวจ */
+  revision: number
+  /** ครูยืนยันงานครบถ้วนแล้ว (ไม่ยืนยัน = “รอครูยืนยันความครบถ้วน” ไม่ใช้คำว่าไม่ผ่าน) */
+  passed: boolean
+  /** null = ครูบันทึกเฉพาะความครบถ้วน ยังไม่ให้คะแนน */
+  score: { raw: number; penaltyPct: number; deduction: number; net: number } | null
+  /** ครูตั้งการหักเฉพาะคน (0 = ยกเว้น) — เหตุผลอยู่ในความคิดเห็น */
+  override: number | null
+  late: boolean
+}
+
+export function gradeView(grade: Grade | null, currentRevision: number): GradeView | null {
+  if (!grade) return null
+  const { raw_score: raw, net_score: net } = grade
+  return {
+    stale: grade.graded_revision < currentRevision,
+    revision: grade.graded_revision,
+    passed: grade.passed,
+    score:
+      raw !== null && net !== null
+        ? { raw, penaltyPct: grade.applied_penalty_pct, deduction: raw - net, net }
+        : null,
+    override: grade.penalty_override_pct,
+    late: grade.timing === 'late',
+  }
+}
+
+/** แถบขั้นตอน ส่งงาน → ครูตรวจ → งานครบถ้วน → ได้โทเคน (โทเคนมากับระยะ 5 จึงยังไม่ถึงขั้นสุดท้าย) */
+export function stepStates(
+  status: SubmissionStatus,
+  grade: GradeView | null = null,
+): ('done' | 'now' | 'todo')[] {
+  if (!status.submission) return ['now', 'todo', 'todo', 'todo']
+  if (!grade || grade.stale) return ['done', 'now', 'todo', 'todo']
+  return grade.passed ? ['done', 'done', 'done', 'todo'] : ['done', 'done', 'now', 'todo']
 }
 
 /** ข้อความแทนฟอร์มเมื่อส่ง/ส่งแก้ไม่ได้ตอนนี้ */
