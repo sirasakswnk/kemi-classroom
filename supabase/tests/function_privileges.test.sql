@@ -94,7 +94,10 @@ insert into expected_authenticated values
   -- 0031_comment_thread (อ่านช่องความคิดเห็นพร้อมชื่อผู้ส่งและสิทธิ์เขียนของผู้เรียก)
   ('public.comment_thread(uuid,uuid)'),
   -- 0032_grade_table (ครู/ผู้ดูแลอ่านตารางคะแนนของห้อง)
-  ('public.teacher_grade_table(uuid)');
+  ('public.teacher_grade_table(uuid)'),
+  -- 0033_delete_post (ครู/ผู้ดูแล: ดูยอดก่อนลบ, ลบการบ้าน/ประกาศแบบ cascade)
+  ('public.post_delete_preview(uuid)'),
+  ('public.delete_post(uuid,jsonb,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**

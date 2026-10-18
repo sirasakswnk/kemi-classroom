@@ -1043,6 +1043,15 @@ export type Database = {
       }
       delete_asset_begin: { Args: { p_job_id: number }; Returns: Json }
       delete_asset_finish: { Args: { p_job_id: number }; Returns: boolean }
+      delete_post: {
+        Args: {
+          p_admin_mode?: boolean
+          p_expected: Json
+          p_post_id: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
       ensure_account: { Args: never; Returns: Json }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
       grade_submission: {
@@ -1092,6 +1101,7 @@ export type Database = {
         }
         Returns: Json
       }
+      post_delete_preview: { Args: { p_post_id: string }; Returns: Json }
       preview_due_change: {
         Args: { p_assignment_id: string; p_due_at: string }
         Returns: Json
