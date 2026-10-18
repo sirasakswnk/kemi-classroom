@@ -1183,6 +1183,7 @@ export type Database = {
         Args: { p_asset_id: string; p_version_id: string }
         Returns: string
       }
+      teacher_grade_table: { Args: { p_classroom_id: string }; Returns: Json }
       teacher_submission_list: {
         Args: { p_assignment_id: string }
         Returns: Json
