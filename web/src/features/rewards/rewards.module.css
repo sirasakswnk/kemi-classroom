@@ -398,7 +398,7 @@
 
 /* ---------- ผลสุ่ม (แบบ v2 .reveal) ---------- */
 .reveal {
-  width: min(calc(100vw - 32px), 340px);
+  width: min(calc(100vw - 32px), 360px);
   max-height: calc(100dvh - 32px);
   overflow: auto;
   margin: auto;
@@ -482,6 +482,8 @@
 
 .revealRow > * {
   flex: 1;
+  padding-inline: 12px;
+  white-space: nowrap;
 }
 
 .ghostDark {
