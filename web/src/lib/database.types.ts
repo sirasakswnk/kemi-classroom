@@ -305,6 +305,47 @@ export type Database = {
         }
         Relationships: []
       }
+      charms: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          position: number
+          rarity_id: number
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          position: number
+          rarity_id: number
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          position?: number
+          rarity_id?: number
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "charms_rarity_id_fkey"
+            columns: ["rarity_id"]
+            isOneToOne: false
+            referencedRelation: "rarities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classrooms: {
         Row: {
           created_at: string
@@ -520,6 +561,39 @@ export type Database = {
           },
         ]
       }
+      owned_charms: {
+        Row: {
+          charm_id: string
+          obtained_at: string
+          student_id: string
+        }
+        Insert: {
+          charm_id: string
+          obtained_at?: string
+          student_id: string
+        }
+        Update: {
+          charm_id?: string
+          obtained_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owned_charms_charm_id_fkey"
+            columns: ["charm_id"]
+            isOneToOne: false
+            referencedRelation: "charms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owned_charms_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           body: string | null
@@ -560,6 +634,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rarities: {
+        Row: {
+          id: number
+          name: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          id: number
+          name: string
+          updated_at?: string
+          weight: number
+        }
+        Update: {
+          id?: number
+          name?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
       }
       revision_permissions: {
         Row: {
@@ -722,6 +817,39 @@ export type Database = {
         }
         Relationships: []
       }
+      student_equipment: {
+        Row: {
+          charm_id: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          charm_id?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          charm_id?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_equipment_student_id_charm_id_fkey"
+            columns: ["student_id", "charm_id"]
+            isOneToOne: false
+            referencedRelation: "owned_charms"
+            referencedColumns: ["student_id", "charm_id"]
+          },
+          {
+            foreignKeyName: "student_equipment_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           account_id: string | null
@@ -768,6 +896,7 @@ export type Database = {
           first_submitted_at: string
           id: string
           last_submitted_at: string
+          reward_effect_seen: boolean
           reward_granted: boolean
           student_id: string
         }
@@ -778,6 +907,7 @@ export type Database = {
           first_submitted_at: string
           id?: string
           last_submitted_at: string
+          reward_effect_seen?: boolean
           reward_granted?: boolean
           student_id: string
         }
@@ -788,6 +918,7 @@ export type Database = {
           first_submitted_at?: string
           id?: string
           last_submitted_at?: string
+          reward_effect_seen?: boolean
           reward_granted?: boolean
           student_id?: string
         }
@@ -954,6 +1085,45 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number
+          student_id: string
+          term_id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          balance?: number
+          student_id: string
+          term_id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          balance?: number
+          student_id?: string
+          term_id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallets_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallets_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
             referencedColumns: ["id"]
           },
         ]
