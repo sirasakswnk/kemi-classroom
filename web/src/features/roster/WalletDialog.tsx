@@ -24,13 +24,15 @@ export function WalletDialog({
   onClose: () => void
 }) {
   const copy = th.rosterList.wallet
-  const [delta, setDelta] = useState(0)
+  const [draftDelta, setDelta] = useState(0)
   const [error, setError] = useState<{ text: string; latest: boolean } | null>(null)
   const requestKey = useRef<{ fingerprint: string; key: string } | null>(null)
   const queryClient = useQueryClient()
   const toast = useToast()
 
   const balance = student.wallet_balance
+  // ยอดล่าสุดลดลงระหว่างเปิดหน้าต่าง (หน้าจออื่นปรับ): ลดได้ไม่เกินยอดใหม่ ไม่แสดงยอดหลังปรับติดลบ
+  const delta = Math.max(draftDelta, -balance)
   const after = balance + delta
 
   const save = useMutation({
