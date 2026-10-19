@@ -93,7 +93,8 @@ set local role postgres;
 select is(
   (select x - 'student_id' from res, jsonb_array_elements(res.body) x where res.label = 'overview' and x ->> 'student_code' = '33300001'),
   '{"display_name": "หนึ่ง แก้ผูก", "student_code": "33300001", "group_name": "ม.5/1", "roll_number": 1,
-    "bound": true, "account_email": "o•••••@example.com", "classrooms": ["เคมีแก้ผูก ม.5/1"]}'::jsonb,
+    "bound": true, "account_email": "o•••••@example.com", "classrooms": ["เคมีแก้ผูก ม.5/1"],
+    "wallet_balance": 0, "wallet_version": 0}'::jsonb,
   'รายชื่อ T05: ห้อง เลขที่ บัญชี (อีเมลปิดบางส่วน) และชั้นเรียนที่เข้าแล้ว');
 select ok((select body::text !~ 'old8@example\.com|other8@example\.com' from res where label = 'overview'),
   'รายชื่อ T05 ไม่มีอีเมลเต็มของนักเรียน');

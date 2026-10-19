@@ -204,8 +204,9 @@ set local role postgres;
 select is(
   (select array_agg(p.oid::regprocedure::text order by 1) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosrc ~* 'public\.wallets'),
-  array['grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)'],
-  'มีแค่ grade_submission ที่แตะ wallets (เปลี่ยนกำหนด/เฉลย/ลบงานไม่แตะ) — RPC ใหม่ที่เขียนยอดต้องเพิ่มที่นี่');
+  array['grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)',
+        'wallet_adjust(uuid,integer,integer,uuid,boolean)', 'roster_overview(boolean)'],
+  'แตะ wallets มีแค่ grade_submission + wallet_adjust (เขียน) และ roster_overview (อ่าน) — เปลี่ยนกำหนด/เฉลย/ลบงานไม่แตะ; RPC ใหม่ที่แตะยอดต้องเพิ่มที่นี่');
 
 select * from finish();
 rollback;
