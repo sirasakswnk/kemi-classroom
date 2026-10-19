@@ -1250,6 +1250,10 @@ export type Database = {
       jobs_maintenance: { Args: never; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
+      mark_reward_effect_seen: {
+        Args: { p_submission_ids: string[] }
+        Returns: Json
+      }
       my_classrooms: { Args: never; Returns: Json }
       my_work: { Args: { p_classroom_id?: string }; Returns: Json }
       open_revision_permission: {
@@ -1327,6 +1331,7 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_comment_id: string }
         Returns: Json
       }
+      reward_effects: { Args: never; Returns: Json }
       roster_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
       save_solution: {
         Args: {
@@ -1402,6 +1407,16 @@ export type Database = {
       }
       upload_complete_target: {
         Args: { p_batch_id: string; p_item: number }
+        Returns: Json
+      }
+      wallet_adjust: {
+        Args: {
+          p_admin_mode?: boolean
+          p_delta: number
+          p_expected_version: number
+          p_request_key: string
+          p_student_id: string
+        }
         Returns: Json
       }
     }
