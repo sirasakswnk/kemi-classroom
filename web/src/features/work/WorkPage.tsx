@@ -169,7 +169,12 @@ export default function WorkPage() {
         <div className={styles.side}>
           <MyWork post={p} status={s} />
           {sub && !grade.isPending && !grade.isError && (
-            <MyGrade view={view} fullScore={a.full_score} revision={sub.content_revision} />
+            <MyGrade
+              view={view}
+              fullScore={a.full_score}
+              revision={sub.content_revision}
+              status={s}
+            />
           )}
           <CommentThread mode="student" assignmentId={p.id} />
           {s.solution_published && <SolutionSection postId={p.id} />}

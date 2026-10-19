@@ -1,20 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
-import { EllipsisVertical, FileSpreadsheet, Link2, TriangleAlert, Unlink } from 'lucide-react'
+import {
+  Coins,
+  EllipsisVertical,
+  FileSpreadsheet,
+  Link2,
+  TriangleAlert,
+  Unlink,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { th } from '../../copy/th'
+import { cx } from '../../lib/cx'
 import { appErrorOf } from '../../lib/request'
 import { Button, Chip, MenuButton, Select } from '../../ui'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import { RebindDialog, type RebindMode } from './RebindDialog'
+import { WalletDialog } from './WalletDialog'
 import { filterRoster, rosterOverviewQuery, type RosterFilter, type RosterRow } from './rosterApi'
 import styles from './RosterList.module.css'
 
 const FILTERS: RosterFilter[] = ['all', 'unbound', 'notjoined']
 
 // T05 รายชื่อนักเรียน (แบบ v2 tRoster, UX 10): รายชื่อภาคเรียนนี้ทุกห้อง กรองตามห้อง/สถานะ
-// แถวที่ผูกแล้วมีเมนู “แก้การผูกบัญชี” 2 แบบ — ตัวกรองอยู่ใน URL (?group=&filter=) ให้หน้าอื่นลิงก์มาได้
+// เมนูต่อแถว: “ปรับโทเคน” ทุกแถว (P5-03) + “แก้การผูกบัญชี” 2 แบบเมื่อผูกแล้ว — ตัวกรองอยู่ใน URL (?group=&filter=) ให้หน้าอื่นลิงก์มาได้
 export default function RosterList() {
   const { adminMode, term } = useTeacher()
   const copy = th.rosterList
@@ -24,11 +33,14 @@ export default function RosterList() {
   const filterParam = params.get('filter') as RosterFilter | null
   const filter: RosterFilter = filterParam && FILTERS.includes(filterParam) ? filterParam : 'all'
   const [target, setTarget] = useState<{ row: RosterRow; mode: RebindMode } | null>(null)
+  // เก็บแค่ id — หน้าต่างอ่านยอด/รุ่นจากผลรายชื่อล่าสุด (หลังโหลดใหม่เมื่อยอดไม่พอ/รุ่นเก่า)
+  const [walletId, setWalletId] = useState<string | null>(null)
 
   const rows = useMemo(() => roster.data ?? [], [roster.data])
   const groups = useMemo(() => [...new Set(rows.map((r) => r.group_name))], [rows])
   const inGroup = useMemo(() => filterRoster(rows, group, 'all'), [rows, group])
   const shown = useMemo(() => filterRoster(rows, group, filter), [rows, group, filter])
+  const walletRow = walletId ? rows.find((r) => r.student_id === walletId) : undefined
 
   const setParam = (key: string, value: string) =>
     setParams(
@@ -116,6 +128,9 @@ export default function RosterList() {
                   <th scope="col">{copy.columns.code}</th>
                   <th scope="col">{copy.columns.account}</th>
                   <th scope="col">{copy.columns.classes}</th>
+                  <th scope="col" className={styles.tokens}>
+                    {copy.columns.tokens}
+                  </th>
                   <th scope="col">
                     <span className="sr-only">{copy.columns.menu}</span>
                   </th>
@@ -154,26 +169,34 @@ export default function RosterList() {
                         <Chip tone="plain">{copy.notJoined}</Chip>
                       )}
                     </td>
+                    <td className={cx(styles.tokens, 'num')}>{r.wallet_balance}</td>
                     <td className={styles.menuCell}>
-                      {r.bound && (
-                        <MenuButton
-                          label={copy.rowMenu(r.display_name)}
-                          icon={<EllipsisVertical aria-hidden="true" />}
-                          items={[
-                            {
-                              label: copy.moveItem,
-                              icon: <Link2 />,
-                              onSelect: () => setTarget({ row: r, mode: 'move' }),
-                            },
-                            {
-                              label: copy.unbindItem,
-                              icon: <Unlink />,
-                              tone: 'danger',
-                              onSelect: () => setTarget({ row: r, mode: 'unbind' }),
-                            },
-                          ]}
-                        />
-                      )}
+                      <MenuButton
+                        label={copy.rowMenu(r.display_name)}
+                        icon={<EllipsisVertical aria-hidden="true" />}
+                        items={[
+                          {
+                            label: copy.walletItem,
+                            icon: <Coins />,
+                            onSelect: () => setWalletId(r.student_id),
+                          },
+                          ...(r.bound
+                            ? [
+                                {
+                                  label: copy.moveItem,
+                                  icon: <Link2 />,
+                                  onSelect: () => setTarget({ row: r, mode: 'move' }),
+                                },
+                                {
+                                  label: copy.unbindItem,
+                                  icon: <Unlink />,
+                                  tone: 'danger' as const,
+                                  onSelect: () => setTarget({ row: r, mode: 'unbind' }),
+                                },
+                              ]
+                            : []),
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -182,6 +205,16 @@ export default function RosterList() {
             {shown.length === 0 && <p className={styles.emptyRow}>{copy.empty}</p>}
           </div>
         </section>
+      )}
+
+      {walletRow && (
+        <WalletDialog
+          key={walletRow.student_id}
+          student={walletRow}
+          term={term?.name}
+          adminMode={adminMode}
+          onClose={() => setWalletId(null)}
+        />
       )}
 
       {target && (

@@ -149,6 +149,8 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
     message: 'เผยแพร่เฉลยแล้ว เปิดรับเพิ่มได้ผ่านตัวเลือกรับงานหลังเฉลยเท่านั้น',
     action: 'reload',
   },
+  // T05 ปรับโทเคน (UX 7.1, P5-03) — หน้าต่างต่อท้ายยอดล่าสุด
+  insufficient_balance: { message: 'ยอดโทเคนไม่พอ', action: 'field' },
 }
 
 const FALLBACK = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง ถ้ายังไม่ได้ให้แจ้งคุณครู'

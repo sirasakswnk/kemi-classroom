@@ -11,6 +11,8 @@ const row = (name: string, group: string, bound: boolean, classrooms: string[]):
   bound,
   account_email: bound ? 'a•••••@example.com' : null,
   classrooms,
+  wallet_balance: 0,
+  wallet_version: 0,
 })
 
 describe('T05 รายชื่อ', () => {

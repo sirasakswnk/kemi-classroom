@@ -7,6 +7,7 @@ import {
   dueHint,
   dueSoon,
   filterWork,
+  gradeChip,
   gradeView,
   isPending,
   mineBadge,
@@ -46,6 +47,9 @@ const status = (over: Partial<SubmissionStatus> = {}): SubmissionStatus => ({
   permission_open: false,
   outcome: 'first_on_time',
   blocked: null,
+  reward_tokens: 2,
+  reward_granted: false,
+  current_term: true,
   submission: null,
   ...over,
 })
@@ -220,6 +224,28 @@ describe('S03 คะแนนและความครบถ้วน', () => 
       'todo',
     ])
     expect(stepStates(st, gradeView(grade(), 2))).toEqual(['done', 'now', 'todo', 'todo'])
+    const got = status({ outcome: 'resubmit', submission: submitted(), reward_granted: true })
+    expect(stepStates(got, gradeView(grade(), 1))).toEqual(['done', 'done', 'done', 'done'])
+    // ส่งแก้หลังได้รางวัล: รอตรวจชุดใหม่ แต่โทเคนที่ได้แล้วไม่หาย
+    expect(stepStates(got, gradeView(grade(), 2))).toEqual(['done', 'now', 'todo', 'done'])
+  })
+  it('ป้ายรางวัล UX 7: ได้รับแล้ว / งานภาคเรียนก่อน / ครบถ้วน', () => {
+    const v = gradeView(grade(), 1)
+    expect(gradeChip(v, status({ reward_granted: true })).label).toBe(
+      'งานครบถ้วน · ได้รับ 2 โทเคนแล้ว',
+    )
+    expect(gradeChip(v, status({ current_term: false })).label).toBe(
+      'บันทึกคะแนนแล้ว · งานภาคเรียนก่อน',
+    )
+    expect(gradeChip(v, status()).label).toBe(th.work.grade.complete)
+    // งาน 0 โทเคนไม่บอก “ได้รับ 0”; ผ่าน→ไม่ผ่าน (I3) ไม่อ้างว่างานครบถ้วน
+    expect(gradeChip(v, status({ reward_granted: true, reward_tokens: 0 })).label).toBe(
+      th.work.grade.complete,
+    )
+    expect(
+      gradeChip(gradeView(grade({ passed: false }), 1), status({ reward_granted: true })).label,
+    ).toBe(th.work.grade.pending)
+    expect(gradeChip(null, status()).label).toBe(th.work.grade.waiting)
   })
   it('ข้อความไม่ใช้คำว่า “ไม่ผ่าน”', () => {
     expect(JSON.stringify(th.work.grade)).not.toContain('ไม่ผ่าน')

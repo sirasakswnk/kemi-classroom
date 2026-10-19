@@ -37,6 +37,10 @@ const StatusSchema = z.object({
   outcome: OutcomeSchema.nullable(),
   /** รหัส UX 7.1 ที่ทำให้ส่งไม่ได้ตอนนี้ (term_ended, submission_closed, resubmit_not_allowed …) */
   blocked: z.string().nullable(),
+  /** รางวัลของงาน (0036): จำนวนโทเคนของงาน, ได้รับแล้วหรือยัง, ห้องอยู่ในเทอมกระเป๋าปัจจุบัน (false = งานภาคเรียนก่อน) */
+  reward_tokens: z.number().int(),
+  reward_granted: z.boolean(),
+  current_term: z.boolean(),
   submission: z
     .object({
       submission_id: z.uuid(),

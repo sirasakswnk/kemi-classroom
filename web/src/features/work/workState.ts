@@ -116,14 +116,29 @@ export function gradeView(grade: Grade | null, currentRevision: number): GradeVi
   }
 }
 
-/** แถบขั้นตอน ส่งงาน → ครูตรวจ → งานครบถ้วน → ได้โทเคน (โทเคนมากับระยะ 5 จึงยังไม่ถึงขั้นสุดท้าย) */
+/** แถบขั้นตอน ส่งงาน → ครูตรวจ → งานครบถ้วน → ได้โทเคน (ขั้นสุดท้ายเมื่อเซิร์ฟเวอร์ให้รางวัลแล้ว — ไม่ถอนตาม I3) */
 export function stepStates(
   status: SubmissionStatus,
   grade: GradeView | null = null,
 ): ('done' | 'now' | 'todo')[] {
   if (!status.submission) return ['now', 'todo', 'todo', 'todo']
-  if (!grade || grade.stale) return ['done', 'now', 'todo', 'todo']
-  return grade.passed ? ['done', 'done', 'done', 'todo'] : ['done', 'done', 'now', 'todo']
+  const token = status.reward_granted ? 'done' : 'todo'
+  if (!grade || grade.stale) return ['done', 'now', 'todo', token]
+  return grade.passed ? ['done', 'done', 'done', token] : ['done', 'done', 'now', token]
+}
+
+/** ป้ายส่วนคะแนน S03 (UX 7): ได้รางวัลแล้ว / งานภาคเรียนก่อน / ครบถ้วน / รอยืนยัน / รอตรวจชุดใหม่ */
+export function gradeChip(
+  view: GradeView | null,
+  status: Pick<SubmissionStatus, 'reward_granted' | 'reward_tokens' | 'current_term'>,
+): { label: string; tone: 'amber' | 'green' | 'plain' } {
+  const g = copy.grade
+  if (!view) return { label: g.waiting, tone: 'amber' }
+  if (view.stale) return { label: g.staleChip, tone: 'amber' }
+  if (view.passed && status.reward_granted && status.reward_tokens > 0)
+    return { label: g.rewarded(status.reward_tokens), tone: 'green' }
+  if (!status.current_term) return { label: g.oldTerm, tone: 'plain' }
+  return view.passed ? { label: g.complete, tone: 'green' } : { label: g.pending, tone: 'amber' }
 }
 
 /** ข้อความแทนฟอร์มเมื่อส่ง/ส่งแก้ไม่ได้ตอนนี้ */
