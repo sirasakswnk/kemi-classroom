@@ -1222,8 +1222,13 @@ export type Database = {
         }
         Returns: Json
       }
+      draw_charm: {
+        Args: { p_rates_key: string; p_request_key: string }
+        Returns: Json
+      }
       ensure_account: { Args: never; Returns: Json }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
+      get_draw_options: { Args: never; Returns: Json }
       grade_submission: {
         Args: {
           p_admin_mode?: boolean
@@ -1345,6 +1350,7 @@ export type Database = {
         Returns: Json
       }
       search_roster: { Args: { p_query: string }; Returns: Json }
+      set_equipment: { Args: { p_charm_id: string }; Returns: Json }
       set_join_enabled: {
         Args: {
           p_admin_mode?: boolean
