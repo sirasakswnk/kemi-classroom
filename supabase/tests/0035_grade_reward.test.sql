@@ -202,11 +202,13 @@ select is((select sum(w.balance)::integer from public.wallets w where w.term_id 
   11, 'ยอดรวมเทอม T1 = 2 (N1) + 1 (N3) + 2 (N4) + 2 (N5) + 4 (N6)');
 set local role postgres;
 select is(
-  (select array_agg(p.oid::regprocedure::text order by 1) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  (select array_agg(p.oid::regprocedure::text order by p.oid::regprocedure::text collate "C")
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private') and p.prosrc ~* 'public\.wallets'),
-  array['grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)',
-        'wallet_adjust(uuid,integer,integer,uuid,boolean)', 'roster_overview(boolean)'],
-  'แตะ wallets มีแค่ grade_submission + wallet_adjust (เขียน) และ roster_overview (อ่าน) — เปลี่ยนกำหนด/เฉลย/ลบงานไม่แตะ; RPC ใหม่ที่แตะยอดต้องเพิ่มที่นี่');
+  array['draw_charm(text,uuid)', 'get_draw_options()',
+        'grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)',
+        'roster_overview(boolean)', 'wallet_adjust(uuid,integer,integer,uuid,boolean)'],
+  'แตะ wallets มีแค่ grade_submission + wallet_adjust + draw_charm (เขียน) และ roster_overview + get_draw_options (อ่าน) — เปลี่ยนกำหนด/เฉลย/ลบงานไม่แตะ; RPC ใหม่ที่แตะยอดต้องเพิ่มที่นี่');
 
 select * from finish();
 rollback;
