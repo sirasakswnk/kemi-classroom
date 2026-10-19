@@ -48,7 +48,8 @@ export const sqlText = (s) => `'${String(s).replaceAll("'", "''")}'`
 /**
  * รัน body ของแต่ละตัวพร้อมกัน ตัวละหนึ่งการเชื่อมต่อ ในนาม authenticated ของ authUserId
  * ทุกตัวรอถึงเวลาเดียวกันของเซิร์ฟเวอร์ (pg_sleep_until) ก่อนเริ่ม body แล้วถือ transaction ไว้ holdSeconds
- * ก่อน commit (ให้อีกตัวต้องรอล็อกจริง) — คืน [{ ok, json, err, at }] (at = เวลาเซิร์ฟเวอร์หลัง body จบ)
+ * ก่อน commit (ให้อีกตัวต้องรอล็อกจริง) — คืน [{ ok, json, err, at }] (at = เวลาเซิร์ฟเวอร์หลัง body จบ
+ * ทั้งกรณีสำเร็จและล้ม: ตัวที่ล้มหลังรอล็อกจึงวัดได้ว่ารอจริง)
  */
 export async function race(authUserId, bodies, holdSeconds = 0.3) {
   const [startAt] = await psqlOk(`select (clock_timestamp() + interval '1.5 seconds')::text;`)
@@ -58,19 +59,27 @@ export async function race(authUserId, bodies, holdSeconds = 0.3) {
 select set_config('request.jwt.claims', ${sqlText(claims)}, true) is null;
 set local role authenticated;
 select pg_sleep_until(${sqlText(startAt)}::timestamptz) is null;
+\\set ON_ERROR_STOP 0
 select 'JSON ' || (${body})::text;
+\\set ON_ERROR_STOP 1
+\\if :ERROR
+rollback;
+select 'AT ' || clock_timestamp()::text;
+\\else
 select 'AT ' || clock_timestamp()::text;
 select pg_sleep(${holdSeconds}) is null;
 commit;
+\\endif
 `),
   )
   return (await Promise.all(runs)).map((r) => {
     const line = (p) => r.out.split(/\r?\n/).find((l) => l.startsWith(p))?.slice(p.length)
+    const json = r.code === 0 ? line('JSON ') : undefined
     return {
-      ok: r.code === 0,
-      json: r.code === 0 ? JSON.parse(line('JSON ')) : null,
+      ok: json !== undefined,
+      json: json !== undefined ? JSON.parse(json) : null,
       at: line('AT ') ?? null,
-      err: r.code === 0 ? null : r.err.trim(),
+      err: json !== undefined ? null : r.err.trim(),
     }
   })
 }
