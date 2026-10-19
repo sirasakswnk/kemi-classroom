@@ -197,3 +197,28 @@
   flex: 1;
   min-width: 12em;
 }
+
+/* ผลต่อรางวัลก่อนบันทึก (แบบ v2 .reward-box) */
+.reward {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.reward[data-yes] {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+
+.reward svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}

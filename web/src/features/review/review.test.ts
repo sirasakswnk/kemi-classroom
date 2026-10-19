@@ -22,6 +22,7 @@ const row = (n: number, over: Partial<StatusRow> = {}): StatusRow => ({
   content_revision: null,
   timing: null,
   graded: false,
+  reward_granted: false,
   file_count: 0,
   ...over,
 })

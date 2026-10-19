@@ -126,3 +126,21 @@ export function formulaParts(
     rounded: !Number.isInteger(exact),
   }
 }
+
+/** ผลต่อรางวัลที่คาดเมื่อกดบันทึก (UX 9 + แบบ v2 reward-box) — ตามกติกาเดียวกับขั้นให้รางวัลใน grade_submission (0035) */
+export type RewardPreview =
+  'will_grant' | 'granted' | 'granted_unpass' | 'late' | 'old_term' | 'not_passed' | 'no_reward'
+
+export function rewardPreview(input: {
+  pass: boolean
+  timing: 'on_time' | 'late'
+  granted: boolean
+  tokens: number
+  currentTerm: boolean
+}): RewardPreview {
+  if (input.granted) return input.pass ? 'granted' : 'granted_unpass'
+  if (input.tokens <= 0) return 'no_reward'
+  if (input.timing === 'late') return 'late'
+  if (!input.currentTerm) return 'old_term'
+  return input.pass ? 'will_grant' : 'not_passed'
+}
