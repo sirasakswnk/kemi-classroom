@@ -21,7 +21,7 @@ begin
 end
 $$;
 
-select plan(42);
+select plan(43);
 
 -- ข้อมูลสมมติ: เทอมกระเป๋า T1 + เทอมเก่า T0; ครู + ผู้ดูแล; นักเรียน N1 (ห้อง C1, C0) และ N2 (ห้อง C1) อยู่ในรายชื่อ T1
 -- H1 (C1, 2 โทเคน): S1 N1 ทัน · S4 N2 ทัน · H2 (C1, 3): S2 N1 ทัน · H3 (C1, 1): S3 N1 สาย
@@ -206,6 +206,9 @@ select throws_ok($$ select public.wallet_adjust(pg_temp.st(1), 1, 3, null) $$, '
 select throws_ok($$ select public.wallet_adjust(gen_random_uuid(), 1, 0, gen_random_uuid()) $$, 'P0001', 'student_not_found',
   'ไม่พบนักเรียน → student_not_found');
 
+-- สิทธิ์เหมือน grade_submission: ครู หรือผู้ดูแลในโหมดผู้ดูแลเท่านั้น (นักเรียน forbidden ทดสอบในส่วน ค)
+select pg_temp.as_user('20360000-0000-4000-8000-0000000000ff');
+select throws_ok($$ select pg_temp.adj(1, 1, 3) $$, 'P0001', 'account_required', 'ไม่มีบัญชีในระบบ → account_required');
 select pg_temp.as_user('20360000-0000-4000-8000-000000000002');
 select throws_ok($$ select pg_temp.adj(1, 1, 3) $$, 'P0001', 'admin_mode_required', 'ผู้ดูแลนอกโหมดผู้ดูแลปรับไม่ได้');
 select is(public.wallet_adjust(pg_temp.st(1), 2, 3, gen_random_uuid(), true) -> 'balance', '2'::jsonb,
