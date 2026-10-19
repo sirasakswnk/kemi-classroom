@@ -88,6 +88,8 @@ export const ERROR_CODES = [
   'close_required',
   'solution_published',
   'insufficient_balance',
+  'draw_completed',
+  'draw_unavailable',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -195,6 +197,9 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   solution_published: 'reload',
   // T05 ปรับโทเคน (P5-03) / S04 สุ่ม (P5-04): ยอดไม่พอ — หน้าจอโหลดยอดใหม่แล้วแสดง “ยอดล่าสุด {n} โทเคน”
   insufficient_balance: 'field',
+  // S04 (P5-04): ปกติปุ่มถูกปิดก่อนแล้ว — แสดงข้อความแล้วโหลดตัวเลือกสุ่มใหม่ ไม่หักโทเคน
+  draw_completed: 'field',
+  draw_unavailable: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

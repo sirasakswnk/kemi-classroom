@@ -151,6 +151,9 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   },
   // T05 ปรับโทเคน (UX 7.1, P5-03) — หน้าต่างต่อท้ายยอดล่าสุด
   insufficient_balance: { message: 'ยอดโทเคนไม่พอ', action: 'field' },
+  // S04 สุ่ม (UX 7.1, P5-04)
+  draw_completed: { message: 'สะสมครบแล้ว', action: 'field' },
+  draw_unavailable: { message: 'ยังไม่มีรายการที่สุ่มได้ รอครูปรับอัตราสุ่ม', action: 'field' },
 }
 
 const FALLBACK = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง ถ้ายังไม่ได้ให้แจ้งคุณครู'

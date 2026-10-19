@@ -508,6 +508,11 @@
     - [x] P5-04c push kemi-dev → `db:test:dev` 39 ไฟล์/1566 ข้อผ่าน (ข้อมูลทดสอบ rollback หมด) · advisors security ไม่มี error (WARN 49 → 52 = 3 RPC ใหม่ตามแบบเดิม) · `db:types` แล้ว typecheck ผ่าน — type ของ `set_equipment` เป็น `p_charm_id: string` (ไม่ nullable) ตอนทำ P5-06 ส่ง null ต้อง cast
         - ข้อควรระวัง: ห้ามรัน `db:test:dev` ซ้อนกันสองชุด — CLI ตั้งรหัสผ่าน role ชั่วคราวใหม่ทุกครั้ง ชุดที่รันอยู่ต่อไม่ได้ (`password authentication failed for user "cli_login_postgres"`) แล้ว pooler บล็อกชั่วคราว (`ECIRCUITBREAKER`) รอ ~4 นาทีแล้วรันเดี่ยวผ่าน
 - [ ] P5-05 S04 สุ่ม + เอฟเฟกต์ + เอฟเฟกต์ได้รับโทเคนครั้งเดียว (รวมยอดหลายงาน)
+    - [ ] P5-05a `features/rewards/api.ts` + ตัวช่วย pure + unit + ข้อความ/รหัส `draw_completed`/`draw_unavailable`
+    - [ ] P5-05b S04 `/draw` + เหรียญรูปชั่วคราว + ผลสุ่ม/แสดงข้างชื่อ + ปุ่มโทเคนบนหัวเว็บ
+    - [ ] P5-05c เอฟเฟกต์ได้รับโทเคนรวมยอด (ตั้งดูแล้วเฉพาะ id ที่แสดง)
+    - [ ] P5-05d หัว “งานของฉัน” S03 ตาม UX 7 หลังครูตรวจ
+    - [ ] P5-05e ตรวจเบราว์เซอร์ + CSP กับ build จริง (อนุชา “ทดสอบอุปกรณ์”)
 - [ ] P5-06 S05 ตู้สะสม + ป๊อปอัป + สวมใส่ + แสดงในแท็บสมาชิก
 - [ ] P5-07 `0038_charm_admin` + T06 จัดการเครื่องราง (ชื่อ/คำอธิบาย/ระดับ/อัตรารวม 100) + อัปโหลดรูป (purpose `charm`, Edge Function deploy dev) + รูปชั่วคราววาดด้วยโค้ด
 - [ ] P5-08 **[effort สูง]** `0039_terms`: `terms_start`/`terms_end` (K5, J9, I5) + ทดสอบ + สคริปต์ยิงพร้อมกัน (ค)
