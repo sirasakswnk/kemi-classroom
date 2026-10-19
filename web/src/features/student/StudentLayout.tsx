@@ -8,6 +8,7 @@ import { initialOf } from '../../lib/initial'
 import { Button, useToast } from '../../ui'
 import { NamePicker } from '../identity/NamePicker'
 import { useMyStudent } from '../identity/useMyStudent'
+import { RewardEffect } from '../rewards/RewardEffect'
 import { TokenPill } from '../rewards/TokenPill'
 import { StudentContext, type StudentContextValue } from './studentContext'
 import styles from './student.module.css'
@@ -65,6 +66,7 @@ export function StudentLayout() {
       {value ? (
         <StudentContext value={value}>
           <Outlet />
+          <RewardEffect />
         </StudentContext>
       ) : (
         <>
