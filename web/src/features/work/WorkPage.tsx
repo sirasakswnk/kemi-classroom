@@ -6,23 +6,34 @@ import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate } from '../../lib/thaiTime'
 import { Button, Steps } from '../../ui'
+import { CommentThread } from '../comments/CommentThread'
+import { gradeQuery } from '../grading/api'
 import { postQuery } from '../posts/api'
 import { myClassroomsQuery } from '../student/api'
 import { AttachmentList } from '../uploads/AttachmentList'
 import { submissionStatusQuery } from './api'
+import { MyGrade } from './MyGrade'
 import { MyWork } from './MyWork'
-import { stepStates, when } from './workState'
+import { SolutionSection } from './SolutionSection'
+import { gradeView, stepStates, when } from './workState'
 import page from '../student/student.module.css'
 import styles from './work.module.css'
 
 // S03 หน้างานของนักเรียน (UX 6, 13; แบบ v2 sWork): ชื่องาน/เวลา → แถบขั้นตอน → โจทย์และไฟล์ | งานของฉัน
 // ตั้งแต่ 960 px แบ่ง 2 คอลัมน์ ซ้ายโจทย์ ขวางานของฉัน (ลำดับใน DOM เดียวกับที่เห็น)
-// คะแนน ความคิดเห็น และเฉลยมากับระยะ 4 (P4-05/P4-06)
+// ลำดับฝั่งขวา: งานของฉัน → คะแนนและความครบถ้วน → ความคิดเห็นส่วนตัว → เฉลย (UX 6)
 export default function WorkPage() {
   const { postId = '' } = useParams()
   const post = useQuery(postQuery(postId))
   const status = useQuery(submissionStatusQuery(postId))
   const classes = useQuery(myClassroomsQuery)
+  const submissionId = status.data?.submission?.submission_id
+  // ผลตรวจ: อ่านผ่าน RLS (เจ้าของงานส่ง) โหลดใหม่ทุกครั้งที่เปิดหน้า เพราะครูตรวจได้ตลอด
+  const grade = useQuery({
+    ...gradeQuery(submissionId ?? ''),
+    enabled: !!submissionId,
+    staleTime: 0,
+  })
   const queryClient = useQueryClient()
   const copy = th.work
   const statusError = status.isError ? appErrorOf(status.error) : null
@@ -93,7 +104,9 @@ export default function WorkPage() {
   const s = status.data!
   const closeText =
     s.intake === 'closed' ? copy.closed : a.close_at ? when(a.close_at) : copy.noClose
-  const states = stepStates(s)
+  const sub = s.submission
+  const view = sub ? gradeView(grade.data ?? null, sub.content_revision) : null
+  const states = stepStates(s, view)
 
   return (
     <main className={page.page}>
@@ -155,6 +168,11 @@ export default function WorkPage() {
         </div>
         <div className={styles.side}>
           <MyWork post={p} status={s} />
+          {sub && !grade.isPending && !grade.isError && (
+            <MyGrade view={view} fullScore={a.full_score} revision={sub.content_revision} />
+          )}
+          <CommentThread mode="student" assignmentId={p.id} />
+          {s.solution_published && <SolutionSection postId={p.id} />}
         </div>
       </div>
     </main>

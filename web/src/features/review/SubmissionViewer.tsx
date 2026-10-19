@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
   ChevronLeft,
@@ -6,27 +6,32 @@ import {
   FileText,
   Image as ImageIcon,
   Info,
-  RotateCcw,
   TriangleAlert,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { th } from '../../copy/th'
-import { loadSignedFile, signedFileKey, signedFileOptions } from '../../lib/files'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
+import { CommentThread } from '../comments/CommentThread'
+import { GradePanel } from '../grading/GradePanel'
 import { postQuery } from '../posts/api'
 import { TeacherPage } from '../teacher/TeacherLayout'
-import { AttachmentList, type AttachmentRef } from '../uploads/AttachmentList'
+import { useTeacher } from '../teacher/teacherContext'
+import { AttachmentList } from '../uploads/AttachmentList'
+import { formatBytes } from '../uploads/rules'
 import { submissionFilesQuery, submissionListQuery } from './api'
+import { ImagePane, PdfPane } from './FilePanes'
+import { pdfFileName } from './pdfFileName'
+import { useMergePdf } from './useMergePdf'
 import { isImage, rowBadges } from './reviewState'
 import styles from './review.module.css'
 
-// ตัวดูไฟล์เบื้องต้นของ T03 (P3-09): ไฟล์งานส่งของนักเรียนหนึ่งคนทีละไฟล์
-// รูป: ขอลิงก์ + โหลด Blob เฉพาะไฟล์ที่เปิดอยู่ (ไม่โหลดล่วงหน้า) แสดงจาก object URL แล้วคืนเมื่อเปลี่ยนไฟล์/ปิด
-// PDF: เปิดแท็บใหม่แบบ inline (แถวไฟล์เดียวกับไฟล์แนบ) — ตัวดู PDF ในหน้า ซูม/หมุน และรวม PDF มากับ P4-04
+// หน้าตรวจ T03: ไฟล์งานส่งของนักเรียนหนึ่งคนทีละไฟล์ (P3-09) — ตัวดูรูป/PDF ซูม หมุน เปลี่ยนหน้าอยู่ใน FilePanes (P4-04b/c)
+// โหลดเฉพาะไฟล์ที่เปิดอยู่ รายการไฟล์แสดงชื่อไฟล์ไม่มีรูปย่อ (TECHNICAL_DESIGN 9.3); รวม PDF ดาวน์โหลดทำใน P4-08 (useMergePdf)
+// แผงผลตรวจ (P4-04a) อยู่ข้างตัวดู — จอคอมแบ่งภาพราวสองในสาม กับแผงหนึ่งในสาม (UX 9)
 // กลับไปรายชื่อได้ตัวกรองและหน้าเดิม (state.back จาก T03)
 export default function SubmissionViewer() {
   const { postId = '', submissionId = '' } = useParams()
@@ -38,10 +43,16 @@ export default function SubmissionViewer() {
   const classroomId = post.data?.classroom_id ?? list.data?.classroom_id ?? ''
   const classroom = useQuery({ ...classroomQuery(classroomId), enabled: !!classroomId })
   const [index, setIndex] = useState(0)
+  const { adminMode } = useTeacher()
   const copy = th.review.viewer
 
   const statusTo = `/t/w/${postId}${backSearch}`
   const row = list.data?.rows.find((r) => r.submission_id === submissionId)
+  // ปุ่มดาวน์โหลด PDF รวม — เรียก hook ก่อน return ใด ๆ ของหน้า; ชื่อไฟล์ {เลขที่}_{ชื่อ}_{นามสกุล}.pdf
+  const merge = useMergePdf(
+    submissionId,
+    pdfFileName(row?.roll_number ?? null, row?.display_name ?? ''),
+  )
   const crumbs = [
     { label: th.teacher.overview, to: '/t' },
     ...(classroom.data ? [{ label: classroom.data.name, to: `/t/c/${classroomId}?tab=work` }] : []),
@@ -119,9 +130,25 @@ export default function SubmissionViewer() {
         </header>
 
         {!current ? (
-          <div className={styles.empty}>
-            <Info aria-hidden="true" />
-            <span>{copy.noFiles}</span>
+          <div className={styles.viewer}>
+            <div className={styles.empty}>
+              <Info aria-hidden="true" />
+              <span>{copy.noFiles}</span>
+            </div>
+            <aside className={styles.side}>
+              <GradePanel
+                postId={postId}
+                row={{ ...row, submission_id: submissionId }}
+                adminMode={adminMode}
+              />
+              <CommentThread
+                mode="teacher"
+                assignmentId={postId}
+                studentId={row.student_id}
+                studentName={row.display_name}
+                adminMode={adminMode}
+              />
+            </aside>
           </div>
         ) : (
           <div className={styles.viewer}>
@@ -149,15 +176,21 @@ export default function SubmissionViewer() {
               </div>
               <div className={styles.stage}>
                 {isImage(current.content_type) ? (
-                  <ImagePane key={current.asset_id} file={current} owner={row.display_name} />
+                  <ImagePane
+                    key={current.asset_id}
+                    file={current}
+                    owner={row.display_name}
+                    merge={merge}
+                    fileCount={all.length}
+                  />
                 ) : (
-                  <div className={styles.pdfNote}>
-                    <FileText aria-hidden="true" />
-                    <span>{copy.pdfNote}</span>
-                    <div>
-                      <AttachmentList files={[current]} />
-                    </div>
-                  </div>
+                  <PdfPane
+                    key={current.asset_id}
+                    file={current}
+                    owner={row.display_name}
+                    merge={merge}
+                    fileCount={all.length}
+                  />
                 )}
               </div>
             </div>
@@ -178,79 +211,29 @@ export default function SubmissionViewer() {
                       )}
                       <span>
                         {i + 1}. {f.file_name}
+                        <small>{formatBytes(f.size_bytes)}</small>
                       </span>
                     </button>
                   </li>
                 ))}
               </ul>
-              {isImage(current.content_type) && <AttachmentList files={[current]} />}
-              <p className={styles.note}>
-                <Info aria-hidden="true" />
-                <span>{copy.gradingSoon}</span>
-              </p>
+              <AttachmentList files={[current]} />
+              <GradePanel
+                postId={postId}
+                row={{ ...row, submission_id: submissionId }}
+                adminMode={adminMode}
+              />
+              <CommentThread
+                mode="teacher"
+                assignmentId={postId}
+                studentId={row.student_id}
+                studentName={row.display_name}
+                adminMode={adminMode}
+              />
             </aside>
           </div>
         )}
       </div>
     </TeacherPage>
   )
-}
-
-function ImagePane({ file, owner }: { file: AttachmentRef; owner: string }) {
-  const queryClient = useQueryClient()
-  const copy = th.review.viewer
-  // Blob ของไฟล์ที่เปิดอยู่เท่านั้น — เก็บใน cache 5 นาทีให้สลับกลับมาไม่โหลดจาก B2 ซ้ำ
-  const blob = useQuery({
-    queryKey: ['file-blob', file.asset_id],
-    queryFn: async () =>
-      loadSignedFile(await queryClient.fetchQuery(signedFileOptions(file.asset_id, 'view'))),
-    staleTime: Infinity,
-    gcTime: 5 * 60_000,
-    retry: false,
-  })
-  // object URL ผูกกับ <img> ตรง ๆ — สร้างเมื่อได้ Blob และคืนเมื่อเปลี่ยนไฟล์/ปิดตัวดู
-  const imgRef = useRef<HTMLImageElement>(null)
-  useEffect(() => {
-    const img = imgRef.current
-    if (!blob.data || !img) return
-    const url = URL.createObjectURL(blob.data)
-    img.src = url
-    return () => {
-      img.removeAttribute('src')
-      URL.revokeObjectURL(url)
-    }
-  }, [blob.data])
-
-  if (blob.isError) {
-    const error = appErrorOf(blob.error)
-    return (
-      <p className={styles.error} role="alert">
-        <TriangleAlert aria-hidden="true" />
-        <span>
-          {error.message}
-          {error.ref && ` (${th.errors.reference(error.ref)})`}
-        </span>
-        <Button
-          size="sm"
-          variant="ghost"
-          icon={<RotateCcw />}
-          onClick={() => {
-            // ลิงก์อาจหมดอายุ (b2_403) — ขอลิงก์ใหม่แล้วโหลดอีกครั้ง
-            void queryClient.invalidateQueries({ queryKey: signedFileKey(file.asset_id, 'view') })
-            void blob.refetch()
-          }}
-        >
-          {copy.retry}
-        </Button>
-      </p>
-    )
-  }
-  if (!blob.data) {
-    return (
-      <p role="status" className={styles.muted}>
-        {copy.loading}
-      </p>
-    )
-  }
-  return <img ref={imgRef} alt={copy.imageAlt(owner, file.file_name)} />
 }

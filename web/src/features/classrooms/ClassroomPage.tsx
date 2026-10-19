@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link2, Lock, LockOpen, Maximize2, TriangleAlert, Users } from 'lucide-react'
+import { Link2, Lock, LockOpen, Maximize2, Table2, TriangleAlert, Users } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
@@ -203,6 +203,10 @@ function Room({
                 </button>
               </>
             )}
+            <Link to={`/t/c/${c.id}/grades`} className={styles.toolBtn} data-solid="true">
+              <Table2 aria-hidden="true" />
+              {th.gradebook.openFromRoom}
+            </Link>
             <Link to="/t/roster" className={styles.toolBtn} data-solid="true">
               <Users aria-hidden="true" />
               {copy.roster}

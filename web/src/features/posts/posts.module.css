@@ -601,3 +601,56 @@
     display: none;
   }
 }
+
+/* ---------- หน้าต่างลบการบ้าน/ประกาศ (N4, P4-09) ---------- */
+.deleteLead {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.deleteCsv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.deleteCsvError {
+  color: var(--red);
+  font-size: 0.8125rem;
+}
+
+.deleteCheck {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: var(--tap-min);
+  padding: 10px 14px;
+  border: 1px solid var(--red);
+  border-radius: 12px;
+  background: var(--red-soft);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.deleteCheck input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--red);
+}
+
+/* ปุ่ม “ลบ” บนการ์ดประกาศ ต่อจากปุ่มแก้ไข */
+.cardDelete {
+  composes: cardAction;
+  color: var(--red);
+}
+
+.postHead > .cardDelete {
+  margin-left: 0;
+}

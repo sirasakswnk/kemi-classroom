@@ -105,6 +105,9 @@ export function DialogBase({
       requestClose()
     }
     const onNativeClose = () => {
+      // เหตุการณ์ close ส่งแบบ async: ถ้ากล่องเปิดอยู่แล้วแปลว่าเป็นเหตุการณ์ค้างจาก cleanup รอบก่อน (เช่น StrictMode
+      // เรียก effect ซ้ำตอน mount กล่องที่ open = true ตั้งแต่แรก) ไม่ใช่เบราว์เซอร์ปิดเอง — ไม่งั้นกล่องปิดทันทีที่เปิด
+      if (dialog.open) return
       // เบราว์เซอร์ปิดเองขณะที่ open ยังเป็น true
       if (dismissibleRef.current) onCloseRef.current()
       else dialog.showModal()

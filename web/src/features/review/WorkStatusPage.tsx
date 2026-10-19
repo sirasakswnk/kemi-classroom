@@ -6,19 +6,28 @@ import {
   ChevronRight,
   ClipboardCheck,
   Inbox,
+  CalendarPlus,
   Lock,
+  LockOpen,
+  Trash2,
   TriangleAlert,
 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
 import { postQuery } from '../posts/api'
+import { DeletePostDialog } from '../posts/DeletePostDialog'
 import { TeacherPage } from '../teacher/TeacherLayout'
+import { useTeacher } from '../teacher/teacherContext'
 import { submissionListQuery } from './api'
+import { solutionQuery } from './assignmentApi'
+import { CloseDialog } from './CloseDialog'
+import { DueDialog } from './DueDialog'
+import { SolutionDialog } from './SolutionDialog'
 import { ProblemCard } from './ProblemCard'
 import {
   countRows,
@@ -35,7 +44,8 @@ import styles from './review.module.css'
 // T03 สถานะการส่งงาน (UX 9 [ยืนยันเพิ่มใน HTML ครู]; แบบ v2 tStatus): หัวหน้า (ชื่องาน กำหนดส่ง สถานะรับงาน) → การ์ดโจทย์และไฟล์
 // → สรุปยอด → ตัวกรอง ทั้งหมด/ส่งแล้ว/ยังไม่ส่ง → ตาราง 15 คนต่อหน้า (เลขที่ ชื่อ สถานะ เวลาส่ง ป้ายส่งช้า/ออกจากห้องแล้ว)
 // ตัวกรองและหน้าอยู่ใน URL (?filter=&page=) — กลับจากตัวดูไฟล์ได้หน้าเดิม
-// ปุ่มเปลี่ยนกำหนดส่ง/ปิดรับ/เฉลย มากับ P4-03 · หน้าตรวจเต็ม (คะแนน ความคิดเห็น) มากับ P4-04/P4-05
+// ปุ่มหัวหน้า (แบบ v2 tStatus .actions): เปิดรับอยู่ = เปลี่ยนกำหนดส่ง · ปิดรับงาน · เตรียมเฉลย; ปิดแล้ว = เปลี่ยนกำหนดส่ง ·
+// เปิดรับอีกครั้ง (ก่อนเผยแพร่เฉลย) · เผยแพร่เฉลย/ดูเฉลย; ช่วงรับหลังเฉลย = ปิดรับงานหลังเฉลย · ดูเฉลย — หน้าต่าง M1–M3 (P4-05)
 export default function WorkStatusPage() {
   const { postId = '' } = useParams()
   const [params, setParams] = useSearchParams()
@@ -44,6 +54,10 @@ export default function WorkStatusPage() {
   const classroomId = post.data?.classroom_id ?? list.data?.classroom_id ?? ''
   const classroom = useQuery({ ...classroomQuery(classroomId), enabled: !!classroomId })
   const [now] = useState(() => Date.now())
+  const solution = useQuery(solutionQuery(postId))
+  const { adminMode } = useTeacher()
+  const [dialog, setDialog] = useState<'due' | 'close' | 'solution' | 'delete' | null>(null)
+  const navigate = useNavigate()
   const copy = th.review
 
   const roomTo = classroomId ? `/t/c/${classroomId}?tab=work` : '/t'
@@ -115,6 +129,8 @@ export default function WorkStatusPage() {
       },
       { replace: true },
     )
+  const act = th.workActions
+  const hasDraft = !!solution.data && !solution.data.publishedAt
   const backSearch = `?filter=${filter}&page=${view.page}`
   const filterCount: Record<StatusFilter, number> = {
     all: counts.total,
@@ -143,7 +159,93 @@ export default function WorkStatusPage() {
               </Chip>
             )}
           </span>
+          <div className={styles.actions}>
+            <Button variant="ghost" icon={<CalendarPlus />} onClick={() => setDialog('due')}>
+              {act.changeDue}
+            </Button>
+            {data.intake === 'open' && (
+              <Button variant="ghost" icon={<Lock />} onClick={() => setDialog('close')}>
+                {act.close}
+              </Button>
+            )}
+            {data.intake === 'closed' && !data.solution_published && (
+              <Button variant="ghost" icon={<LockOpen />} onClick={() => setDialog('close')}>
+                {act.reopen}
+              </Button>
+            )}
+            {data.intake === 'after_solution' && (
+              <Button variant="ghost" icon={<Lock />} onClick={() => setDialog('close')}>
+                {act.closeAfter}
+              </Button>
+            )}
+            <Button
+              variant={data.intake === 'closed' && !data.solution_published ? 'primary' : 'ghost'}
+              icon={<BookOpenCheck />}
+              onClick={() => setDialog('solution')}
+            >
+              {data.solution_published
+                ? act.viewSolution
+                : data.intake === 'closed'
+                  ? hasDraft
+                    ? act.publishPrepared
+                    : act.publish
+                  : hasDraft
+                    ? act.prepared
+                    : act.prepare}
+            </Button>
+            <Button
+              variant="ghost"
+              icon={<Trash2 />}
+              className={styles.dangerAction}
+              onClick={() => setDialog('delete')}
+            >
+              {th.deletePost.open}
+            </Button>
+          </div>
         </header>
+        {dialog === 'due' && (
+          <DueDialog
+            open
+            onClose={() => setDialog(null)}
+            postId={postId}
+            dueAt={a.due_at}
+            adminMode={adminMode}
+          />
+        )}
+        {dialog === 'close' && (
+          <CloseDialog
+            open
+            onClose={() => setDialog(null)}
+            postId={postId}
+            intake={data.intake}
+            dueAt={a.due_at}
+            closeAt={a.close_at}
+            solutionPublished={data.solution_published}
+            acceptAfterSolution={a.accept_after_solution}
+            notSubmitted={counts.not}
+            waiting={counts.waiting}
+            adminMode={adminMode}
+          />
+        )}
+        {dialog === 'delete' && (
+          <DeletePostDialog
+            open
+            onClose={() => setDialog(null)}
+            postId={postId}
+            adminMode={adminMode}
+            onDeleted={() => void navigate(roomTo, { replace: true })}
+          />
+        )}
+        <SolutionDialog
+          open={dialog === 'solution'}
+          onClose={() => setDialog(null)}
+          postId={postId}
+          classroomId={p.classroom_id}
+          intake={data.intake}
+          acceptAfterSolution={a.accept_after_solution}
+          adminMode={adminMode}
+          onGoClose={() => setDialog('close')}
+        />
 
         <ProblemCard post={p} />
 

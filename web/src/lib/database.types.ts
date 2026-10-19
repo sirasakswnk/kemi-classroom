@@ -133,7 +133,9 @@ export type Database = {
       assignments: {
         Row: {
           accept_after_solution: boolean
+          after_solution_closed_at: string | null
           close_at: string | null
+          closed_at: string | null
           due_at: string
           full_score: number
           full_score_locked_at: string | null
@@ -144,7 +146,9 @@ export type Database = {
         }
         Insert: {
           accept_after_solution?: boolean
+          after_solution_closed_at?: string | null
           close_at?: string | null
+          closed_at?: string | null
           due_at: string
           full_score: number
           full_score_locked_at?: string | null
@@ -155,7 +159,9 @@ export type Database = {
         }
         Update: {
           accept_after_solution?: boolean
+          after_solution_closed_at?: string | null
           close_at?: string | null
+          closed_at?: string | null
           due_at?: string
           full_score?: number
           full_score_locked_at?: string | null
@@ -346,6 +352,137 @@ export type Database = {
             columns: ["term_id"]
             isOneToOne: false
             referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          assignment_id: string
+          author_account_id: string
+          body: string | null
+          created_at: string
+          id: string
+          retracted_at: string | null
+          student_id: string
+        }
+        Insert: {
+          assignment_id: string
+          author_account_id: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          retracted_at?: string | null
+          student_id: string
+        }
+        Update: {
+          assignment_id?: string
+          author_account_id?: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          retracted_at?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "comments_author_account_id_fkey"
+            columns: ["author_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grades: {
+        Row: {
+          applied_penalty_pct: number
+          deduction: number | null
+          graded_at: string
+          graded_by_account_id: string
+          graded_revision: number
+          net_score: number | null
+          override_comment_id: string | null
+          passed: boolean
+          penalty_override_pct: number | null
+          raw_score: number | null
+          submission_id: string
+          timing: string
+          timing_basis_at: string
+          timing_due_at: string
+          timing_i1: boolean
+          version: number
+        }
+        Insert: {
+          applied_penalty_pct: number
+          deduction?: number | null
+          graded_at: string
+          graded_by_account_id: string
+          graded_revision: number
+          net_score?: number | null
+          override_comment_id?: string | null
+          passed: boolean
+          penalty_override_pct?: number | null
+          raw_score?: number | null
+          submission_id: string
+          timing: string
+          timing_basis_at: string
+          timing_due_at: string
+          timing_i1: boolean
+          version?: number
+        }
+        Update: {
+          applied_penalty_pct?: number
+          deduction?: number | null
+          graded_at?: string
+          graded_by_account_id?: string
+          graded_revision?: number
+          net_score?: number | null
+          override_comment_id?: string | null
+          passed?: boolean
+          penalty_override_pct?: number | null
+          raw_score?: number | null
+          submission_id?: string
+          timing?: string
+          timing_basis_at?: string
+          timing_due_at?: string
+          timing_i1?: boolean
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_graded_by_account_id_fkey"
+            columns: ["graded_by_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_override_comment_id_fkey"
+            columns: ["override_comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "submissions"
             referencedColumns: ["id"]
           },
         ]
@@ -838,8 +975,32 @@ export type Database = {
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
+      change_due: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_due_at: string
+          p_expected_to_late: string[]
+          p_expected_to_on_time: string[]
+          p_request_key: string
+        }
+        Returns: Json
+      }
       claim_identity: { Args: { p_ref: string }; Returns: Json }
       classroom_view: { Args: { p_classroom_id: string }; Returns: Json }
+      close_assignment: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_close_at: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
+      comment_thread: {
+        Args: { p_assignment_id: string; p_student_id?: string }
+        Returns: Json
+      }
       commit_roster_import: {
         Args: {
           p_admin_mode?: boolean
@@ -882,8 +1043,31 @@ export type Database = {
       }
       delete_asset_begin: { Args: { p_job_id: number }; Returns: Json }
       delete_asset_finish: { Args: { p_job_id: number }; Returns: boolean }
+      delete_post: {
+        Args: {
+          p_admin_mode?: boolean
+          p_expected: Json
+          p_post_id: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
       ensure_account: { Args: never; Returns: Json }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
+      grade_submission: {
+        Args: {
+          p_admin_mode?: boolean
+          p_expected_version: number
+          p_override_pct: number
+          p_pass: boolean
+          p_raw: number
+          p_reason: string
+          p_request_key: string
+          p_seen_revision: number
+          p_submission_id: string
+        }
+        Returns: Json
+      }
       jobs_claim: { Args: { p_limit?: number }; Returns: Json }
       jobs_complete: {
         Args: { p_job_id: number; p_note?: string }
@@ -898,9 +1082,41 @@ export type Database = {
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
       my_classrooms: { Args: never; Returns: Json }
       my_work: { Args: { p_classroom_id?: string }; Returns: Json }
+      open_revision_permission: {
+        Args: {
+          p_admin_mode?: boolean
+          p_request_key: string
+          p_submission_id: string
+        }
+        Returns: Json
+      }
       ping: { Args: never; Returns: string }
+      post_comment: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_body: string
+          p_request_key: string
+          p_student_id: string
+        }
+        Returns: Json
+      }
+      post_delete_preview: { Args: { p_post_id: string }; Returns: Json }
+      preview_due_change: {
+        Args: { p_assignment_id: string; p_due_at: string }
+        Returns: Json
+      }
       preview_roster_import: {
         Args: { p_admin_mode?: boolean; p_group_name: string; p_rows: Json }
+        Returns: Json
+      }
+      publish_solution: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_expected_version: number
+          p_request_key: string
+        }
         Returns: Json
       }
       rebind_preview: {
@@ -928,7 +1144,31 @@ export type Database = {
         }
         Returns: Json
       }
+      reopen_assignment: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_close_at: string
+          p_request_key: string
+        }
+        Returns: Json
+      }
+      retract_comment: {
+        Args: { p_admin_mode?: boolean; p_comment_id: string }
+        Returns: Json
+      }
       roster_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
+      save_solution: {
+        Args: {
+          p_admin_mode?: boolean
+          p_assignment_id: string
+          p_body: string
+          p_expected_version: number
+          p_files: string[]
+          p_request_key: string
+        }
+        Returns: Json
+      }
       search_roster: { Args: { p_query: string }; Returns: Json }
       set_join_enabled: {
         Args: {
@@ -953,6 +1193,7 @@ export type Database = {
         Args: { p_asset_id: string; p_version_id: string }
         Returns: string
       }
+      teacher_grade_table: { Args: { p_classroom_id: string }; Returns: Json }
       teacher_submission_list: {
         Args: { p_assignment_id: string }
         Returns: Json

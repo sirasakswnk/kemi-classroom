@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { th } from '../../copy/th'
+import type { Grade } from '../grading/api'
 import type { SubmissionStatus, WorkRow } from './api'
 import {
   blockedReason,
   dueHint,
   dueSoon,
   filterWork,
+  gradeView,
   isPending,
   mineBadge,
   sameFiles,
@@ -160,5 +162,67 @@ describe('S03 งานของฉัน', () => {
   })
   it('วันเวลาไทยของเวลา UTC', () => {
     expect(when('2026-11-10T13:00:00Z')).toMatch(/10 พ\.ย\..* 20:00 น\.$/)
+  })
+})
+
+const grade = (over: Partial<Grade> = {}): Grade => ({
+  submission_id: '00000000-0000-4000-8000-0000000000s1',
+  raw_score: 9,
+  passed: true,
+  penalty_override_pct: null,
+  timing: 'on_time',
+  applied_penalty_pct: 0,
+  net_score: 9,
+  graded_revision: 1,
+  graded_at: '2026-11-11T05:00:00Z',
+  version: 1,
+  ...over,
+})
+
+describe('S03 คะแนนและความครบถ้วน', () => {
+  it('ยังไม่เคยตรวจ → ไม่มีผลให้แสดง', () => {
+    expect(gradeView(null, 1)).toBeNull()
+  })
+  it('คะแนนทัน: ก่อนหัก = สุทธิ ไม่มีการหัก', () => {
+    expect(gradeView(grade({ raw_score: 7, net_score: 7 }), 1)).toEqual({
+      stale: false,
+      revision: 1,
+      passed: true,
+      score: { raw: 7, penaltyPct: 0, deduction: 0, net: 7 },
+      override: null,
+      late: false,
+    })
+  })
+  it('งานสาย: ก่อนหัก 9, หัก 20% → สุทธิ 8 (หัก 1 ปัดขึ้นตามสูตรของเซิร์ฟเวอร์)', () => {
+    const v = gradeView(
+      grade({ timing: 'late', applied_penalty_pct: 20, raw_score: 9, net_score: 8 }),
+      1,
+    )
+    expect(v?.score).toEqual({ raw: 9, penaltyPct: 20, deduction: 1, net: 8 })
+    expect(v?.late).toBe(true)
+  })
+  it('ไม่ให้คะแนนแต่บันทึกความครบถ้วน → score เป็น null', () => {
+    const v = gradeView(grade({ raw_score: null, net_score: null, passed: false }), 1)
+    expect(v?.score).toBeNull()
+    expect(v?.passed).toBe(false)
+  })
+  it('ส่งแก้หลังตรวจ → ผลเดิมเป็นของชุดก่อนหน้า (stale)', () => {
+    expect(gradeView(grade({ graded_revision: 1 }), 2)?.stale).toBe(true)
+    expect(gradeView(grade({ graded_revision: 2 }), 2)?.stale).toBe(false)
+  })
+  it('แถบขั้นตอนตามผลตรวจ: ครบถ้วน / รอยืนยัน / รอตรวจชุดใหม่', () => {
+    const st = status({ outcome: 'resubmit', submission: submitted() })
+    expect(stepStates(st, gradeView(grade(), 1))).toEqual(['done', 'done', 'done', 'todo'])
+    expect(stepStates(st, gradeView(grade({ passed: false }), 1))).toEqual([
+      'done',
+      'done',
+      'now',
+      'todo',
+    ])
+    expect(stepStates(st, gradeView(grade(), 2))).toEqual(['done', 'now', 'todo', 'todo'])
+  })
+  it('ข้อความไม่ใช้คำว่า “ไม่ผ่าน”', () => {
+    expect(JSON.stringify(th.work.grade)).not.toContain('ไม่ผ่าน')
+    expect(th.work.grade.pending).toBe('รอครูยืนยันความครบถ้วน')
   })
 })

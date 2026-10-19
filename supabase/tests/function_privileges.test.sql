@@ -75,7 +75,29 @@ insert into expected_authenticated values
   ('public.teacher_submission_list(uuid)'),
   -- 0023_jobs (ยอดพื้นที่ทุกบทบาท — นักเรียนเห็นแค่ระดับ; ตัวนับ B2 เฉพาะผู้ดูแล)
   ('public.storage_status()'),
-  ('public.admin_b2_usage()');
+  ('public.admin_b2_usage()'),
+  -- 0025_grading (ครู/ผู้ดูแลในโหมดผู้ดูแลบันทึกผลตรวจ)
+  ('public.grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)'),
+  -- 0027_feedback (เปิดสิทธิ์แก้ของครู + ความคิดเห็นส่วนตัวทั้งสองฝ่าย)
+  ('public.open_revision_permission(uuid,uuid,boolean)'),
+  ('public.post_comment(uuid,uuid,text,uuid,boolean)'),
+  ('public.retract_comment(uuid,boolean)'),
+  -- 0028_intake (ครู/ผู้ดูแล: ดูผลก่อนเปลี่ยนกำหนดส่ง, เปลี่ยนกำหนดส่ง, ปิดรับ)
+  ('public.preview_due_change(uuid,timestamp with time zone)'),
+  ('public.change_due(uuid,timestamp with time zone,uuid[],uuid[],uuid,boolean)'),
+  ('public.close_assignment(uuid,timestamp with time zone,uuid,boolean)'),
+  -- 0029_solutions (ครู/ผู้ดูแล: บันทึกและเผยแพร่เฉลย)
+  ('public.save_solution(uuid,text,uuid[],integer,uuid,boolean)'),
+  ('public.publish_solution(uuid,integer,uuid,boolean)'),
+  -- 0030_reopen (ครู/ผู้ดูแล: เปิดรับอีกครั้ง / เปลี่ยนหรือยกเลิกเวลาปิดรับ)
+  ('public.reopen_assignment(uuid,timestamp with time zone,uuid,boolean)'),
+  -- 0031_comment_thread (อ่านช่องความคิดเห็นพร้อมชื่อผู้ส่งและสิทธิ์เขียนของผู้เรียก)
+  ('public.comment_thread(uuid,uuid)'),
+  -- 0032_grade_table (ครู/ผู้ดูแลอ่านตารางคะแนนของห้อง)
+  ('public.teacher_grade_table(uuid)'),
+  -- 0033_delete_post (ครู/ผู้ดูแล: ดูยอดก่อนลบ, ลบการบ้าน/ประกาศแบบ cascade)
+  ('public.post_delete_preview(uuid)'),
+  ('public.delete_post(uuid,jsonb,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**

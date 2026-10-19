@@ -1,0 +1,199 @@
+/* แผงผลตรวจ T03 (แบบ v2 g-panel / score-in / calc / ovr-box / switch-row) */
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.muted {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.84375rem;
+}
+
+.scoreIn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreIn input {
+  width: 6.5em;
+  text-align: center;
+}
+
+.scoreIn > span {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.calc {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--bg-2);
+  font-size: 0.90625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.calcRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.calcRow > span:last-child {
+  text-align: right;
+}
+
+.calcRow[data-total] {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  font-weight: 600;
+}
+
+.override {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.overrideRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-height: var(--tap-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.hint,
+.note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.note {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+
+.hint svg,
+.note svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+}
+
+/* ช่องติ๊ก “ยืนยันงานครบถ้วน” — ทั้งแถวเป็นพื้นที่แตะ (≥ 44 px) */
+.passRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap-min);
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.passRow input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--purple);
+  cursor: pointer;
+}
+
+.passRow > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.passRow b {
+  font-weight: 600;
+}
+
+.passRow > span > span {
+  color: var(--ink-2);
+  font-size: 0.84375rem;
+}
+
+.passRow:has(input:checked) {
+  border-color: var(--purple);
+  background: var(--purple-soft);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+.error svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.error > span {
+  flex: 1;
+  min-width: 12em;
+}

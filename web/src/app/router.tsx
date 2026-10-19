@@ -95,6 +95,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T04 ตารางคะแนน + CSV (P4-07)
+            path: 'c/:classId/grades',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).GradebookPage,
+            }),
+          },
+          {
             path: 'c/:classId/new',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).CreatePost,

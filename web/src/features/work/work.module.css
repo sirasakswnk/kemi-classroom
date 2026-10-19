@@ -584,3 +584,42 @@
 .homeCols[data-single] {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* ---------- คะแนนและความครบถ้วน (S03) ---------- */
+.scoreRows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreRows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+.scoreRows dt,
+.scoreRows dd {
+  margin: 0;
+}
+
+.scoreRows dd small {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
+.scoreRows .scoreNet {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.card[data-stale] .scoreRows {
+  opacity: 0.7;
+}

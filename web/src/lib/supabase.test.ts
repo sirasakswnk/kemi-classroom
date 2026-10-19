@@ -132,6 +132,23 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   },
   reason_required: { message: 'กรุณาใส่เหตุผล', action: 'focus_field' },
   stale_revision: { message: 'ข้อมูลนี้ถูกแก้จากหน้าจออื่นแล้ว', action: 'reload_latest' },
+  // T03 แผงผลตรวจ (UX 7.1 — score_invalid ใต้ช่องแสดงช่วงตามคะแนนเต็มของงาน)
+  score_invalid: { message: 'ใส่คะแนนเป็นจำนวนเต็ม 0 ถึงคะแนนเต็ม', action: 'focus_field' },
+  penalty_not_late: {
+    message: 'งานนี้นับเป็นส่งทันกำหนดแล้ว จึงไม่มีการหักส่งช้าให้ปรับ',
+    action: 'reload',
+  },
+  comment_too_long: { message: 'ข้อความยาวเกิน 2,000 ตัวอักษร ตัดให้สั้นลง', action: 'field' },
+  preview_changed: {
+    message:
+      'มีนักเรียนส่งหรือครูตรวจงานเพิ่มระหว่างนี้ รายชื่อด้านล่างอัปเดตแล้ว ตรวจอีกครั้งแล้วกดยืนยัน',
+    action: 'field',
+  },
+  close_required: { message: 'ปิดรับงานก่อนเผยแพร่เฉลย', action: 'field' },
+  solution_published: {
+    message: 'เผยแพร่เฉลยแล้ว เปิดรับเพิ่มได้ผ่านตัวเลือกรับงานหลังเฉลยเท่านั้น',
+    action: 'reload',
+  },
 }
 
 const FALLBACK = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง ถ้ายังไม่ได้ให้แจ้งคุณครู'

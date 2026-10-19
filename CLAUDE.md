@@ -48,6 +48,7 @@
 - กติกาไม่พอ ขัดกัน หรือต้องตีความเกินเอกสาร → หยุดส่วนนั้นแล้วถาม; กติกาใหม่ต้องแก้ `SYSTEM_SPEC.md` ก่อนแก้โค้ด
 - เพิ่ม dependency นอกรายการใน `TECHNICAL_BUILD_PLAN.md` ส่วน 1
 - ทุกอย่างที่แตะระบบใช้จริง (`kemi-prod`, bucket `kemi-files`, Pages production): migration, deploy function, ตั้งค่า, ข้อมูล — ค่าเริ่มต้นคือทำกับ dev เท่านั้น
+- **เพิ่ม/แก้ข้อมูลบน kemi-dev ด้วย SQL ตรง** (insert/update/delete ผ่าน `supabase db query`) — ต้องขอผู้ใช้ก่อนทุกครั้ง หรือใช้หน้าเว็บ/RPC ตามปกติ (select อ่านอย่างเดียวทำได้) (ผู้ใช้กำหนด 18 ต.ค. 2026)
 - ลบไฟล์หรือข้อมูล, `git push --force`, เขียนประวัติ git ใหม่, push ครั้งแรกไป GitHub
 - สิ่งที่มีค่าใช้จ่าย เปิด billing หรืออัปเกรดแพ็กเกจ — **ห้ามเสมอ** (J10.4–J10.5)
 
@@ -72,6 +73,7 @@
   - เครื่องมือเว็บ: Vite 8, React 19, TypeScript 6 (strict), ESLint 10 (flat config), Prettier (ไม่มี `;`, single quote, กว้าง 100), Vitest 5 (environment `node` ถ้าต้องใช้ DOM ต้องขอเพิ่ม dependency)
   - Supabase CLI อยู่ใน `package.json` ที่ root เรียกด้วย `npx supabase …` (link กับ `kemi-dev` แล้ว)
   - npm script ที่ root: `npm run db:start | db:reset | db:test | db:test:dev | db:push | db:advisors` (Postgres ในเครื่องต้องเปิด Docker Desktop ก่อน)
+  - ตรวจ CSP ของ build จริง: `node ops/csp-serve.mjs web/dist 5173` (วิธีใช้ใน ส่วน 7 ข้อ 5)
   - ฐานข้อมูล dev: `npm run db:push` · สร้าง type: `npx supabase gen types typescript --linked`
   - รัน SQL กับ dev (ไม่มี `psql` ในเครื่อง): `npx supabase db query --linked -f <ไฟล์>.sql --output-format json` — ผ่าน Management API ในนาม `postgres`; ผลยาวให้รวมเป็นแถวเดียวด้วย `string_agg`/`concat_ws` · ตรวจ advisor: `npx supabase db advisors --linked`
   - ทดสอบฐานข้อมูล: pgTAP ใน `supabase/tests/*.test.sql` คู่กับ migration ทุกไฟล์ — ขั้นตอน: `db:reset` → `db:test` (ในเครื่อง) ผ่านแล้วค่อย `db:push` → `db:test:dev`
@@ -85,7 +87,13 @@
 2. ข้อความและสถานะบนหน้าจอตรง UX_DESIGN/แบบ v2 หรือจดความต่างไว้เป็นข้อเสนอในโน้ตของงาน
 3. งานหน้าเว็บตรวจที่จอ 390 px (มือถือ), 820 px และ 1180 px (แท็บเล็ตแนวตั้ง/แนวนอน — นักเรียนส่งงานจากแท็บเล็ตด้วย) และ 1280 px (คอม) ไม่มีข้อผิดพลาดใน console; แยกอุปกรณ์ด้วยความกว้างจอ/`pointer: coarse` ห้ามใช้ user agent และไม่มีปุ่มที่ต้อง hover อย่างเดียว
 4. ไม่ทำให้ข้อใดในส่วน 5 ถูกละเมิด
-5. `PROGRESS.md` อัปเดตแล้ว และ commit แล้ว
+5. **งานที่แตะสคริปต์/worker/wasm/รูป/สไตล์/คำขอไปบริการภายนอก/การดาวน์โหลดแบบ blob ต้องตรวจ CSP กับ build จริง** (CSP ของ Cloudflare อยู่ที่ `web/public/_headers`; dev server ไม่มี CSP จึงไม่พิสูจน์อะไร):
+   - build (`npm --prefix web run build`) แล้วเสิร์ฟด้วย `node ops/csp-serve.mjs web/dist 5173` (หยุด dev server ก่อน; พอร์ต 5173 ใช้ session ที่ล็อกอิน kemi-dev ค้างไว้ได้) — สคริปต์ใส่ header ชุดเดียวกับ `dist/_headers` และเพิ่ม `report-uri /__csp-report` ให้ **เบราว์เซอร์รายงานการละเมิดมาที่เซิร์ฟเวอร์เอง** (ครอบคลุมช่วงโหลดหน้า worker และสิ่งที่เกิดก่อนติดตั้งตัวฟังในหน้า); ดูผลที่ `curl http://localhost:5173/__csp-summary` (`count`, `violations`)
+   - **ห้ามใช้ “console ไม่มี error” จากเครื่องมือเบราว์เซอร์ (Claude in Chrome `read_console_messages`) เป็นหลักฐานเรื่อง CSP** — มันมองไม่เห็นข้อความ CSP (พบ 18 ต.ค. 2026); ตัวฟัง `document.addEventListener('securitypolicyviolation', …)` ในหน้าใช้เสริมได้ แต่จับได้เฉพาะหลังติดตั้ง
+   - **ก่อนเชื่อผล “ไม่พบ” ต้องมีตัวควบคุมบวก:** ในหน้าที่ทดสอบรัน `fetch('https://example.com/probe')` แล้วดู `/__csp-summary` ต้องมี `connect-src` ของ URL นั้น; แล้วจึงใช้งานทุกเส้นทางที่เกี่ยวข้อง (เปิดหน้า สร้าง worker อัปโหลด ดูไฟล์ ดาวน์โหลด) และรายงาน `count` ที่เพิ่มจากตัวควบคุม
+   - iframe ถูก CSP ห้าม (`frame-ancestors 'none'`) — วัดความกว้างด้วย iframe ต้องใช้ dev server แยกรอบ
+   - ทดสอบดาวน์โหลดต้อง **คลิกจริง** (ไม่ใช่ `element.click()` จากสคริปต์): คลิกที่ไม่มี user gesture ทำให้ Chrome บล็อกดาวน์โหลดอัตโนมัติของ origin นั้นต่อไป (ไฟล์ไม่ลงดิสก์ทั้งที่แอปแจ้งว่าสำเร็จ)
+6. `PROGRESS.md` อัปเดตแล้ว และ commit แล้ว
 
 ## 8. การสื่อสาร
 

@@ -1,10 +1,13 @@
-import { PenLine } from 'lucide-react'
+import { PenLine, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { initialOf } from '../../lib/initial'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
+import { useTeacher } from '../teacher/teacherContext'
 import { AttachmentList } from '../uploads/AttachmentList'
 import type { Post } from './api'
+import { DeletePostDialog } from './DeletePostDialog'
 import styles from './posts.module.css'
 
 // ประกาศของห้อง ใช้ร่วมกันใน S02 (นักเรียน) และ T08 (ครู) — แบบ v2 .post; ไฟล์แนบเปิดดู/ดาวน์โหลดได้ (P3-06b)
@@ -12,6 +15,34 @@ import styles from './posts.module.css'
 // ครู: ปุ่มแก้ไขบนการ์ดประกาศ (ถาวรตาม UX 9) — ปุ่มแก้ไขการบ้านอยู่ที่การ์ดโจทย์ของ T03
 
 type Heading = 'h2' | 'h3'
+
+/** ปุ่ม “ลบ” บนการ์ดประกาศของครู + หน้าต่างยืนยันสั้น (N4) — ต่อจากปุ่มแก้ไข */
+function DeleteAnnouncement({ post }: { post: Post }) {
+  const copy = th.deletePost
+  const { adminMode } = useTeacher()
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button
+        type="button"
+        className={styles.cardDelete}
+        aria-label={copy.openAnnouncementAria(post.title)}
+        onClick={() => setOpen(true)}
+      >
+        <Trash2 aria-hidden="true" />
+        <span aria-hidden="true">{copy.openAnnouncement}</span>
+      </button>
+      {open && (
+        <DeletePostDialog
+          open
+          onClose={() => setOpen(false)}
+          postId={post.id}
+          adminMode={adminMode}
+        />
+      )}
+    </>
+  )
+}
 
 /** ประกาศ: ผู้โพสต์ เวลา หัวข้อ และข้อความ (คงการขึ้นบรรทัด) — กว้างไม่เกิน 760 px เพื่อให้อ่านง่าย (UX 13) */
 export function AnnouncementList({
@@ -53,6 +84,7 @@ export function AnnouncementList({
                   <span aria-hidden="true">{copy.edit}</span>
                 </Link>
               )}
+              {editable && <DeleteAnnouncement post={post} />}
             </div>
             <Title className={styles.postTitle}>{post.title}</Title>
             {post.body && <p className={styles.postBody}>{post.body}</p>}
