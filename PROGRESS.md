@@ -6,8 +6,8 @@
 
 ## สถานะล่าสุด
 
-- ระยะปัจจุบัน: 5 (branch `phase-5` สร้างจาก `main` @ `5f226c2` 19 ต.ค. 2026; รอผู้ใช้ตกลงแผน P5-xx) · **ระยะ 4 ปิดแล้ว 19 ต.ค. 2026:** merge `phase-4` เข้า `main` แบบ merge commit @ `5f226c2` — CI ของ phase-4 ก่อน merge: `web` ผ่านที่ `ee77fb9` (โค้ดล่าสุด; commit หลังจากนั้นแก้แค่ .md จึงไม่รันตาม `paths-ignore`), `db` ผ่านที่ `7aac7e3` (รวม migration ล่าสุด `0033`); CI บน `main` @ `5f226c2` run 39190653865 `web` + `db` ผ่าน; Cloudflare Pages production “Deploy successful”; production ยังแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” และ bundle ชี้ kemi-dev (`igchlnmxbghsigyziomk`) · ระยะ 3 ปิดแล้ว 11 ต.ค. 2026: merge `phase-3` เข้า `main` @ `ea48714` (CI + Cloudflare Pages ผ่าน, production ยังมีแถบระบบทดสอบและต่อ kemi-dev, ตาราง `backup.yml` 02:30/14:30 น. เริ่มทำงาน) · ระยะ 2 ปิด 4 ต.ค. @ `aff3cb5` · ระยะ 1 ปิด 2 ต.ค. @ `137ea08`
-- งานถัดไป: **รอผู้ใช้ตกลงแผนระยะ 5 (เสนอในแชท 19 ต.ค.) และตัดสินคำถามที่ค้าง** แล้วเริ่ม P5-01 · P3-12e รอตัวเลข B2 · migration ถัดไป `0032_…`
+- ระยะปัจจุบัน: 5 (branch `phase-5` สร้างจาก `main` @ `5f226c2` 19 ต.ค. 2026; แผน P5-01–P5-10 ผู้ใช้ตกลงแล้ว) · **ระยะ 4 ปิดแล้ว 19 ต.ค. 2026:** merge `phase-4` เข้า `main` แบบ merge commit @ `5f226c2` — CI ของ phase-4 ก่อน merge: `web` ผ่านที่ `ee77fb9` (โค้ดล่าสุด; commit หลังจากนั้นแก้แค่ .md จึงไม่รันตาม `paths-ignore`), `db` ผ่านที่ `7aac7e3` (รวม migration ล่าสุด `0033`); CI บน `main` @ `5f226c2` run 39190653865 `web` + `db` ผ่าน; Cloudflare Pages production “Deploy successful”; production ยังแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” และ bundle ชี้ kemi-dev (`igchlnmxbghsigyziomk`) · ระยะ 3 ปิดแล้ว 11 ต.ค. 2026: merge `phase-3` เข้า `main` @ `ea48714` (CI + Cloudflare Pages ผ่าน, production ยังมีแถบระบบทดสอบและต่อ kemi-dev, ตาราง `backup.yml` 02:30/14:30 น. เริ่มทำงาน) · ระยะ 2 ปิด 4 ต.ค. @ `aff3cb5` · ระยะ 1 ปิด 2 ต.ค. @ `137ea08`
+- งานถัดไป: P5-01a (`0034_rewards`) — ผู้ใช้ตกลงแผนระยะ 5 แล้ว 19 ต.ค. · P3-12e รอตัวเลข B2 · migration ถัดไป `0032_…`
 - สำรองตามตาราง (ตรวจ 17 ต.ค.): สำเร็จทุกรอบตั้งแต่ 12 ต.ค. (GitHub เริ่มรอบช้ากว่า cron 2.5–5.5 ชม.) · รอบ 02:30 น. 17 ต.ค. เริ่ม 05:09 น. ใช้ ~2 นาที อ่าน B2 0 คำขอ ping สำเร็จไม่มี warning · ล้าง Drive แล้ว: จุดกู้คืน 7 ต.ค. 3 จุดลบในรอบ 14 ต.ค. 19:58 น., PDF จริงของ P3-12d ลบในรอบ 15 ต.ค. 19:46 น. (`ขอ 1 ยืนยัน 1`, `backup_manifests` ไม่มี key นั้นแล้ว 0/20) — §13 ข้อ 14 (token ไม่หมดอายุ 7 วัน) ผ่าน
 - เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
 - บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
@@ -470,15 +470,22 @@
 
 ## ระยะ 5 — รางวัลและสะสม
 
-- [ ] P5-01 **[effort สูง]** migration กลุ่ม rewards + ให้รางวัลในรอบเดียวกับผลตรวจ + seed ระดับ/เครื่องราง 12 ชิ้น + ทดสอบ
-- [ ] P5-02 **[effort สูง]** สุ่ม (K6) + อัตราจริง + ปรับยอด + ทดสอบคำขอพร้อมกัน
-- [ ] P5-03 S04 สุ่ม + เอฟเฟกต์ + เอฟเฟกต์ได้รับโทเคนครั้งเดียว
-- [ ] P5-04 S05 ตู้สะสม + สวมใส่ + แสดงในแท็บสมาชิก
-- [ ] P5-05 T06 จัดการเครื่องราง + อัตรา + อัปโหลดรูป
-- [ ] P5-06 **[effort สูง]** migration กลุ่ม terms เริ่ม/จบภาคเรียน (K5, J9, I5) + ทดสอบ
-- [ ] P5-07 T07 หน้าภาคเรียน + สถานะหลังจบภาคเรียนในทุกหน้าที่เกี่ยวข้อง
+- แผน P5-01–P5-10 ผู้ใช้ตกลง 19 ต.ค. 2026 (branch `phase-5`) · ค่าเริ่มต้นที่ตกลง: receipt 24 ชม. (`operation_receipts`), wallet หนึ่งแถวต่อ (นักเรียน, เทอม), สุ่มด้วย `gen_random_bytes` (pgcrypto)
+- **ผู้ใช้ตัดสิน 19 ต.ค. 2026:** (1) ทดสอบสถิติการสุ่มเป็น pgTAP ที่ rollback ทุกครั้ง รันในเครื่องและ `db:test:dev` (2) เพิ่มสคริปต์ Node ใน `ops/` เปิด 2 การเชื่อมต่อยิงพร้อมกันหลายรอบ **กับฐานข้อมูลในเครื่อง (supabase start) เท่านั้น ไม่ใช่ kemi-dev**: (ก) `grade_submission` ผ่านพร้อมกัน → โทเคนเพิ่มครั้งเดียว ใน P5-02 (ข) `draw_charm` สองครั้งพร้อมกันตอนมี 1 โทเคน → สำเร็จ 1 ครั้ง ยอดไม่ติดลบ ใน P5-04 (ค) `grade_submission` ชน `terms_start` → ยอดไม่ผิด ใน P5-08 — นอกเหนือจาก pgTAP และสองแท็บใน P5-10 (3) เอฟเฟกต์โทเคนหลายงานที่ยังไม่ได้ดู: แสดงครั้งเดียวรวมยอด เช่น “+3 โทเคน จาก 2 งาน” แล้วตั้งว่าดูแล้วทุกงาน (ผู้ใช้จะลง UX_DESIGN เอง) (4) P5-07 deploy Edge Function ขึ้น kemi-dev ได้ (dev เท่านั้น)
+
+- [ ] P5-01 **[effort สูง]** `0034_rewards`: `wallets`, `rarities`, `charms`, `owned_charms`, `student_equipment`, `submissions.reward_effect_seen` + RLS + seed ระดับ 4 ระดับ/เครื่องราง 12 ชิ้น + ทดสอบ
+    - [ ] P5-01a migration + seed + pgTAP ในเครื่อง
+    - [ ] P5-01b `db:push` kemi-dev → `db:test:dev` → `db:types` (seed บน dev = insert ด้วย SQL ตรง ต้องขอผู้ใช้)
+- [ ] P5-02 **[effort สูง]** `0035_grade_reward`: ขั้นให้รางวัลที่จุดต่อใน `grade_submission` (TECHNICAL_DESIGN ส่วน 6 ข้อ 6–7; ล็อก term_control → assignment → submission → wallet; ทัน + ไม่ใช่ส่งแรกหลังเฉลย + ผ่าน + เทอมปัจจุบัน I5 + `reward_granted=false`) + pgTAP ข้อที่ย้ายจากระยะ 4 (I3, K4, N3, N4) + ส่งช้า/ตรวจซ้ำ/K5 + สคริปต์ยิงพร้อมกัน (ก)
+- [ ] P5-03 `0036_wallet_ops`: `mark_reward_effect_seen` + เอฟเฟกต์ค้างในสถานะงาน + `wallet_adjust` (รุ่นยอด, ไม่ติดลบ, ไม่มีประวัติ) + ช่องปรับโทเคนใน T05
+- [ ] P5-04 **[effort สูง]** `0037_draw`: `get_draw_options` (อัตราจริง, ok/ยอดไม่พอ/completed/unavailable), `draw_charm` (receipt 24 ชม., `gen_random_bytes`), `set_equipment` + pgTAP สถิติ + สคริปต์ยิงพร้อมกัน (ข)
+- [ ] P5-05 S04 สุ่ม + เอฟเฟกต์ + เอฟเฟกต์ได้รับโทเคนครั้งเดียว (รวมยอดหลายงาน)
+- [ ] P5-06 S05 ตู้สะสม + ป๊อปอัป + สวมใส่ + แสดงในแท็บสมาชิก
+- [ ] P5-07 `0038_charm_admin` + T06 จัดการเครื่องราง (ชื่อ/คำอธิบาย/ระดับ/อัตรารวม 100) + อัปโหลดรูป (purpose `charm`, Edge Function deploy dev) + รูปชั่วคราววาดด้วยโค้ด
+- [ ] P5-08 **[effort สูง]** `0039_terms`: `terms_start`/`terms_end` (K5, J9, I5) + ทดสอบ + สคริปต์ยิงพร้อมกัน (ค)
+- [ ] P5-09 T07 หน้าภาคเรียน + สถานะหลังจบภาคเรียนในทุกหน้าที่เกี่ยวข้อง
     - จาก P3-09b: ฟอร์มภาคเรียน (วันที่ใด ๆ) ใช้ตัวเลือกวันที่/เวลาของระบบ `DatePicker` + `TimePicker` (`web/src/ui`, P3-09b) — ห้ามใช้ `<input type="date|time">` (UX 13 “วันที่และเวลา”); ค่าเข้า/ออก `YYYY-MM-DD` + `HH:mm` แล้ว `bangkokToUtcIso`
-- [ ] P5-08 ตรวจรับระยะ 5 (จุดสาธิต 3)
+- [ ] P5-10 ตรวจรับระยะ 5 (จุดสาธิต 3): ชุดเต็ม, CSP กับ build จริง, 4 ความกว้าง, สองแท็บพร้อมกัน, merge
 
 ## ระยะ 6 — แจ้งเตือนและงานเบื้องหลัง
 
