@@ -66,10 +66,11 @@ export function dueHint(dueAt: string, now: number): 'overdue' | 'soon' | null {
 export const sameFiles = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id, i) => id === b[i])
 
-/** S03: ป้ายหัว “งานของฉัน” */
+/** S03: ป้ายหัว “งานของฉัน” — หลังครูตรวจชุดล่าสุดแล้วใช้สถานะตาม UX 7 (ไม่ค้างที่ “รอครูตรวจ”) */
 export function mineBadge(
   status: SubmissionStatus,
   ui: { editing: boolean; attached: boolean },
+  grade: GradeView | null = null,
 ): Badge {
   const sub = status.submission
   if (sub && ui.editing) return { label: copy.label.editing, tone: 'amber' }
@@ -80,6 +81,12 @@ export function mineBadge(
     return { label: copy.label.todo, tone: 'amber' }
   }
   if (status.permission_open) return { label: copy.label.permission, tone: 'purple' }
+  if (grade && !grade.stale) {
+    if (!grade.passed && status.current_term && grade.score)
+      return { label: copy.label.scored(grade.score.net), tone: 'amber' }
+    const chip = gradeChip(grade, status)
+    return { label: chip.label, tone: chip.tone }
+  }
   if (sub.timing === 'late') return { label: copy.label.late, tone: 'red' }
   if (sub.content_revision > 1) return { label: copy.label.revised, tone: 'purple' }
   return { label: copy.label.onTime, tone: 'purple' }

@@ -167,7 +167,7 @@ export default function WorkPage() {
           </section>
         </div>
         <div className={styles.side}>
-          <MyWork post={p} status={s} />
+          <MyWork post={p} status={s} grade={view} />
           {sub && !grade.isPending && !grade.isError && (
             <MyGrade
               view={view}
