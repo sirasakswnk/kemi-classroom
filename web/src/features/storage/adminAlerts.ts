@@ -1,13 +1,14 @@
 import { th } from '../../copy/th'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
-import { formatSize, type StorageReconcile, type StorageStatus } from './api'
+import { formatSize, type StorageReconcile, type StorageStatus, type TermAlert } from './api'
 
 // แถบเตือนบนสุดของ D01 (P6-04b, J10.1): ตามสถานะปัจจุบัน ไม่ใช่ประวัติ
 // - พื้นที่ถึง admin_warn_pct ขึ้นไป (80% / 90% / เต็ม) — ผู้ดูแลไม่มีกระดิ่ง จึงเห็นที่หน้านี้เท่านั้น
 // - ผลเทียบ B2 ล่าสุดมีธงยอดต่างเกินเกณฑ์ (0049: ≥ 5% หรือ ≥ 200 MB)
+// - ภาคเรียนเปิดค้างเกิน 6 เดือน (0053, J9.2 เสริม) — เตือนอย่างเดียว ไม่เปลี่ยนสถานะ
 
 export interface AdminAlert {
-  key: 'storage' | 'reconcile'
+  key: 'storage' | 'reconcile' | 'term'
   tone: 'amber' | 'red'
   title: string
   body: string
@@ -20,6 +21,7 @@ export function adminStorageAlerts(
   status: StorageStatus | undefined,
   reconcile: StorageReconcile | undefined,
   now: Date = new Date(),
+  term: TermAlert | undefined = null,
 ): AdminAlert[] {
   const copy = th.storage.adminAlert
   const out: AdminAlert[] = []
@@ -44,6 +46,14 @@ export function adminStorageAlerts(
       tone: 'amber',
       title: copy.diff(formatSize(Math.abs(reconcile.diff_bytes))),
       body: reconcile.diff_bytes > 0 ? copy.diffMore(when) : copy.diffLess(when),
+    })
+  }
+  if (term) {
+    out.push({
+      key: 'term',
+      tone: 'amber',
+      title: copy.term(term.name),
+      body: copy.termBody(thaiDate(term.started_at, now), term.days_open),
     })
   }
   return out

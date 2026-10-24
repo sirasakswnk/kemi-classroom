@@ -1313,6 +1313,7 @@ export type Database = {
       admin_retry_job: { Args: { p_job_id: number }; Returns: Json }
       admin_storage_reconcile: { Args: never; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
+      admin_term_alert: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
       change_due: {
         Args: {

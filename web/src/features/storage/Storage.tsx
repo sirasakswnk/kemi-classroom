@@ -5,6 +5,7 @@ import { appErrorOf } from '../../lib/request'
 import {
   adminB2UsageQuery,
   adminStorageReconcileQuery,
+  adminTermAlertQuery,
   formatSize,
   storageStatusQuery,
   type StorageStatus,
@@ -167,11 +168,12 @@ function Meter({ s }: { s: StorageStatus }) {
   )
 }
 
-/** D01: แถบเตือนบนสุด — พื้นที่ถึงเกณฑ์ผู้ดูแลขึ้นไป และธงยอด B2 ต่างเกินเกณฑ์ (adminAlerts) */
+/** D01: แถบเตือนบนสุด — พื้นที่ถึงเกณฑ์ผู้ดูแลขึ้นไป ธงยอด B2 ต่างเกินเกณฑ์ และภาคเรียนเปิดเกิน 6 เดือน (adminAlerts) */
 export function AdminStorageAlerts() {
   const storage = useQuery(storageStatusQuery)
   const reconcile = useQuery(adminStorageReconcileQuery)
-  const alerts = adminStorageAlerts(storage.data, reconcile.data)
+  const term = useQuery(adminTermAlertQuery)
+  const alerts = adminStorageAlerts(storage.data, reconcile.data, new Date(), term.data)
   if (alerts.length === 0) return null
   return (
     <div className={styles.alerts} aria-label={th.storage.adminAlert.aria}>

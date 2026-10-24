@@ -79,6 +79,24 @@ export const adminStorageReconcileQuery = queryOptions({
   staleTime: 5 * 60_000,
 })
 
+// ภาคเรียนเปิดค้างเกิน 6 เดือน (0053, J9.2 เสริม) — ผู้ดูแลเท่านั้น · ไม่ต้องเตือน = null
+const TermAlertSchema = z
+  .object({
+    term_id: z.uuid(),
+    name: z.string(),
+    started_at: z.string(),
+    due_at: z.string(),
+    days_open: z.number().int(),
+  })
+  .nullable()
+export type TermAlert = z.infer<typeof TermAlertSchema>
+
+export const adminTermAlertQuery = queryOptions({
+  queryKey: ['admin-term-alert'],
+  queryFn: () => run(supabase.rpc('admin_term_alert'), TermAlertSchema),
+  staleTime: 5 * 60_000,
+})
+
 /** ขนาดแบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) */
 export function formatSize(bytes: number): string {
   if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2)} GB`

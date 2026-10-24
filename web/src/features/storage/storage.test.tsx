@@ -1,7 +1,7 @@
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { th } from '../../copy/th'
-import { formatSize, type StorageReconcile, type StorageStatus } from './api'
+import { formatSize, type StorageReconcile, type StorageStatus, type TermAlert } from './api'
 import { adminStorageAlerts } from './adminAlerts'
 import { UploadBlocked } from './Storage'
 
@@ -72,5 +72,24 @@ describe('D01 แถบเตือนบนสุด (P6-04b)', () => {
     expect(
       adminStorageAlerts(status('full', 100), reconcile(5, true), NOW).map((a) => a.key),
     ).toEqual(['storage', 'reconcile'])
+  })
+
+  it('ภาคเรียนเปิดค้างเกิน 6 เดือน (J9.2 เสริม) → แถบเหลือง บอกชื่อ วันเริ่ม จำนวนวัน · null ไม่แสดง', () => {
+    const term: TermAlert = {
+      term_id: '45300000-0000-4000-8000-000000000001',
+      name: 'ภาคเรียนที่ 1/2569',
+      started_at: '2026-04-20T01:00:00Z',
+      due_at: '2026-10-20T01:00:00Z',
+      days_open: 188,
+    }
+    expect(adminStorageAlerts(status('ok', 10), null, NOW, term)).toEqual([
+      {
+        key: 'term',
+        tone: 'amber',
+        title: copy.term('ภาคเรียนที่ 1/2569'),
+        body: copy.termBody('20 เม.ย.', 188),
+      },
+    ])
+    expect(adminStorageAlerts(status('ok', 10), null, NOW, null)).toEqual([])
   })
 })
