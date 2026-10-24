@@ -171,6 +171,15 @@ test('ไม่มี apikey จากหน้าเว็บ → ใช้ SUP
   assert.equal(args.p_admin_mode, true)
 })
 
+test('รูปเครื่องราง: classroom_id = null ส่งต่อให้ RPC ตรวจ (P5-07)', async () => {
+  const { handler, calls } = setup(ok({ ...BATCH_RESULT, purpose: 'charm' }))
+  const res = await handler(post({ ...BODY, purpose: 'charm', classroom_id: null }))
+  assert.equal(res.status, 200)
+  const args = JSON.parse(String(calls[0].init.body))
+  assert.equal(args.p_purpose, 'charm')
+  assert.equal(args.p_classroom_id, null)
+})
+
 test('ไม่มี JWT → 401 not_authenticated โดยไม่เรียก RPC', async () => {
   const { handler, calls } = setup(ok(BATCH_RESULT))
   for (const authorization of ['', 'Basic abc', 'Bearer ']) {
@@ -197,6 +206,7 @@ test('คำขอผิดรูป → 400 invalid_request โดยไม่�
     'not json',
     [],
     { ...BODY, classroom_id: 'abc' },
+    { ...BODY, classroom_id: undefined },
     { ...BODY, request_key: undefined },
     { ...BODY, post_id: 'x' },
     { ...BODY, files: {} },
