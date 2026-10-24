@@ -8,11 +8,12 @@ import { supabase, toAppError } from '../../lib/supabase'
 import { z } from '../../lib/zod'
 import type { UploadType } from './rules'
 
-export type UploadPurpose = 'post' | 'solution' | 'submission'
+export type UploadPurpose = 'post' | 'solution' | 'submission' | 'charm'
 
 export interface BatchRequest {
   purpose: UploadPurpose
-  classroomId: string
+  /** null = รูปเครื่องราง (purpose charm ไม่มีห้อง) */
+  classroomId: string | null
   postId: string | null
   files: { name: string; type: UploadType; size: number }[]
   requestKey: string

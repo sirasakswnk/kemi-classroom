@@ -154,6 +154,8 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   // S04 สุ่ม (UX 7.1, P5-04)
   draw_completed: { message: 'สะสมครบแล้ว', action: 'field' },
   draw_unavailable: { message: 'ยังไม่มีรายการที่สุ่มได้ รอครูปรับอัตราสุ่ม', action: 'field' },
+  // T06 (UX 7.1, P5-07)
+  rates_must_total_100: { message: 'อัตรารวมของทุกระดับต้องเท่ากับ 100%', action: 'field' },
 }
 
 const FALLBACK = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง ถ้ายังไม่ได้ให้แจ้งคุณครู'

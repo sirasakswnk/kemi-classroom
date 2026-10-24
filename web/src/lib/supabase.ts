@@ -90,6 +90,7 @@ export const ERROR_CODES = [
   'insufficient_balance',
   'draw_completed',
   'draw_unavailable',
+  'rates_must_total_100',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -200,6 +201,8 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   // S04 (P5-04): ปกติปุ่มถูกปิดก่อนแล้ว — แสดงข้อความแล้วโหลดตัวเลือกสุ่มใหม่ ไม่หักโทเคน
   draw_completed: 'field',
   draw_unavailable: 'field',
+  // T06 (P5-07): ใต้ช่องอัตรา — หน้าจอต่อท้าย “(ตอนนี้ {n}%)” จากค่าที่กรอก
+  rates_must_total_100: 'field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

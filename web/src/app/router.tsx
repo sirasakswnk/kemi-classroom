@@ -88,6 +88,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T06 จัดการเครื่องราง (P5-07)
+            path: 'charms',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).CharmsPage,
+            }),
+          },
+          {
             // T05 รายชื่อนักเรียน + แก้การผูกบัญชี (นำเข้า Excel อยู่ที่ /t/roster/import)
             path: 'roster',
             lazy: async () => ({

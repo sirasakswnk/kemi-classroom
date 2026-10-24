@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   ChevronRight,
   CirclePlus,
+  Gem,
   LayoutDashboard,
   ShieldCheck,
   TriangleAlert,
@@ -108,6 +109,10 @@ export function TeacherLayout() {
           <NavLink to="/t/roster" className={styles.nav}>
             <Users aria-hidden="true" />
             {th.teacher.roster}
+          </NavLink>
+          <NavLink to="/t/charms" className={styles.nav}>
+            <Gem aria-hidden="true" />
+            {th.teacher.charms}
           </NavLink>
           <p className={styles.foot}>
             {value.term?.name}
