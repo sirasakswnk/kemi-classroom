@@ -53,6 +53,11 @@ export function dueSoon(rows: WorkRow[], limit = 5): WorkRow[] {
   return sortWork(rows.filter(isPending)).slice(0, limit)
 }
 
+/** S01 กล่อง “ใกล้กำหนดส่ง” ว่าง: ห้องยังไม่มีงานเลย ≠ มีงานและส่งครบแล้ว */
+export function dueEmpty(rows: WorkRow[]): 'noWork' | 'allSent' {
+  return rows.length ? 'allSent' : 'noWork'
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /** ป้ายเวลาใน S01: เลยกำหนด (ยังส่งได้แบบสาย) / เหลือไม่ถึง 24 ชม. / ไม่มี */

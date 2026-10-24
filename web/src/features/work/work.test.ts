@@ -4,6 +4,7 @@ import type { Grade } from '../grading/api'
 import type { SubmissionStatus, WorkRow } from './api'
 import {
   blockedReason,
+  dueEmpty,
   dueHint,
   dueSoon,
   filterWork,
@@ -124,6 +125,11 @@ describe('เรียงและกรองงาน (UX 5)', () => {
   it('ใกล้กำหนดส่ง (S01) = เฉพาะงานที่ยังต้องส่ง ไม่เกิน limit', () => {
     expect(isPending(closed)).toBe(false)
     expect(dueSoon([done, a, closed, b], 1).map((r) => r.post_id)).toEqual(['b'])
+  })
+  it('ใกล้กำหนดส่งว่าง: ห้องยังไม่มีงาน ≠ ส่งครบแล้ว', () => {
+    expect(dueEmpty([])).toBe('noWork')
+    expect(dueEmpty([done])).toBe('allSent')
+    expect(th.work.noWorkTitle).toBe('ยังไม่มีงานในชั้นเรียนนี้')
   })
   it('ป้ายเวลา: เลยกำหนด / เหลือไม่ถึง 24 ชม. / ไม่มี', () => {
     const due = '2026-11-10T13:00:00Z'

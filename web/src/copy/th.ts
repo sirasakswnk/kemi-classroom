@@ -889,6 +889,7 @@ export const th = {
     dueSoon: 'ใกล้กำหนดส่ง',
     noPendingTitle: 'ไม่มีงานค้างส่ง',
     noPendingBody: 'งานทุกชิ้นส่งแล้ว รอครูตรวจ',
+    noWorkTitle: 'ยังไม่มีงานในชั้นเรียนนี้',
     dueMeta: (time: string, room: string) => `${time} น. · ${room}`,
     lessThanDay: 'เหลือไม่ถึง 24 ชม.',
     overdue: 'เลยกำหนดแล้ว ส่งได้แบบส่งช้า',

@@ -10,7 +10,7 @@ import { ClassBanner } from '../classrooms/ClassBanner'
 import { pastClassroomsQuery, termNamesQuery, termQuery } from '../classrooms/api'
 import { myWorkQuery } from '../work/api'
 import { DueSoon } from '../work/DueSoon'
-import { dueSoon, isPending } from '../work/workState'
+import { dueEmpty, dueSoon, isPending } from '../work/workState'
 import work from '../work/work.module.css'
 import { myClassroomsQuery } from './api'
 import { firstName } from './names'
@@ -99,7 +99,7 @@ export default function StudentHome() {
                 </Button>
               </div>
             ) : (
-              <DueSoon rows={due} now={now} />
+              <DueSoon rows={due} now={now} empty={dueEmpty(workRows)} />
             )}
           </section>
         )}
