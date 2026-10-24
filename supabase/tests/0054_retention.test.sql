@@ -20,7 +20,7 @@ begin
 end
 $$;
 
-select plan(38);
+select plan(39);
 
 -- ข้อมูลสมมติ: T1 ปัจจุบัน (active) · T0 เก่าแบบเริ่มเทอมทับเมื่อ 100 วันก่อน (ไฟล์ครบอายุแล้ว คะแนนยัง) ·
 -- TE เก่าแบบกดจบเมื่อ 10 วันก่อน (ยังไม่ครบ ไม่มีไฟล์)
@@ -187,8 +187,10 @@ select throws_ok($$ select public.export_mark_downloaded('40540000-0000-4000-800
   'P0001', 'export_mismatch', 'fingerprint ไม่ตรง (ชุดเปลี่ยนระหว่างดาวน์โหลด) → ปฏิเสธ');
 select throws_ok($$ select public.export_mark_downloaded('40540000-0000-4000-8000-000000000003', 'files', md5(''), 0, 0) $$,
   'P0001', 'export_mismatch', 'ชุดว่างไม่มีอะไรให้ดาวน์โหลด → บันทึกไม่ได้');
-select throws_ok($$ select public.export_mark_downloaded('40540000-0000-4000-8000-000000000002', 'data', md5(''), 1, 1) $$,
-  'P0001', 'invalid_request', 'หมวดคะแนนยังดาวน์โหลดไม่ได้ (P6-05a2)');
+select throws_ok($$ select public.export_mark_downloaded('40540000-0000-4000-8000-000000000002', 'data', md5(''), 1, 0) $$,
+  'P0001', 'export_mismatch', 'หมวดคะแนนตรวจกับชุดของตัวเอง ไม่ใช่ชุดไฟล์ (0055)');
+select throws_ok($$ select public.export_mark_downloaded('40540000-0000-4000-8000-000000000002', 'cache', md5(''), 1, 0) $$,
+  'P0001', 'invalid_request', 'หมวดที่ไม่มี → invalid_request');
 select throws_ok($$ select public.export_mark_downloaded('40540000-0000-4000-8000-000000000001', 'files', md5(''), 1, 1) $$,
   'P0001', 'invalid_request', 'ภาคเรียนที่ยังเปิดบันทึกไม่ได้');
 

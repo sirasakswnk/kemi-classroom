@@ -130,7 +130,9 @@ insert into expected_authenticated values
   ('public.admin_term_alert()'),
   -- 0054_retention (ครู/ผู้ดูแล: รายการไฟล์ภาคเรียนเก่าสำหรับ ZIP + บันทึกว่าดาวน์โหลดครบ)
   ('public.export_files_page(uuid,uuid,integer,boolean)'),
-  ('public.export_mark_downloaded(uuid,text,text,integer,bigint,boolean)');
+  ('public.export_mark_downloaded(uuid,text,text,integer,bigint,boolean)'),
+  -- 0055_retention_data (ครู/ผู้ดูแล: คะแนน เวลาส่ง ความคิดเห็นของภาคเรียนเก่าสำหรับ CSV)
+  ('public.export_term_data(uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
