@@ -511,6 +511,7 @@ export const th = {
     account: 'บัญชีของฉัน',
     homeEyebrow: (term: string, date: string) => `${term} · ${date}`,
     // UX T07 [ข้อเสนอหน้าจอ K5]: แถบม่วงบนหน้าแรกหลังครูจบภาคเรียน
+    termEndedGreeting: 'ภาคเรียนนี้จบแล้ว',
     termEnded:
       'ครูจบภาคเรียนนี้แล้ว ส่งงานและเขียนความคิดเห็นใหม่ไม่ได้ ยังดูคะแนน เฉลย ตู้สะสม และใช้โทเคนสุ่มได้',
     withClasses: 'งานและประกาศของห้องจะแสดงที่หน้าแรก',
@@ -1090,6 +1091,7 @@ export const th = {
     privateStudent: 'เห็นเฉพาะคุณและคุณครู',
     privateTeacher: (name: string) => `ครูกับ${name}`,
     emptyStudent: 'ยังไม่มีข้อความ ถามครูเรื่องงานนี้ได้ที่นี่',
+    emptyClosed: 'ยังไม่มีข้อความ',
     emptyTeacher: 'ยังไม่มีข้อความในงานนี้',
     placeholderStudent: 'เขียนถึงคุณครู…',
     placeholderTeacher: 'เขียนถึงนักเรียน…',

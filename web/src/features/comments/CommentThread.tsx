@@ -105,7 +105,11 @@ export function CommentThread(props: Props) {
         <ErrorLine error={appErrorOf(thread.error)} />
       ) : thread.data.comments.length === 0 ? (
         <p className={styles.muted}>
-          {props.mode === 'student' ? copy.emptyStudent : copy.emptyTeacher}
+          {props.mode === 'teacher'
+            ? copy.emptyTeacher
+            : canWrite
+              ? copy.emptyStudent
+              : copy.emptyClosed}
         </p>
       ) : (
         <ol className={styles.list}>

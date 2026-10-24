@@ -44,6 +44,8 @@ export default function StudentHome() {
   const pendingIn = (classId: string) =>
     workRows.filter((r) => r.classroom_id === classId && isPending(r)).length
   const hasWork = (classId: string) => workRows.some((r) => r.classroom_id === classId)
+  // จบภาคเรียนแล้ว (K5): งานที่ยังไม่ส่งกลายเป็นส่งไม่ได้ จึงห้ามสรุปว่า “ส่งงานครบแล้ว”
+  const ended = term.data?.status === 'ended'
 
   return (
     <main className={styles.page} data-width={list.length === 0 ? 'narrow' : undefined}>
@@ -55,14 +57,16 @@ export default function StudentHome() {
         <p>
           {list.length === 0
             ? th.identity.noClass
-            : due.length > 0
-              ? th.work.pendingGreeting(workRows.filter(isPending).length)
-              : myWork.data && workRows.length > 0
-                ? th.work.allSent
-                : th.student.withClasses}
+            : ended
+              ? th.student.termEndedGreeting
+              : due.length > 0
+                ? th.work.pendingGreeting(workRows.filter(isPending).length)
+                : myWork.data && workRows.length > 0
+                  ? th.work.allSent
+                  : th.student.withClasses}
         </p>
       </div>
-      {term.data?.status === 'ended' && (
+      {ended && (
         <p className={styles.note} data-tone="purple" role="note">
           <Lock aria-hidden="true" />
           <span>{th.student.termEnded}</span>
@@ -74,8 +78,8 @@ export default function StudentHome() {
           <span>{notice}</span>
         </p>
       )}
-      <div className={work.homeCols} data-single={list.length === 0 || undefined}>
-        {list.length > 0 && (
+      <div className={work.homeCols} data-single={list.length === 0 || ended || undefined}>
+        {list.length > 0 && !ended && (
           <section className={styles.section} aria-labelledby="dueTitle">
             <div className={styles.sectionHead}>
               <h2 id="dueTitle">{th.work.dueSoon}</h2>
@@ -131,7 +135,9 @@ export default function StudentHome() {
                       </span>
                     </ClassBanner>
                     <span className={styles.classFoot}>
-                      {pendingIn(c.id) > 0 ? (
+                      {ended ? (
+                        <Chip tone="plain">{th.work.label.termEnded}</Chip>
+                      ) : pendingIn(c.id) > 0 ? (
                         <Chip tone="amber">{th.work.pendingChip(pendingIn(c.id))}</Chip>
                       ) : (
                         <Chip tone="plain">
