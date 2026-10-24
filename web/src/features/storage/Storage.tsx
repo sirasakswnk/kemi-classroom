@@ -2,7 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { HardDrive, Info, OctagonAlert, TriangleAlert } from 'lucide-react'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
-import { adminB2UsageQuery, formatSize, storageStatusQuery, type StorageStatus } from './api'
+import {
+  adminB2UsageQuery,
+  adminStorageReconcileQuery,
+  formatSize,
+  storageStatusQuery,
+  type StorageStatus,
+} from './api'
+import { adminStorageAlerts } from './adminAlerts'
 import styles from './storage.module.css'
 
 // พื้นที่เก็บไฟล์ (P3-10; UX 12 J10, J10.1–J10.3; แบบ v2 storePanel / store-bar / blocked-up)
@@ -147,6 +154,30 @@ function Meter({ s }: { s: StorageStatus }) {
       <p className={styles.hint}>
         {copy.limitHint(formatSize(s.quota_bytes ?? 0), formatSize((s.quota_bytes ?? 0) - limit))}
       </p>
+    </div>
+  )
+}
+
+/** D01: แถบเตือนบนสุด — พื้นที่ถึงเกณฑ์ผู้ดูแลขึ้นไป และธงยอด B2 ต่างเกินเกณฑ์ (adminAlerts) */
+export function AdminStorageAlerts() {
+  const storage = useQuery(storageStatusQuery)
+  const reconcile = useQuery(adminStorageReconcileQuery)
+  const alerts = adminStorageAlerts(storage.data, reconcile.data)
+  if (alerts.length === 0) return null
+  return (
+    <div className={styles.alerts} aria-label={th.storage.adminAlert.aria}>
+      {alerts.map((a) => (
+        <div key={a.key} className={styles.bar} data-tone={a.tone} role="status">
+          {a.tone === 'red' ? (
+            <OctagonAlert aria-hidden="true" />
+          ) : (
+            <TriangleAlert aria-hidden="true" />
+          )}
+          <span>
+            <b>{a.title}</b> {a.body}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }

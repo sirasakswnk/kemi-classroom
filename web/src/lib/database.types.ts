@@ -246,6 +246,7 @@ export type Database = {
       b2_daily_usage: {
         Row: {
           class_b_requests: number
+          class_c_requests: number
           copy_bytes: number
           day: string
           download_bytes: number
@@ -254,6 +255,7 @@ export type Database = {
         }
         Insert: {
           class_b_requests?: number
+          class_c_requests?: number
           copy_bytes?: number
           day: string
           download_bytes?: number
@@ -262,6 +264,7 @@ export type Database = {
         }
         Update: {
           class_b_requests?: number
+          class_c_requests?: number
           copy_bytes?: number
           day?: string
           download_bytes?: number
@@ -872,14 +875,75 @@ export type Database = {
           },
         ]
       }
+      storage_reconciliations: {
+        Row: {
+          b2_bytes: number
+          b2_versions: number
+          breakdown: Json
+          db_assets_bytes: number
+          db_reserved_bytes: number
+          diff_bytes: number
+          exceeds_threshold: boolean
+          finished_at: string
+          id: number
+          job_id: number | null
+          offset_after_bytes: number
+          offset_before_bytes: number
+          requests: number
+          runs: number
+          started_at: string
+        }
+        Insert: {
+          b2_bytes: number
+          b2_versions: number
+          breakdown: Json
+          db_assets_bytes: number
+          db_reserved_bytes: number
+          diff_bytes: number
+          exceeds_threshold: boolean
+          finished_at?: string
+          id?: never
+          job_id?: number | null
+          offset_after_bytes: number
+          offset_before_bytes: number
+          requests: number
+          runs: number
+          started_at: string
+        }
+        Update: {
+          b2_bytes?: number
+          b2_versions?: number
+          breakdown?: Json
+          db_assets_bytes?: number
+          db_reserved_bytes?: number
+          diff_bytes?: number
+          exceeds_threshold?: boolean
+          finished_at?: string
+          id?: never
+          job_id?: number | null
+          offset_after_bytes?: number
+          offset_before_bytes?: number
+          requests?: number
+          runs?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
       storage_settings: {
         Row: {
           admin_warn_pct: number
           daily_view_budget_bytes: number
           daily_view_budget_requests: number
           hard_stop_margin_bytes: number
+          notified_level: number
           quota_bytes: number
+          reconcile_daily_budget_requests: number
+          reconcile_run_max_requests: number
+          reconcile_warn_bytes: number
+          reconcile_warn_pct: number
+          reconciled_at: string | null
           singleton: boolean
+          storage_offset_bytes: number
           teacher_warn_pct: number
           updated_at: string
         }
@@ -888,8 +952,15 @@ export type Database = {
           daily_view_budget_bytes?: number
           daily_view_budget_requests?: number
           hard_stop_margin_bytes: number
+          notified_level?: number
           quota_bytes: number
+          reconcile_daily_budget_requests?: number
+          reconcile_run_max_requests?: number
+          reconcile_warn_bytes?: number
+          reconcile_warn_pct?: number
+          reconciled_at?: string | null
           singleton?: boolean
+          storage_offset_bytes?: number
           teacher_warn_pct?: number
           updated_at?: string
         }
@@ -898,8 +969,15 @@ export type Database = {
           daily_view_budget_bytes?: number
           daily_view_budget_requests?: number
           hard_stop_margin_bytes?: number
+          notified_level?: number
           quota_bytes?: number
+          reconcile_daily_budget_requests?: number
+          reconcile_run_max_requests?: number
+          reconcile_warn_bytes?: number
+          reconcile_warn_pct?: number
+          reconciled_at?: string | null
           singleton?: boolean
+          storage_offset_bytes?: number
           teacher_warn_pct?: number
           updated_at?: string
         }
@@ -1231,6 +1309,7 @@ export type Database = {
       }
       admin_b2_usage: { Args: never; Returns: Json }
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
+      admin_storage_reconcile: { Args: never; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
       change_due: {
@@ -1315,6 +1394,7 @@ export type Database = {
         Args: { p_rates_key: string; p_request_key: string }
         Returns: Json
       }
+      due_reminder_run: { Args: { p_job_id: number }; Returns: Json }
       ensure_account: { Args: never; Returns: Json }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
       get_draw_options: { Args: never; Returns: Json }
@@ -1469,6 +1549,11 @@ export type Database = {
           p_classroom_id: string
           p_enabled: boolean
         }
+        Returns: Json
+      }
+      storage_reconcile_start: { Args: { p_job_id: number }; Returns: Json }
+      storage_reconcile_step: {
+        Args: { p_job_id: number; p_more: boolean; p_page: Json }
         Returns: Json
       }
       storage_status: { Args: never; Returns: Json }

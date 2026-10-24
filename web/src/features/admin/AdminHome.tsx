@@ -16,7 +16,7 @@ import { BrandLogo } from '../../app/common/brand'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { Button, Chip, Field, Input, Modal, Select, useToast } from '../../ui'
-import { StoragePanel } from '../storage/Storage'
+import { AdminStorageAlerts, StoragePanel } from '../storage/Storage'
 import { enterAdminMode } from '../teacher/adminMode'
 import { addTeacher, adminTeachersQuery, removeTeacher, type AllowlistRow } from './api'
 import styles from './AdminHome.module.css'
@@ -43,6 +43,7 @@ export default function AdminHome() {
         </Button>
       </header>
       <main className={styles.page}>
+        <AdminStorageAlerts />
         <div className={styles.head}>
           <div>
             <span className={styles.eyebrow}>{copy.eyebrow}</span>

@@ -19,6 +19,9 @@ const StorageSchema = z.object({
   teacher_warn_pct: z.number().optional(),
   reserved_bytes: z.number().optional(),
   deleting_bytes: z.number().optional(),
+  /** ส่วนที่ B2 มากกว่าที่ระบบนับ ณ การเทียบล่าสุด (0049) — รวมอยู่ใน used_bytes แล้ว */
+  offset_bytes: z.number().optional(),
+  reconciled_at: z.string().nullable().optional(),
   by_purpose: z
     .object({ submission: z.number(), post: z.number(), solution: z.number(), charm: z.number() })
     .optional(),
@@ -51,6 +54,25 @@ export const adminB2UsageQuery = queryOptions({
   queryKey: ['admin-b2-usage'],
   queryFn: () => run(supabase.rpc('admin_b2_usage'), B2UsageSchema),
   staleTime: 30_000,
+})
+
+// ผลเทียบยอดพื้นที่ B2 ล่าสุด (0049/0050) — ผู้ดูแลเท่านั้น · ยังไม่เคยเทียบ = null
+const ReconcileSchema = z
+  .object({
+    finished_at: z.string(),
+    b2_bytes: z.number(),
+    db_bytes: z.number(),
+    diff_bytes: z.number(),
+    offset_bytes: z.number(),
+    exceeds_threshold: z.boolean(),
+  })
+  .nullable()
+export type StorageReconcile = z.infer<typeof ReconcileSchema>
+
+export const adminStorageReconcileQuery = queryOptions({
+  queryKey: ['admin-storage-reconcile'],
+  queryFn: () => run(supabase.rpc('admin_storage_reconcile'), ReconcileSchema),
+  staleTime: 5 * 60_000,
 })
 
 /** ขนาดแบบที่ B2 คิด (1 GB = 1,000,000,000 ไบต์) */

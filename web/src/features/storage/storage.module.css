@@ -235,3 +235,13 @@
   color: var(--ink-2);
   font-size: 0.8125rem;
 }
+
+/* D01 แถบเตือนบนสุด (P6-04b) */
+.alerts {
+  display: grid;
+  gap: 8px;
+}
+
+.alerts .bar {
+  margin: 0;
+}
