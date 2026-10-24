@@ -120,7 +120,9 @@ insert into expected_authenticated values
   -- 0043_notifications (นักเรียน/ครู: กระดิ่งของตัวเอง)
   ('public.my_notifications(timestamptz,integer)'),
   ('public.unread_notification_count()'),
-  ('public.mark_notifications_read(uuid[])');
+  ('public.mark_notifications_read(uuid[])'),
+  -- 0050_storage_threshold (ผู้ดูแล: ผลเทียบยอดพื้นที่ล่าสุดใน D01)
+  ('public.admin_storage_reconcile()');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
