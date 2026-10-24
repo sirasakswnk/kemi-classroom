@@ -8,6 +8,8 @@ import { initialOf as initialOfTeacher } from '../../lib/initial'
 import { appErrorOf, membersQuery, removeMember, type Classroom, type Member } from './api'
 import styles from './classrooms.module.css'
 import { MemberCharm } from '../rewards/MemberCharm'
+import { useCharmImages } from '../charms/charmImages'
+import { catalogQuery } from '../charms/api'
 
 // แท็บสมาชิกของครู (UX 9): เฉพาะคนที่เข้าห้องแล้ว + ป้ายห้องตามรายชื่อ (เห็นคนที่เข้าผิดห้อง)
 // แต่ละแถวมีเมนู “เอาออกจากชั้นเรียน” → กล่องยืนยัน; ลิงก์ไปดูคนที่ยังไม่เข้าใน T05
@@ -26,6 +28,12 @@ export function MembersPanel({
 }) {
   const copy = th.classrooms.room
   const members = useQuery(membersQuery(c.id, termId))
+  // รูปของชิ้นที่แสดงข้างชื่อ: id รูปจากแคตตาล็อก T06 (ครูอ่านได้) แล้วขอลิงก์รวมครั้งเดียว
+  const anyCharm = !!members.data?.some((m) => m.charm)
+  const catalog = useQuery({ ...catalogQuery(adminMode), enabled: anyCharm })
+  const imageOf = (charmId: string | undefined) =>
+    catalog.data?.charms.find((x) => x.id === charmId)?.image_asset_id ?? null
+  const charmImages = useCharmImages(members.data?.map((m) => imageOf(m.charm?.id)) ?? [])
   const [target, setTarget] = useState<Member | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -102,7 +110,12 @@ export function MembersPanel({
                       <span className="sr-only">, {copy.roll(m.roll_number)}</span>
                     )}
                   </span>
-                  {m.charm && <MemberCharm charm={m.charm} />}
+                  {m.charm && (
+                    <MemberCharm
+                      charm={m.charm}
+                      image={charmImages.get(imageOf(m.charm.id) ?? '')}
+                    />
+                  )}
                   {m.group_name ? (
                     <Chip tone="purple">{m.group_name}</Chip>
                   ) : (

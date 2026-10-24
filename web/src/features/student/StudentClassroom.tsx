@@ -22,6 +22,7 @@ import {
 } from './seenAnnouncements'
 import styles from './student.module.css'
 import { MemberCharm } from '../rewards/MemberCharm'
+import { useCharmImages } from '../charms/charmImages'
 
 const TABS = ['general', 'work', 'members'] as const
 
@@ -32,6 +33,8 @@ const TABS = ['general', 'work', 'members'] as const
 export default function StudentClassroom() {
   const { classId = '' } = useParams()
   const view = useQuery(classroomViewQuery(classId))
+  // รูปเครื่องรางที่สมาชิกเลือกแสดง — ขอลิงก์รวมครั้งเดียวต่อหน้าจอ
+  const charmImages = useCharmImages(view.data?.members.map((m) => m.charm?.image_asset_id) ?? [])
   const classes = useQuery(myClassroomsQuery)
   const posts = useQuery({ ...postsQuery(classId), enabled: view.isSuccess })
   const [now] = useState(() => Date.now())
@@ -145,7 +148,16 @@ export default function StudentClassroom() {
                     <span className={styles.mNo}>{m.roll_number ?? '–'}</span>
                     <span className={styles.mName}>{m.display_name}</span>
                     {m.is_me && <Chip tone="purple">{copy.me}</Chip>}
-                    {m.charm && <MemberCharm charm={m.charm} />}
+                    {m.charm && (
+                      <MemberCharm
+                        charm={m.charm}
+                        image={
+                          m.charm.image_asset_id
+                            ? charmImages.get(m.charm.image_asset_id)
+                            : undefined
+                        }
+                      />
+                    )}
                   </li>
                 ))}
               </ul>

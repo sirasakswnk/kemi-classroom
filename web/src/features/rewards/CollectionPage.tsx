@@ -12,6 +12,7 @@ import { collectionQuery, setEquipment, type OwnedSlot } from './api'
 import { Medal } from './Medal'
 import { tierOf } from './rewardState'
 import styles from './rewards.module.css'
+import { useCharmImages } from '../charms/charmImages'
 
 const copy = th.rewards
 const CHIP = [styles.chip0, styles.chip1, styles.chip2, styles.chip3]
@@ -25,6 +26,8 @@ export default function CollectionPage() {
   const [open, setOpen] = useState<OwnedSlot | null>(null)
 
   const c = collection.data
+  // รูปของทุกชิ้นที่มี — ขอลิงก์รวมครั้งเดียว เก็บใน Cache Storage (TECHNICAL_DESIGN 9.3 ข้อ 4.1)
+  const images = useCharmImages(c?.items.map((s) => (s.owned ? s.image_asset_id : null)) ?? [])
   return (
     <main className={styles.colPage}>
       <Link to="/draw" className={styles.colBack}>
@@ -98,7 +101,12 @@ export default function CollectionPage() {
                       <Check />
                     </span>
                   )}
-                  <Medal rarityId={slot.rarity_id} symbol={slot.symbol} size={84} />
+                  <Medal
+                    rarityId={slot.rarity_id}
+                    symbol={slot.symbol}
+                    size={84}
+                    image={slot.image_asset_id ? images.get(slot.image_asset_id) : null}
+                  />
                   <b>{slot.name}</b>
                   <span className={cx(styles.tierChip, CHIP[tier])}>{slot.rarity_name}</span>
                 </button>
@@ -111,6 +119,7 @@ export default function CollectionPage() {
       {open && c && (
         <CharmSheet
           slot={open}
+          image={open.image_asset_id ? images.get(open.image_asset_id) : undefined}
           equipped={open.charm_id === c.equipped_charm_id}
           onClose={() => setOpen(null)}
         />
@@ -151,10 +160,12 @@ function LockedMedal() {
 
 function CharmSheet({
   slot,
+  image,
   equipped,
   onClose,
 }: {
   slot: OwnedSlot
+  image: string | undefined
   equipped: boolean
   onClose: () => void
 }) {
@@ -189,6 +200,7 @@ function CharmSheet({
             rarityId={slot.rarity_id}
             symbol={slot.symbol}
             size={132}
+            image={image}
             className={styles.sheetMedal}
           />
         </div>

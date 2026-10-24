@@ -114,6 +114,8 @@ const SlotSchema = z.discriminatedUnion('owned', [
     description: z.string(),
     symbol: z.string(),
     obtained_at: z.string(),
+    /** รูปที่ครูอัปโหลด (null = เหรียญวาด) — 0040 */
+    image_asset_id: z.uuid().nullable(),
   }),
 ])
 export type CollectionSlot = z.infer<typeof SlotSchema>

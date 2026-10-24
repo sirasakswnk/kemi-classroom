@@ -9,7 +9,14 @@ import type { AppError } from '../../lib/supabase'
 import { Button, useToast } from '../../ui'
 import { DialogBase } from '../../ui/DialogBase'
 import { useRequestKey } from '../review/useRequestKey'
-import { drawCharm, drawOptionsQuery, setEquipment, type DrawOptions, type DrawResult } from './api'
+import {
+  collectionQuery,
+  drawCharm,
+  drawOptionsQuery,
+  setEquipment,
+  type DrawOptions,
+  type DrawResult,
+} from './api'
 import { Coin, Medal } from './Medal'
 import {
   drawButton,
@@ -20,6 +27,7 @@ import {
   weightsText,
 } from './rewardState'
 import styles from './rewards.module.css'
+import { useCharmImages } from '../charms/charmImages'
 
 const copy = th.rewards
 const TIER = [styles.tier0, styles.tier1, styles.tier2, styles.tier3]
@@ -238,6 +246,11 @@ function Reveal({ result, onClose }: { result: DrawResult; onClose: () => void }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<AppError | null>(null)
   const { charm } = result
+  // ผลสุ่มไม่มีรูป — ใช้รูปจากตู้สะสมที่โหลดใหม่หลังสุ่ม (ไม่มี = เหรียญวาด)
+  const collection = useQuery(collectionQuery)
+  const slot = collection.data?.items.find((s) => s.owned && s.charm_id === charm.id)
+  const imageId = slot?.owned ? slot.image_asset_id : null
+  const images = useCharmImages([imageId])
   const tier = tierOf(charm.rarity_id)
 
   const equip = async () => {
@@ -271,6 +284,7 @@ function Reveal({ result, onClose }: { result: DrawResult; onClose: () => void }
           rarityId={charm.rarity_id}
           symbol={charm.symbol}
           size={150}
+          image={imageId ? images.get(imageId) : null}
           className={styles.bigMedal}
         />
         <span className={cx(styles.tierChip, CHIP[tier])}>{charm.rarity_name}</span>

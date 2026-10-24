@@ -23,6 +23,7 @@ import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import { defaultUploadDeps } from '../uploads/useFileField'
 import { uploadSet } from '../uploads/uploader'
+import { browserCharmImageDeps, useCharmImages } from './charmImages'
 import { catalogQuery, saveCharm, saveRarityWeights, type AdminCharm, type Catalog } from './api'
 import { CharmImageError, prepareCharmImage } from './charmImage'
 import {
@@ -82,6 +83,8 @@ function CharmsBody({ catalog, adminMode }: { catalog: Catalog; adminMode: boole
     catalog.charms[0] ? draftOf(catalog.charms[0]) : newDraft(),
   )
   const panelRef = useRef<HTMLElement>(null)
+  // รูปที่อัปโหลดไว้ของทุกชิ้น — ขอลิงก์รวมครั้งเดียว เก็บใน Cache Storage (TECHNICAL_DESIGN 9.3 ข้อ 4.1)
+  const images = useCharmImages(catalog.charms.map((c) => c.image_asset_id))
 
   const select = (next: CharmDraft) => {
     setDraft(next)
@@ -126,7 +129,12 @@ function CharmsBody({ catalog, adminMode }: { catalog: Catalog; adminMode: boole
                     aria-pressed={draft.id === c.id}
                     onClick={() => select(draftOf(c))}
                   >
-                    <Medal rarityId={c.rarity_id} symbol={c.symbol} size={64} />
+                    <Medal
+                      rarityId={c.rarity_id}
+                      symbol={c.symbol}
+                      size={64}
+                      image={c.image_asset_id ? images.get(c.image_asset_id) : null}
+                    />
                     <b>{c.name}</b>
                     <span className={cx(rewardStyles.tierChip, CHIP[tierOf(c.rarity_id)])}>
                       {rarity?.name}
@@ -153,6 +161,7 @@ function CharmsBody({ catalog, adminMode }: { catalog: Catalog; adminMode: boole
           draft={draft}
           setDraft={setDraft}
           catalog={catalog}
+          images={images}
           adminMode={adminMode}
         />
       </div>
@@ -272,12 +281,14 @@ function EditPanel({
   draft,
   setDraft,
   catalog,
+  images,
   adminMode,
 }: {
   ref: Ref<HTMLElement>
   draft: CharmDraft
   setDraft: Dispatch<SetStateAction<CharmDraft>>
   catalog: Catalog
+  images: ReadonlyMap<string, string>
   adminMode: boolean
 }) {
   const queryClient = useQueryClient()
@@ -324,6 +335,8 @@ function EditPanel({
         setImageError(err ? err.message : th.errors.fallback)
         return
       }
+      // เก็บรูปที่เพิ่งอัปโหลดลงแคชไว้เลย — หลังบันทึกไม่ต้องโหลดจาก B2 อีก
+      void browserCharmImageDeps.cachePut(assetId, blob).catch(() => undefined)
       set({ image: { kind: 'new', assetId, previewUrl: URL.createObjectURL(blob) } })
     } catch (e) {
       setImageError(e instanceof CharmImageError ? e.message : appErrorOf(e).message)
@@ -364,15 +377,27 @@ function EditPanel({
     if (latest) setDraft(draftOf(latest))
   }
 
-  const medal = previewUrl ? (
-    <img src={previewUrl} alt="" className={styles.previewImg} width={96} height={96} />
-  ) : (
-    <Medal rarityId={draft.rarityId} symbol={previewSymbol(draft, current)} size={96} />
+  // รูปที่แสดง: รูปที่เพิ่งเลือก > รูปที่อัปโหลดไว้ (ถ้าไม่ได้กดใช้รูปวาด) > เหรียญวาด
+  const shown =
+    previewUrl ??
+    (draft.image.kind === 'keep' && current?.image_asset_id
+      ? images.get(current.image_asset_id)
+      : undefined)
+  const medal = (
+    <Medal
+      rarityId={draft.rarityId}
+      symbol={previewSymbol(draft, current)}
+      size={96}
+      image={shown}
+    />
   )
-  const smallMedal = previewUrl ? (
-    <img src={previewUrl} alt="" className={styles.previewImg} width={64} height={64} />
-  ) : (
-    <Medal rarityId={draft.rarityId} symbol={previewSymbol(draft, current)} size={64} />
+  const smallMedal = (
+    <Medal
+      rarityId={draft.rarityId}
+      symbol={previewSymbol(draft, current)}
+      size={64}
+      image={shown}
+    />
   )
   const hasUploaded = !!current?.image_asset_id && draft.image.kind !== 'remove'
 

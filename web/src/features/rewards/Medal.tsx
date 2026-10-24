@@ -30,13 +30,28 @@ export function Medal({
   symbol,
   size = 64,
   className,
+  image,
 }: {
   rarityId: number
   symbol: string
   size?: number
   className?: string
+  /** object URL ของรูปที่ครูอัปโหลด (useCharmImages) — ไม่มี = เหรียญวาด */
+  image?: string | null
 }) {
   const id = useSvgId()
+  if (image)
+    return (
+      <img
+        className={className}
+        src={image}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        style={{ borderRadius: '50%', objectFit: 'cover', flex: 'none' }}
+      />
+    )
   const t = tierOf(rarityId)
   const face = FACE[t] ?? FACE[0]
   const ring = RING[t] ?? RING[0]

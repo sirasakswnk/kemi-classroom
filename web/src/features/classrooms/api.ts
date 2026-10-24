@@ -88,6 +88,7 @@ const MemberRowSchema = z
           owned_charms: z
             .object({
               charms: z.object({
+                id: z.uuid(),
                 name: z.string(),
                 symbol: z.string(),
                 rarity_id: z.number().int(),
@@ -116,7 +117,7 @@ export interface Member {
   group_name: string | null
   roll_number: number | null
   /** เครื่องรางที่เลือกแสดงข้างชื่อ (null = ไม่แสดง) */
-  charm: { name: string; symbol: string; rarity_id: number } | null
+  charm: { id: string; name: string; symbol: string; rarity_id: number } | null
 }
 
 export const membersQuery = (classroomId: string, termId: string | undefined) =>
@@ -128,7 +129,7 @@ export const membersQuery = (classroomId: string, termId: string | undefined) =>
         supabase
           .from('memberships')
           .select(
-            'student_id, joined_at, students(display_name, student_equipment(owned_charms(charms(name, symbol, rarity_id))), roster_entries(group_name, roll_number, term_id))',
+            'student_id, joined_at, students(display_name, student_equipment(owned_charms(charms(id, name, symbol, rarity_id))), roster_entries(group_name, roll_number, term_id))',
           )
           .eq('classroom_id', classroomId),
         z.array(MemberRowSchema),
