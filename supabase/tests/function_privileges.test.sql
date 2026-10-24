@@ -145,7 +145,10 @@ insert into expected_service_only values
   ('public.sweep_copying_finish(uuid,text)'),
   ('public.jobs_maintenance()'),
   -- 0047_due_reminder_run (process-jobs: งานเตือน 24 ชม.)
-  ('public.due_reminder_run(bigint)');
+  ('public.due_reminder_run(bigint)'),
+  -- 0049_storage_reconcile (process-jobs: เทียบยอดพื้นที่ B2 รายวัน)
+  ('public.storage_reconcile_start(bigint)'),
+  ('public.storage_reconcile_step(bigint,jsonb,boolean)');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);
