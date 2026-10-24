@@ -111,7 +111,10 @@ insert into expected_authenticated values
   -- 0040_charm_admin (ครู/ผู้ดูแล: T06 แคตตาล็อก อัตรา เพิ่ม/แก้เครื่องราง)
   ('public.charm_catalog(boolean)'),
   ('public.save_rarity_weights(jsonb,text,boolean)'),
-  ('public.save_charm(jsonb,integer,uuid,boolean)');
+  ('public.save_charm(jsonb,integer,uuid,boolean)'),
+  -- 0041_terms (ครู/ผู้ดูแล: เริ่มภาคเรียนใหม่ / จบภาคเรียนโดยไม่เปิดเทอมใหม่)
+  ('public.terms_start(text,uuid,uuid,boolean)'),
+  ('public.terms_end(uuid,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
