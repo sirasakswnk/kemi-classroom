@@ -14,7 +14,7 @@ import {
   TriangleAlert,
   Users,
 } from 'lucide-react'
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import type { AppError } from '../../lib/supabase'
@@ -181,10 +181,15 @@ function StartPanel({ data, adminMode }: { data: TermOverview; adminMode: boolea
       const app = appErrorOf(e)
       setConfirming(false)
       setError(app)
-      if (app.code === 'term_name_taken') nameRef.current?.focus()
-      else if (app.code === 'stale_revision' || app.code === 'term_ended') await reloadAll()
+      if (app.code === 'stale_revision' || app.code === 'term_ended') await reloadAll()
     },
   })
+
+  // ชื่อซ้ำ: โฟกัสช่องหลังหน้าต่างยืนยันปิดและคืนโฟกัสให้ปุ่มแล้ว (effect ของ Modal ลูกทำงานก่อน)
+  const nameTaken = !confirming && error?.code === 'term_name_taken'
+  useEffect(() => {
+    if (nameTaken) nameRef.current?.focus()
+  }, [nameTaken])
 
   const items = [
     { icon: <Coin size={24} />, text: copy.effectTokens, gold: true },
