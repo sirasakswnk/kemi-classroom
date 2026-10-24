@@ -377,3 +377,42 @@
   gap: 12px;
   justify-items: start;
 }
+
+/* ลิงก์ไปห้องของภาคเรียนเก่า (P5-09) — เป้ากด ≥ 44 px */
+.roomRow {
+  display: grid;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.roomRow b {
+  font-weight: 600;
+}
+
+.roomLinks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roomLinks a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--purple-tint);
+  color: var(--purple-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.roomLinks svg {
+  width: 16px;
+  height: 16px;
+}

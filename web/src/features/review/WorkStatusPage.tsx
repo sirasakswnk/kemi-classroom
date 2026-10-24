@@ -19,6 +19,7 @@ import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
+import { PastTermChip } from '../classrooms/RoomTerm'
 import { postQuery } from '../posts/api'
 import { DeletePostDialog } from '../posts/DeletePostDialog'
 import { TeacherPage } from '../teacher/TeacherLayout'
@@ -147,6 +148,7 @@ export default function WorkStatusPage() {
           <h1>{p.title}</h1>
           <p>{copy.due(`${thaiDate(a.due_at)} · ${thaiTime(a.due_at)} น.`)}</p>
           <span className={styles.chips}>
+            <PastTermChip termId={classroom.data?.term_id} />
             <Chip tone={phase.tone}>{phase.label}</Chip>
             {a.close_at && data.intake !== 'closed' && (
               <Chip tone="plain" icon={<Lock />}>

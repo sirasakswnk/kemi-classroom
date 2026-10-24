@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, CircleCheck, KeyRound, Lock, TriangleAlert } from 'lucide-react'
+import { Archive, ArrowRight, CircleCheck, KeyRound, Lock, TriangleAlert } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
@@ -7,7 +7,7 @@ import { initialOf } from '../../lib/initial'
 import { appErrorOf } from '../../lib/request'
 import { Button, Chip, useToast } from '../../ui'
 import { ClassBanner } from '../classrooms/ClassBanner'
-import { termQuery } from '../classrooms/api'
+import { pastClassroomsQuery, termNamesQuery, termQuery } from '../classrooms/api'
 import { myWorkQuery } from '../work/api'
 import { DueSoon } from '../work/DueSoon'
 import { dueSoon, isPending } from '../work/workState'
@@ -175,6 +175,40 @@ export default function StudentHome() {
           )}
         </section>
       </div>
+      <PastClasses currentTermId={term.data?.id} />
     </main>
+  )
+}
+
+// “ภาคเรียนก่อน” (UX ข้อใหม่ใต้ “[ยืนยัน I5]”): พับไว้เป็นค่าเริ่มต้น แสดงห้องเทอมเก่าที่ยังเป็นสมาชิก (RLS)
+// เข้าไปดูคะแนน ความคิดเห็น และเฉลยแบบอ่านอย่างเดียว — ไม่มีห้องเก่าก็ไม่แสดงส่วนนี้
+function PastClasses({ currentTermId }: { currentTermId: string | undefined }) {
+  const past = useQuery(pastClassroomsQuery(currentTermId))
+  const names = useQuery(termNamesQuery)
+  const rooms = [...(past.data ?? [])].reverse()
+  if (rooms.length === 0) return null
+  const copy = th.classrooms
+  return (
+    <details className={styles.past}>
+      <summary>
+        <Archive aria-hidden="true" />
+        <span>{copy.pastSection}</span>
+        <span className={styles.muted}>{copy.pastSectionCount(rooms.length)}</span>
+      </summary>
+      <p className={styles.muted}>{copy.pastSectionHint}</p>
+      <ul className={styles.pastList}>
+        {rooms.map((c) => (
+          <li key={c.id}>
+            <Link to={`/c/${c.id}`} className={styles.pastRoom}>
+              <span>
+                <b>{c.name}</b>
+                <span className={styles.muted}>{names.data?.get(c.term_id) ?? ''}</span>
+              </span>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }

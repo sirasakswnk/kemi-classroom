@@ -6,6 +6,7 @@ import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate } from '../../lib/thaiTime'
 import { Button, Chip, Select, useToast } from '../../ui'
+import { PastTermChip } from '../classrooms/RoomTerm'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { gradeTableQuery, roomOptionsQuery, type GradeTable } from './api'
 import { csvFileName, downloadCsv, gradeCsv } from './gradeCsv'
@@ -29,7 +30,8 @@ export default function GradebookPage() {
   const copy = th.gradebook
   const table = useQuery(gradeTableQuery(classId))
   const rooms = useQuery(roomOptionsQuery)
-  const roomName = rooms.data?.find((r) => r.id === classId)?.name ?? '…'
+  const room = rooms.data?.find((r) => r.id === classId)
+  const roomName = room?.name ?? '…'
   const crumbs = [
     { label: th.teacher.overview, to: '/t' },
     { label: roomName, to: `/t/c/${classId}` },
@@ -74,7 +76,13 @@ export default function GradebookPage() {
   }
   return (
     <TeacherPage crumbs={crumbs}>
-      <Grid key={classId} table={table.data} classId={classId} roomName={roomName} />
+      <Grid
+        key={classId}
+        table={table.data}
+        classId={classId}
+        roomName={roomName}
+        termId={room?.term_id}
+      />
     </TeacherPage>
   )
 }
@@ -83,10 +91,12 @@ function Grid({
   table,
   classId,
   roomName,
+  termId,
 }: {
   table: GradeTable
   classId: string
   roomName: string
+  termId: string | undefined
 }) {
   const copy = th.gradebook
   const navigate = useNavigate()
@@ -112,6 +122,7 @@ function Grid({
       <header className={styles.head}>
         <div>
           {table.term_name && <span className={styles.eyebrow}>{table.term_name}</span>}
+          <PastTermChip termId={termId} />
           <h1>{copy.heading(roomName)}</h1>
           <p>{copy.lead}</p>
         </div>

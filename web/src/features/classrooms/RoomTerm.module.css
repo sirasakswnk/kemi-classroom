@@ -1,0 +1,15 @@
+/* ป้าย “ภาคเรียนก่อน” บนแถบสีของห้อง (ตัวอักษรขาวบนพื้นม่วง) และในหน้าอื่นของห้อง */
+.bannerTag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: rgb(255 255 255 / 22%);
+  border: 1px solid rgb(255 255 255 / 45%);
+  letter-spacing: normal;
+}
+
+.chip {
+  justify-self: start;
+  align-self: start;
+}

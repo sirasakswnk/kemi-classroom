@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Archive,
+  ArrowRight,
   CalendarRange,
   ClipboardCheck,
   Flag,
@@ -15,6 +16,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import type { AppError } from '../../lib/supabase'
@@ -24,6 +26,7 @@ import { Coin } from '../rewards/Medal'
 import { useRequestKey } from '../review/useRequestKey'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
+import { pastClassroomsQuery } from '../classrooms/api'
 import { TERM_NAME_MAX, termOverviewQuery, termsEnd, termsStart, type TermOverview } from './api'
 import styles from './terms.module.css'
 
@@ -350,7 +353,12 @@ function EndPanel({ data, adminMode }: { data: TermOverview; adminMode: boolean 
   )
 }
 
+// ลิงก์ไปห้องของแต่ละภาคเรียน (UX ข้อใหม่ใต้ “[ยืนยัน I5]”): ห้องเทอมเก่าตาม RLS (ครู = ห้องตัวเอง, ผู้ดูแล = ทุกห้อง)
+// + ห้องของภาคเรียนปัจจุบันเมื่อกดจบแล้ว (ภาคเรียนนั้นอยู่ในข้อมูลเก่าด้วย)
 function OldTerms({ data }: { data: TermOverview }) {
+  const { classrooms } = useTeacher()
+  const past = useQuery(pastClassroomsQuery(data.term.term_id))
+  const rooms = [...(past.data ?? []), ...classrooms]
   return (
     <section className={styles.panel} aria-labelledby="term-old">
       <h2 id="term-old">{copy.oldTitle}</h2>
@@ -376,10 +384,34 @@ function OldTerms({ data }: { data: TermOverview }) {
               <b>{copy.oldData}</b>
               <span className={styles.muted}>{copy.due(thaiDate(t.data_due))}</span>
             </div>
+            <OldRooms rooms={rooms.filter((c) => c.term_id === t.id)} loading={past.isPending} />
           </div>
         ))
       )}
     </section>
+  )
+}
+
+function OldRooms({ rooms, loading }: { rooms: { id: string; name: string }[]; loading: boolean }) {
+  if (loading) return null
+  return (
+    <div className={styles.roomRow}>
+      <b>{th.classrooms.pastRoomsLabel}</b>
+      {rooms.length === 0 ? (
+        <span className={styles.muted}>{th.classrooms.pastRoomsNone}</span>
+      ) : (
+        <ul className={styles.roomLinks}>
+          {rooms.map((c) => (
+            <li key={c.id}>
+              <Link to={`/t/c/${c.id}`}>
+                {c.name}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 

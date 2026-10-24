@@ -20,7 +20,7 @@ begin
 end
 $$;
 
-select plan(10);
+select plan(14);
 
 -- ข้อมูลสมมติ: T1 ปัจจุบัน (active) · T0 เก่าแบบเริ่มเทอมทับ · TE เก่าแบบกดจบแล้วเริ่มใหม่ · TX เทอมอื่นที่ไม่เกี่ยว
 -- ห้อง C1, C2 (T1) และ C0 (T0) · S1 อยู่ C1+C2, S2 อยู่ C1, S3 อยู่ C0
@@ -66,6 +66,24 @@ insert into public.wallets (student_id, term_id, balance) values
   ('60420000-0000-4000-8000-000000000002', '40420000-0000-4000-8000-000000000001', 3),
   ('60420000-0000-4000-8000-000000000003', '40420000-0000-4000-8000-000000000002', 9);
 
+-- ทางเข้าห้องภาคเรียนเก่า (P5-09): บัญชีของ S1 (ห้องปัจจุบันเท่านั้น) และ S3 (สมาชิก C0 เทอมเก่า)
+-- + ครูอีกคนกับห้อง C9 (T0) ที่ไม่มีสมาชิก — อ่านผ่าน RLS ของ classrooms ที่หน้าเว็บใช้
+insert into public.teachers (id, display_name) values ('10420000-0000-4000-8000-000000000002', 'ครูภาพรวมสอง');
+insert into public.accounts (id, auth_user_id, provider, provider_subject, email, role, teacher_id) values
+  ('30420000-0000-4000-8000-000000000003', '20420000-0000-4000-8000-000000000003', 'google', 'ov-3', 't42b@example.com', 'teacher', '10420000-0000-4000-8000-000000000002'),
+  ('30420000-0000-4000-8000-000000000012', '20420000-0000-4000-8000-000000000012', 'google', 'ov-12', 's42a@example.com', 'student', null),
+  ('30420000-0000-4000-8000-000000000013', '20420000-0000-4000-8000-000000000013', 'google', 'ov-13', 's42c@example.com', 'student', null);
+update public.students set account_id = '30420000-0000-4000-8000-000000000012' where id = '60420000-0000-4000-8000-000000000001';
+update public.students set account_id = '30420000-0000-4000-8000-000000000013' where id = '60420000-0000-4000-8000-000000000003';
+insert into public.classrooms (id, term_id, teacher_id, name, join_code) values
+  ('70420000-0000-4000-8000-000000000009', '40420000-0000-4000-8000-000000000002', '10420000-0000-4000-8000-000000000002', 'ภาพรวมเก่าห้องอื่น', 'ZZZZ4E');
+create function pg_temp.old_rooms() returns text language sql stable as $$
+  select coalesce(string_agg(c.name, ',' order by c.name), '')
+    from public.classrooms c
+   where c.term_id <> '40420000-0000-4000-8000-000000000001' and c.name like 'ภาพรวม%'
+$$;
+grant execute on function pg_temp.old_rooms() to authenticated;
+
 create temp table res (label text primary key, body jsonb) on commit drop;
 grant select, insert on res to authenticated;
 create function pg_temp.r(p_label text) returns jsonb language sql stable as $$ select body from res where label = p_label $$;
@@ -101,6 +119,16 @@ select is((select jsonb_build_array((x ->> 'files_due')::timestamptz, (x ->> 'da
              from jsonb_array_elements(pg_temp.r('ov') -> 'old_terms') x where x ->> 'name' = 'ภาคภาพรวม จบแล้ว'),
   jsonb_build_array('2026-05-14T03:00:00Z'::timestamptz, '2027-03-15T03:00:00Z'::timestamptz),
   'วันครบอายุ: ไฟล์ +60 วัน คะแนน +1 ปี นับจาก ended_at');
+
+-- ทางเข้าห้องภาคเรียนเก่า: RLS ของ classrooms
+select pg_temp.as_user('20420000-0000-4000-8000-000000000013');
+select is(pg_temp.old_rooms(), 'ภาพรวมเก่า', 'นักเรียนเห็นห้องเทอมเก่าที่ตนเป็นสมาชิกเท่านั้น');
+select pg_temp.as_user('20420000-0000-4000-8000-000000000012');
+select is(pg_temp.old_rooms(), '', 'นักเรียนที่ไม่เคยอยู่ห้องเทอมเก่าไม่เห็นห้องเทอมเก่าเลย');
+select pg_temp.as_user('20420000-0000-4000-8000-000000000003');
+select is(pg_temp.old_rooms(), 'ภาพรวมเก่าห้องอื่น', 'ครูเห็นเฉพาะห้องเทอมเก่าของตัวเอง');
+select pg_temp.as_user('20420000-0000-4000-8000-000000000001');
+select is(pg_temp.old_rooms(), 'ภาพรวมเก่า', 'ครูอีกคนเห็นเฉพาะห้องของตัวเองเช่นกัน');
 
 -- กดจบภาคเรียนปัจจุบัน → ขึ้นในข้อมูลภาคเรียนเก่า
 insert into res values ('end', public.terms_end('40420000-0000-4000-8000-000000000001', gen_random_uuid()));

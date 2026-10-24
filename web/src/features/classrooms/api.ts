@@ -75,6 +75,55 @@ export const classroomQuery = (id: string) =>
       ),
   })
 
+// ---------- ห้องของภาคเรียนเก่า (UX ข้อใหม่ใต้ “[ยืนยัน I5]”, P5-09) ----------
+// ชื่อภาคเรียนทุกแถว (RLS: ทุกคนที่ล็อกอินอ่านได้) — หัวห้องแสดงภาคเรียนของห้องนั้นเอง
+export const termNamesQuery = queryOptions({
+  queryKey: ['term-names'],
+  queryFn: () =>
+    run(
+      supabase.from('terms').select('id, name'),
+      z.array(z.object({ id: z.uuid(), name: z.string() })),
+    ),
+  select: (rows) => new Map(rows.map((t) => [t.id, t.name])),
+})
+
+/** ชื่อ + ภาคเรียนของห้องหนึ่ง (นักเรียนอ่านได้เฉพาะห้องที่เป็นสมาชิก — RLS) — null = ไม่เห็นห้องนี้ */
+export const roomTermQuery = (id: string) =>
+  queryOptions({
+    queryKey: ['room-term', id],
+    enabled: !!id,
+    queryFn: () =>
+      run(
+        supabase.from('classrooms').select('id, name, term_id').eq('id', id).maybeSingle(),
+        z.object({ id: z.uuid(), name: z.string(), term_id: z.uuid() }).nullable(),
+      ),
+  })
+
+const PastClassroomSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  term_id: z.uuid(),
+  created_at: z.string(),
+})
+export type PastClassroom = z.infer<typeof PastClassroomSchema>
+
+/** ห้องที่ไม่ใช่ภาคเรียนปัจจุบัน ที่ผู้เรียกเห็นตาม RLS ของ classrooms:
+ *  ครู = ห้องของตัวเอง, ผู้ดูแล = ทุกห้อง, นักเรียน = ห้องที่ยังเป็นสมาชิก (is_member) */
+export const pastClassroomsQuery = (currentTermId: string | undefined) =>
+  queryOptions({
+    queryKey: ['past-classrooms', currentTermId],
+    enabled: !!currentTermId,
+    queryFn: () =>
+      run(
+        supabase
+          .from('classrooms')
+          .select('id, name, term_id, created_at')
+          .neq('term_id', currentTermId ?? '')
+          .order('created_at'),
+        z.array(PastClassroomSchema),
+      ),
+  })
+
 // ---------- สมาชิก ----------
 const MemberRowSchema = z
   .object({

@@ -15,6 +15,7 @@ import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
+import { PastTermChip } from '../classrooms/RoomTerm'
 import { CommentThread } from '../comments/CommentThread'
 import { GradePanel } from '../grading/GradePanel'
 import { postQuery } from '../posts/api'
@@ -117,6 +118,7 @@ export default function SubmissionViewer() {
             {row.display_name}
           </h1>
           <span className={styles.chips}>
+            <PastTermChip termId={classroom.data?.term_id} />
             {rowBadges(row).map((b) => (
               <Chip key={b.label} tone={b.tone}>
                 {b.label}
