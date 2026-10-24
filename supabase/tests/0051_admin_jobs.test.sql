@@ -20,7 +20,7 @@ begin
 end
 $$;
 
-select plan(25);
+select plan(26);
 
 -- ---------------------------------------------------------------------------
 -- ข้อมูลสมมติ: ผู้ดูแล 1 · ครู 1 (มีบัญชี) · นักเรียน 1 ในห้อง · งานที่เลยกำหนดแล้ว
@@ -138,6 +138,18 @@ set local role authenticated;
 select is(public.admin_retry_job(pg_temp.id('t51-rc-old')) ->> 'result', 'queued', 'ไม่มีงานเทียบอื่นค้าง → ลองใหม่ได้ (ทำต่อจาก cursor เดิม)');
 set local role postgres;
 select is(pg_temp.status('t51-rc-old'), 'pending 0', 'กลับเป็น pending');
+
+-- ---------------------------------------------------------------------------
+-- 6. ตัวนับ B2 ของ D01 แสดงคำขอ Class C ของการเทียบยอด + งบ (0052)
+-- ---------------------------------------------------------------------------
+delete from public.b2_daily_usage where day = (clock_timestamp() at time zone 'UTC')::date and source = 'reconcile';
+insert into public.b2_daily_usage (day, source, class_c_requests) values ((clock_timestamp() at time zone 'UTC')::date, 'reconcile', 3);
+set local role authenticated;
+select ok((select (u -> 'sources' -> 'reconcile' ->> 'class_c_requests')::integer = 3
+                  and (u ->> 'reconcile_budget_requests')::integer > 0 and (u ->> 'reconcile_run_max_requests')::integer > 0
+                  and u -> 'sources' -> 'reconcile' ? 'class_b_requests'
+             from public.admin_b2_usage() u), 'ตัวนับ B2 มี Class C ของการเทียบยอด + งบต่อวัน/ต่อรอบ');
+set local role postgres;
 
 select * from finish();
 rollback;

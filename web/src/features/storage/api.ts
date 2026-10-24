@@ -38,6 +38,8 @@ export const storageStatusQuery = queryOptions({
 
 const UsageRow = z.object({
   class_b_requests: z.number(),
+  /** คำขอ List (Class C) — ใช้โดยการเทียบยอดพื้นที่ (0049/0052) */
+  class_c_requests: z.number().optional(),
   download_bytes: z.number(),
   copy_bytes: z.number(),
 })
@@ -46,6 +48,8 @@ const B2UsageSchema = z.object({
   sources: z.record(z.string(), UsageRow),
   view_budget_requests: z.number(),
   view_budget_bytes: z.number(),
+  reconcile_budget_requests: z.number().optional(),
+  reconcile_run_max_requests: z.number().optional(),
   jobs: z.object({ pending: z.number(), running: z.number(), failed: z.number() }),
 })
 export type B2Usage = z.infer<typeof B2UsageSchema>

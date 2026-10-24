@@ -1444,6 +1444,9 @@ export const th = {
     viewBudget: (req: number, reqMax: number, bytes: string, bytesMax: string) =>
       `งบเปิดดูของระบบวันนี้: ${req.toLocaleString('th-TH')} / ${reqMax.toLocaleString('th-TH')} คำขอ · ${bytes} / ${bytesMax}`,
     jobs: (pending: number, failed: number) => `งานเบื้องหลังรอทำ ${pending} · ล้มเหลว ${failed}`,
+    // P6-04c [ข้อเสนอ]: งบ Class C ของการเทียบยอดพื้นที่ (0049)
+    reconcileBudget: (used: number, max: number, perRun: number) =>
+      `เทียบยอดพื้นที่ B2 วันนี้: คำขอ Class C ${used.toLocaleString('th-TH')} / ${max.toLocaleString('th-TH')} (ไม่เกิน ${perRun} ต่อรอบ · เพดาน Class C ทั้งบัญชี 2,500 ต่อวัน)`,
     loadFailed: 'โหลดข้อมูลพื้นที่ไม่สำเร็จ',
     teacherWarn: (p: string) => `พื้นที่เก็บไฟล์ใช้ไป ${p}%`,
     teacherWarnBody: 'ผู้ดูแลระบบได้รับแจ้งแล้ว ถ้าเต็ม นักเรียนจะอัปโหลดงานไม่ได้ชั่วคราว',

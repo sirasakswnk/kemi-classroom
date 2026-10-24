@@ -84,6 +84,15 @@ export function StoragePanel() {
             )}
           </p>
           <p className={styles.hint}>{copy.b2Hint}</p>
+          {usage.data.reconcile_budget_requests != null && (
+            <p className={styles.hint}>
+              {copy.reconcileBudget(
+                usage.data.sources.reconcile?.class_c_requests ?? 0,
+                usage.data.reconcile_budget_requests,
+                usage.data.reconcile_run_max_requests ?? 0,
+              )}
+            </p>
+          )}
           <p className={styles.hint}>
             {copy.jobs(usage.data.jobs.pending + usage.data.jobs.running, usage.data.jobs.failed)}
           </p>
