@@ -1,4 +1,4 @@
-import { ChevronRight, Clock, ClockAlert, PartyPopper, Sparkles } from 'lucide-react'
+import { ChevronRight, Clock, ClockAlert, FilePlus, PartyPopper, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { bangkokParts, thaiDate, thaiTime } from '../../lib/thaiTime'
@@ -8,18 +8,33 @@ import { dueHint } from './workState'
 import styles from './work.module.css'
 
 // S01 “ใกล้กำหนดส่ง” (UX 5; แบบ v2 sHome .due-card): งานที่ยังต้องส่งจากทุกห้อง เชื่อมไป S03 โดยตรง
-export function DueSoon({ rows, now }: { rows: WorkRow[]; now: number }) {
+// empty: ตอนไม่มีงานค้าง — ห้องยังไม่มีงานเลย หรือมีงานและส่งครบแล้ว (dueEmpty)
+export function DueSoon({
+  rows,
+  now,
+  empty,
+}: {
+  rows: WorkRow[]
+  now: number
+  empty: 'noWork' | 'allSent'
+}) {
   const copy = th.work
   if (!rows.length) {
     return (
       <div className={styles.calm}>
         <span className={styles.wIc} aria-hidden="true">
-          <PartyPopper />
+          {empty === 'noWork' ? <FilePlus /> : <PartyPopper />}
         </span>
-        <span>
-          <b>{copy.noPendingTitle}</b>
-          <span className={styles.muted}>{copy.noPendingBody}</span>
-        </span>
+        {empty === 'noWork' ? (
+          <span>
+            <b>{copy.noWorkTitle}</b>
+          </span>
+        ) : (
+          <span>
+            <b>{copy.noPendingTitle}</b>
+            <span className={styles.muted}>{copy.noPendingBody}</span>
+          </span>
+        )}
       </div>
     )
   }

@@ -159,7 +159,7 @@ select is(pg_temp.brief(pg_temp.r('h1_late')), '[7, false, "late", 50, 3, 4, nul
 select isnt((select full_score_locked_at from public.assignments where post_id = '8e000000-0000-4000-8000-000000000001'), null,
   'L4: คะแนนดิบแรกล็อกคะแนนเต็มและ % หัก');
 select is((pg_temp.r('h1_late') -> 'full_score_locked'), 'true'::jsonb, 'ผลบอกว่าล็อกแล้ว');
-select is((pg_temp.r('h1_late') -> 'reward_granted'), 'false'::jsonb, 'ระยะ 4 ไม่ให้รางวัล');
+select is((pg_temp.r('h1_late') -> 'reward_granted'), 'false'::jsonb, 'งานสายไม่ได้รางวัล');
 
 insert into res values ('h3', public.grade_submission('5e000000-0000-4000-8000-000000000007', 149, true, null, null, 1, 0, gen_random_uuid()));
 select is(pg_temp.brief(pg_temp.r('h3')), '[149, true, "late", 50, 74, 75, null, 1]'::jsonb,
@@ -218,10 +218,10 @@ select is(public.grade_submission('5e000000-0000-4000-8000-000000000001', 9, tru
 select throws_ok($$ select public.grade_submission('5e000000-0000-4000-8000-000000000001', 10, true, null, null, 1, 0, 'c5000000-0000-4000-8000-000000000001') $$,
   'P0001', 'request_key_conflict', 'request key เดิมกับข้อมูลอื่น → request_key_conflict');
 
--- I3: ผ่าน → ไม่ผ่านได้ (ไม่แตะ reward_granted)
+-- I3: ผ่าน → ไม่ผ่านได้ (รางวัลจากการตรวจผ่านครั้งก่อนไม่ถูกถอน — 0035; ชุดเต็มของโทเคนอยู่ใน 0035_grade_reward.test.sql)
 insert into res values ('n1_fail', public.grade_submission('5e000000-0000-4000-8000-000000000001', 9, false, null, null, 1, 1, gen_random_uuid()));
-select is(pg_temp.brief(pg_temp.r('n1_fail')) || (pg_temp.r('n1_fail') -> 'reward_granted'), '[9, false, "on_time", 0, 0, 9, null, 2, false]'::jsonb,
-  'I3: เปลี่ยนผ่านเป็นไม่ผ่านได้');
+select is(pg_temp.brief(pg_temp.r('n1_fail')) || (pg_temp.r('n1_fail') -> 'reward_granted'), '[9, false, "on_time", 0, 0, 9, null, 2, true]'::jsonb,
+  'I3: เปลี่ยนผ่านเป็นไม่ผ่านได้ (reward_granted คงเป็น true)');
 
 -- ยอดรอตรวจและสถานะรายคนของครู (P3-09)
 select is((select (e -> 'waiting') from jsonb_array_elements(public.teacher_work_summary('7e000000-0000-4000-8000-000000000001')) e

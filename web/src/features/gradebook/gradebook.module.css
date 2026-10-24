@@ -67,7 +67,9 @@
   overflow: hidden;
 }
 
+/* position: relative ให้ .sr (absolute) อยู่ในกล่องเลื่อน ไม่ดันหน้ากว้างเกินจอ (พบ P5-10 ที่ 390 px) */
 .wrap {
+  position: relative;
   overflow-x: auto;
 }
 

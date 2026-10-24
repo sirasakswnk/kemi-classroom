@@ -75,6 +75,55 @@ export const classroomQuery = (id: string) =>
       ),
   })
 
+// ---------- ห้องของภาคเรียนเก่า (UX ข้อใหม่ใต้ “[ยืนยัน I5]”, P5-09) ----------
+// ชื่อภาคเรียนทุกแถว (RLS: ทุกคนที่ล็อกอินอ่านได้) — หัวห้องแสดงภาคเรียนของห้องนั้นเอง
+export const termNamesQuery = queryOptions({
+  queryKey: ['term-names'],
+  queryFn: () =>
+    run(
+      supabase.from('terms').select('id, name'),
+      z.array(z.object({ id: z.uuid(), name: z.string() })),
+    ),
+  select: (rows) => new Map(rows.map((t) => [t.id, t.name])),
+})
+
+/** ชื่อ + ภาคเรียนของห้องหนึ่ง (นักเรียนอ่านได้เฉพาะห้องที่เป็นสมาชิก — RLS) — null = ไม่เห็นห้องนี้ */
+export const roomTermQuery = (id: string) =>
+  queryOptions({
+    queryKey: ['room-term', id],
+    enabled: !!id,
+    queryFn: () =>
+      run(
+        supabase.from('classrooms').select('id, name, term_id').eq('id', id).maybeSingle(),
+        z.object({ id: z.uuid(), name: z.string(), term_id: z.uuid() }).nullable(),
+      ),
+  })
+
+const PastClassroomSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  term_id: z.uuid(),
+  created_at: z.string(),
+})
+export type PastClassroom = z.infer<typeof PastClassroomSchema>
+
+/** ห้องที่ไม่ใช่ภาคเรียนปัจจุบัน ที่ผู้เรียกเห็นตาม RLS ของ classrooms:
+ *  ครู = ห้องของตัวเอง, ผู้ดูแล = ทุกห้อง, นักเรียน = ห้องที่ยังเป็นสมาชิก (is_member) */
+export const pastClassroomsQuery = (currentTermId: string | undefined) =>
+  queryOptions({
+    queryKey: ['past-classrooms', currentTermId],
+    enabled: !!currentTermId,
+    queryFn: () =>
+      run(
+        supabase
+          .from('classrooms')
+          .select('id, name, term_id, created_at')
+          .neq('term_id', currentTermId ?? '')
+          .order('created_at'),
+        z.array(PastClassroomSchema),
+      ),
+  })
+
 // ---------- สมาชิก ----------
 const MemberRowSchema = z
   .object({
@@ -82,12 +131,32 @@ const MemberRowSchema = z
     joined_at: z.string(),
     students: z.object({
       display_name: z.string(),
+      // ชิ้นที่แสดงข้างชื่อ (ครูอ่านได้ตาม RLS ของ student_equipment/owned_charms)
+      student_equipment: z
+        .object({
+          owned_charms: z
+            .object({
+              charms: z.object({
+                id: z.uuid(),
+                name: z.string(),
+                symbol: z.string(),
+                rarity_id: z.number().int(),
+              }),
+            })
+            .nullable(),
+        })
+        .nullable(),
       roster_entries: z.array(
         z.object({ group_name: z.string(), roll_number: z.number().int(), term_id: z.uuid() }),
       ),
     }),
   })
-  .transform((m) => ({ student_id: m.student_id, joined_at: m.joined_at, ...m.students }))
+  .transform(({ students: { student_equipment, ...s }, ...m }) => ({
+    student_id: m.student_id,
+    joined_at: m.joined_at,
+    ...s,
+    charm: student_equipment?.owned_charms?.charms ?? null,
+  }))
 
 export interface Member {
   student_id: string
@@ -96,6 +165,8 @@ export interface Member {
   /** ห้องและเลขที่ตามรายชื่อของภาคเรียนนี้ (ไม่มีถ้าไม่อยู่ในรายชื่อเทอมนี้) */
   group_name: string | null
   roll_number: number | null
+  /** เครื่องรางที่เลือกแสดงข้างชื่อ (null = ไม่แสดง) */
+  charm: { id: string; name: string; symbol: string; rarity_id: number } | null
 }
 
 export const membersQuery = (classroomId: string, termId: string | undefined) =>
@@ -107,7 +178,7 @@ export const membersQuery = (classroomId: string, termId: string | undefined) =>
         supabase
           .from('memberships')
           .select(
-            'student_id, joined_at, students(display_name, roster_entries(group_name, roll_number, term_id))',
+            'student_id, joined_at, students(display_name, student_equipment(owned_charms(charms(id, name, symbol, rarity_id))), roster_entries(group_name, roll_number, term_id))',
           )
           .eq('classroom_id', classroomId),
         z.array(MemberRowSchema),
@@ -121,6 +192,7 @@ export const membersQuery = (classroomId: string, termId: string | undefined) =>
             display_name: m.display_name,
             group_name: entry?.group_name ?? null,
             roll_number: entry?.roll_number ?? null,
+            charm: m.charm,
           }
         })
         .sort(compareMembers)

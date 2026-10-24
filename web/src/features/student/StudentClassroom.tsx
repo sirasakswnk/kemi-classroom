@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Lock, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Archive, Lock, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
@@ -8,6 +8,9 @@ import { appErrorOf } from '../../lib/request'
 import { useTabParam } from '../../lib/useTabParam'
 import { Button, Chip, Tabs } from '../../ui'
 import { ClassBanner } from '../classrooms/ClassBanner'
+import { roomTermQuery } from '../classrooms/api'
+import { RoomEyebrow } from '../classrooms/RoomTerm'
+import { useRoomTerm } from '../classrooms/useRoomTerm'
 import { postsQuery } from '../posts/api'
 import { RoomPosts } from '../posts/RoomPosts'
 import { StudentWorkList } from '../work/StudentWorkList'
@@ -21,6 +24,8 @@ import {
   seenKey,
 } from './seenAnnouncements'
 import styles from './student.module.css'
+import { MemberCharm } from '../rewards/MemberCharm'
+import { useCharmImages } from '../charms/charmImages'
 
 const TABS = ['general', 'work', 'members'] as const
 
@@ -31,6 +36,10 @@ const TABS = ['general', 'work', 'members'] as const
 export default function StudentClassroom() {
   const { classId = '' } = useParams()
   const view = useQuery(classroomViewQuery(classId))
+  const roomTerm = useQuery(roomTermQuery(classId))
+  const { past } = useRoomTerm(roomTerm.data?.term_id)
+  // รูปเครื่องรางที่สมาชิกเลือกแสดง — ขอลิงก์รวมครั้งเดียวต่อหน้าจอ
+  const charmImages = useCharmImages(view.data?.members.map((m) => m.charm?.image_asset_id) ?? [])
   const classes = useQuery(myClassroomsQuery)
   const posts = useQuery({ ...postsQuery(classId), enabled: view.isSuccess })
   const [now] = useState(() => Date.now())
@@ -106,7 +115,13 @@ export default function StudentClassroom() {
     <main className={styles.page}>
       {back}
       <section className={styles.hero} aria-label={c.name}>
-        <ClassBanner tone={tone} size="hero" level={1} eyebrow={c.term_name} title={c.name}>
+        <ClassBanner
+          tone={tone}
+          size="hero"
+          level={1}
+          eyebrow={roomTerm.data ? <RoomEyebrow termId={roomTerm.data.term_id} /> : c.term_name}
+          title={c.name}
+        >
           <span className={styles.teacherLine}>
             <span className={styles.bannerAvatar} aria-hidden="true">
               {initialOf(c.teacher_name)}
@@ -117,6 +132,12 @@ export default function StudentClassroom() {
           </span>
         </ClassBanner>
       </section>
+      {past && (
+        <p className={styles.note} data-tone="purple" role="note">
+          <Archive aria-hidden="true" />
+          <span>{th.classrooms.pastRoomStudent}</span>
+        </p>
+      )}
       <Tabs
         label={th.classrooms.room.tabsLabel}
         tabs={TABS.map((key) => ({
@@ -144,6 +165,16 @@ export default function StudentClassroom() {
                     <span className={styles.mNo}>{m.roll_number ?? '–'}</span>
                     <span className={styles.mName}>{m.display_name}</span>
                     {m.is_me && <Chip tone="purple">{copy.me}</Chip>}
+                    {m.charm && (
+                      <MemberCharm
+                        charm={m.charm}
+                        image={
+                          m.charm.image_asset_id
+                            ? charmImages.get(m.charm.image_asset_id)
+                            : undefined
+                        }
+                      />
+                    )}
                   </li>
                 ))}
               </ul>

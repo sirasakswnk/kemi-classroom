@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Clock, Info, Lock, Pencil, RotateCcw, TriangleAlert } from 'lucide-react'
+import { Check, Clock, Coins, Info, Lock, Pencil, RotateCcw, TriangleAlert } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
@@ -9,20 +9,29 @@ import { Button, Chip, Field, Input, Textarea, useToast } from '../../ui'
 import { editablePostQuery } from '../posts/api'
 import type { StatusRow } from '../review/api'
 import { gradeKey, gradeQuery, gradeSubmission, type Grade } from './api'
-import { evaluateDraft, formulaParts, initialDraft, REASON_MAX, type GradeDraft } from './gradeForm'
+import {
+  evaluateDraft,
+  formulaParts,
+  initialDraft,
+  REASON_MAX,
+  rewardPreview,
+  type GradeDraft,
+} from './gradeForm'
 import styles from './grading.module.css'
 import { RevisionPermission } from './RevisionPermission'
 
 // แผงผลตรวจของ T03 (P4-04): คะแนนก่อนหัก + สูตรหักส่งช้า + ปรับเฉพาะคน (งานสายเท่านั้น) + ยืนยันงานครบถ้วน
-// ระยะ 4 ยังไม่มีโทเคน จึงยังไม่มีกล่องผลต่อรางวัลของแบบ v2 (มากับระยะ 5)
+// + กล่องผลต่อรางวัลที่คาดก่อนบันทึก (UX 9, แบบ v2 reward-box) จากข้อมูลรางวัลของ teacher_submission_list (0036)
 
 interface Props {
   postId: string
   row: StatusRow & { submission_id: string }
   adminMode: boolean
+  /** โทเคนของงาน และห้องอยู่ในเทอมกระเป๋าปัจจุบัน (teacher_submission_list) */
+  reward: { tokens: number; currentTerm: boolean }
 }
 
-export function GradePanel({ postId, row, adminMode }: Props) {
+export function GradePanel({ postId, row, adminMode, reward }: Props) {
   const post = useQuery(editablePostQuery(postId))
   const grade = useQuery(gradeQuery(row.submission_id))
   if (post.isPending || grade.isPending) {
@@ -48,6 +57,7 @@ export function GradePanel({ postId, row, adminMode }: Props) {
       postId={postId}
       row={row}
       adminMode={adminMode}
+      reward={reward}
       grade={grade.data ?? null}
       fullScore={assignment.full_score}
       latePct={assignment.late_penalty_pct}
@@ -60,6 +70,7 @@ function GradeForm({
   postId,
   row,
   adminMode,
+  reward,
   grade,
   fullScore,
   latePct,
@@ -142,6 +153,13 @@ function GradeForm({
   const blocked = result.problems.length > 0
   const graded = !!grade
   const oldRevision = grade && grade.graded_revision < (row.content_revision ?? 1)
+  const rewardCase = rewardPreview({
+    pass: draft.pass,
+    timing,
+    granted: row.reward_granted,
+    tokens: reward.tokens,
+    currentTerm: reward.currentTerm,
+  })
 
   return (
     <form
@@ -317,6 +335,15 @@ function GradeForm({
           <span>{copy.passHint}</span>
         </span>
       </label>
+
+      <p className={styles.reward} data-yes={rewardCase === 'will_grant' || undefined}>
+        {rewardCase === 'will_grant' ? <Coins aria-hidden="true" /> : <Info aria-hidden="true" />}
+        <span>
+          {rewardCase === 'will_grant'
+            ? copy.reward.will_grant(reward.tokens)
+            : copy.reward[rewardCase]}
+        </span>
+      </p>
 
       {serverError && !fieldCodes.includes(serverError.code) && (
         <ErrorNote error={serverError} onReload={reload} />

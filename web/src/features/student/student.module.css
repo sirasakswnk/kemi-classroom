@@ -41,8 +41,14 @@
   height: 32px;
 }
 
-.avatarBtn {
+.topEnd {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatarBtn {
   width: var(--tap-min);
   height: var(--tap-min);
   display: grid;
@@ -694,4 +700,72 @@
 .licenses:focus-visible {
   outline: 3px solid var(--purple-mid);
   outline-offset: 2px;
+}
+
+/* S01 “ภาคเรียนก่อน” แบบพับได้ (P5-09) — ปิดไว้เป็นค่าเริ่มต้น กดแถบหัวเพื่อเปิด (เป้ากด ≥ 44 px) */
+.past {
+  display: grid;
+  gap: 10px;
+  padding: 4px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.past summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.past summary svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--purple);
+}
+
+.past summary > span:last-child {
+  margin-left: auto;
+  font-weight: 400;
+}
+
+.past[open] {
+  padding-bottom: 16px;
+}
+
+.pastList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.pastRoom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.pastRoom > span {
+  display: grid;
+  gap: 2px;
+}
+
+.pastRoom svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--purple);
 }

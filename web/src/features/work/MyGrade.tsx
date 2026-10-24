@@ -1,29 +1,27 @@
 import { Info } from 'lucide-react'
 import { th } from '../../copy/th'
 import { Chip } from '../../ui'
-import type { GradeView } from './workState'
+import type { SubmissionStatus } from './api'
+import { gradeChip, type GradeView } from './workState'
 import styles from './work.module.css'
 
 // S03 “คะแนนและความครบถ้วน” (UX 6–7): คะแนนก่อนหัก/การหัก/สุทธิ · ไม่ติ๊กครบถ้วน = “รอครูยืนยันความครบถ้วน” (ไม่ใช้คำว่าไม่ผ่าน)
-// ผลของชุดก่อนหน้าแสดงไว้พร้อมบอกว่ารอตรวจชุดใหม่ · เหตุผลการปรับหักอยู่ในช่องความคิดเห็น · โทเคนมากับระยะ 5
+// ผลของชุดก่อนหน้าแสดงไว้พร้อมบอกว่ารอตรวจชุดใหม่ · เหตุผลการปรับหักอยู่ในช่องความคิดเห็น
+// ป้ายบอกรางวัลที่ได้แล้ว / งานภาคเรียนก่อน ตามข้อมูลรางวัลจาก submission_status (0036)
 export function MyGrade({
   view,
   fullScore,
   revision,
+  status,
 }: {
   view: GradeView | null
   fullScore: number
   /** ชุดที่ส่งล่าสุดของนักเรียน */
   revision: number
+  status: Pick<SubmissionStatus, 'reward_granted' | 'reward_tokens' | 'current_term'>
 }) {
   const copy = th.work.grade
-  const chip = !view
-    ? { label: copy.waiting, tone: 'amber' as const }
-    : view.stale
-      ? { label: copy.staleChip, tone: 'amber' as const }
-      : view.passed
-        ? { label: copy.complete, tone: 'green' as const }
-        : { label: copy.pending, tone: 'amber' as const }
+  const chip = gradeChip(view, status)
   const score = view?.score
 
   return (

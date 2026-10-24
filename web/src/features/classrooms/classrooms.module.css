@@ -535,3 +535,24 @@
     min-height: var(--tap-min);
   }
 }
+
+/* ห้องของภาคเรียนก่อน (P5-09) — แบบ v2 .note.purple */
+.pastNote {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.pastNote svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}

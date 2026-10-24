@@ -11,6 +11,7 @@ const m = (name: string, group: string | null, roll: number | null): Member => (
   display_name: name,
   group_name: group,
   roll_number: roll,
+  charm: null,
 })
 
 describe('ชั้นเรียน', () => {

@@ -28,8 +28,9 @@ function parseRequest(body: unknown): Record<string, unknown> | null {
   const b = body as Record<string, unknown>
   const known = ['purpose', 'classroom_id', 'post_id', 'files', 'request_key', 'admin_mode']
   if (Object.keys(b).some((k) => !known.includes(k))) return null
-  if (typeof b.purpose !== 'string' || !isUuid(b.classroom_id) || !isUuid(b.request_key))
-    return null
+  // classroom_id เป็น null ได้ (รูปเครื่องราง purpose charm ไม่มีห้อง — RPC ตรวจคู่ purpose/ห้องเอง)
+  if (typeof b.purpose !== 'string' || !isUuid(b.request_key)) return null
+  if (b.classroom_id !== null && !isUuid(b.classroom_id)) return null
   if (b.post_id !== undefined && b.post_id !== null && !isUuid(b.post_id)) return null
   if (!Array.isArray(b.files)) return null
   if (b.admin_mode !== undefined && typeof b.admin_mode !== 'boolean') return null

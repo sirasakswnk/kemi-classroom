@@ -87,6 +87,11 @@ export const ERROR_CODES = [
   'preview_changed',
   'close_required',
   'solution_published',
+  'insufficient_balance',
+  'draw_completed',
+  'draw_unavailable',
+  'rates_must_total_100',
+  'term_name_taken',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -192,6 +197,15 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   close_required: 'field',
   // M2: เปิดรับอีกครั้งหลังเผยแพร่เฉลย — โหลดสถานะงานใหม่
   solution_published: 'reload',
+  // T05 ปรับโทเคน (P5-03) / S04 สุ่ม (P5-04): ยอดไม่พอ — หน้าจอโหลดยอดใหม่แล้วแสดง “ยอดล่าสุด {n} โทเคน”
+  insufficient_balance: 'field',
+  // S04 (P5-04): ปกติปุ่มถูกปิดก่อนแล้ว — แสดงข้อความแล้วโหลดตัวเลือกสุ่มใหม่ ไม่หักโทเคน
+  draw_completed: 'field',
+  draw_unavailable: 'field',
+  // T06 (P5-07): ใต้ช่องอัตรา — หน้าจอต่อท้าย “(ตอนนี้ {n}%)” จากค่าที่กรอก
+  rates_must_total_100: 'field',
+  // T07 (P5-09): ใต้ช่องชื่อภาคเรียนใหม่ แล้วย้ายโฟกัสไปที่ช่อง
+  term_name_taken: 'focus_field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

@@ -1,5 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link2, Lock, LockOpen, Maximize2, Table2, TriangleAlert, Users } from 'lucide-react'
+import {
+  Archive,
+  Link2,
+  Lock,
+  LockOpen,
+  Maximize2,
+  Table2,
+  TriangleAlert,
+  Users,
+} from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
@@ -22,6 +31,7 @@ import { CodeFullscreen } from './CodeFullscreen'
 import { requestPageFullscreen } from './fullscreen'
 import styles from './classrooms.module.css'
 import { MembersPanel } from './MembersPanel'
+import { RoomEyebrow } from './RoomTerm'
 
 const TABS = ['general', 'work', 'members'] as const
 
@@ -76,7 +86,6 @@ export default function ClassroomPage() {
         key={c.id}
         classroom={c}
         tone={tone}
-        termName={term?.name ?? ''}
         termId={term?.id}
         termActive={term?.status === 'active'}
         teacherName={teacherName}
@@ -89,7 +98,6 @@ export default function ClassroomPage() {
 function Room({
   classroom: c,
   tone,
-  termName,
   termId,
   termActive,
   teacherName,
@@ -97,13 +105,14 @@ function Room({
 }: {
   classroom: Classroom
   tone: number
-  termName: string
   termId: string | undefined
   termActive: boolean
   teacherName: string
   adminMode: boolean
 }) {
   const copy = th.classrooms.room
+  // ห้องของภาคเรียนก่อน: ไม่มีรหัส/เปิด-ปิดการเข้าห้อง (เข้าห้องเทอมเก่าไม่ได้อยู่แล้ว) ยังตรวจงานได้ (I5)
+  const past = !!termId && c.term_id !== termId
   const [tab, selectTab] = useTabParam(TABS, 'work')
   const [fullOpen, setFullOpen] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(null)
@@ -148,7 +157,13 @@ function Room({
   return (
     <>
       <section className={styles.hero} aria-label={c.name}>
-        <ClassBanner tone={tone} size="hero" level={1} eyebrow={termName} title={c.name}>
+        <ClassBanner
+          tone={tone}
+          size="hero"
+          level={1}
+          eyebrow={<RoomEyebrow termId={c.term_id} />}
+          title={c.name}
+        >
           <p className={styles.teacherLine}>
             <span className={styles.bannerAvatar} aria-hidden="true">
               {initialOfTeacher(teacherName)}
@@ -160,7 +175,7 @@ function Room({
             </span>
           </p>
           <div className={styles.tools}>
-            {c.join_enabled ? (
+            {past ? null : c.join_enabled ? (
               <>
                 <button
                   type="button"
@@ -214,6 +229,12 @@ function Room({
           </div>
         </ClassBanner>
       </section>
+      {past && (
+        <p className={styles.pastNote} role="note">
+          <Archive aria-hidden="true" />
+          <span>{th.classrooms.pastRoomTeacher}</span>
+        </p>
+      )}
       {joinError && (
         <p className={styles.alert} role="alert">
           <TriangleAlert aria-hidden="true" />

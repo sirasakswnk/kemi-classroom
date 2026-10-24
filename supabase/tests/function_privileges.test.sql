@@ -97,7 +97,26 @@ insert into expected_authenticated values
   ('public.teacher_grade_table(uuid)'),
   -- 0033_delete_post (ครู/ผู้ดูแล: ดูยอดก่อนลบ, ลบการบ้าน/ประกาศแบบ cascade)
   ('public.post_delete_preview(uuid)'),
-  ('public.delete_post(uuid,jsonb,uuid,boolean)');
+  ('public.delete_post(uuid,jsonb,uuid,boolean)'),
+  -- 0036_wallet_ops (นักเรียน: เอฟเฟกต์ได้รับโทเคน · ครู/ผู้ดูแล: ปรับยอดมือ)
+  ('public.reward_effects()'),
+  ('public.mark_reward_effect_seen(uuid[])'),
+  ('public.wallet_adjust(uuid,integer,integer,uuid,boolean)'),
+  -- 0037_draw (นักเรียน: อัตราสุ่มจริง, สุ่ม, เลือกชิ้นที่แสดงข้างชื่อ)
+  ('public.get_draw_options()'),
+  ('public.draw_charm(text,uuid)'),
+  ('public.set_equipment(uuid)'),
+  -- 0038_collection (นักเรียน: ตู้สะสมส่วนตัว)
+  ('public.my_collection()'),
+  -- 0040_charm_admin (ครู/ผู้ดูแล: T06 แคตตาล็อก อัตรา เพิ่ม/แก้เครื่องราง)
+  ('public.charm_catalog(boolean)'),
+  ('public.save_rarity_weights(jsonb,text,boolean)'),
+  ('public.save_charm(jsonb,integer,uuid,boolean)'),
+  -- 0041_terms (ครู/ผู้ดูแล: เริ่มภาคเรียนใหม่ / จบภาคเรียนโดยไม่เปิดเทอมใหม่)
+  ('public.terms_start(text,uuid,uuid,boolean)'),
+  ('public.terms_end(uuid,uuid,boolean)'),
+  -- 0042_term_overview (ครู/ผู้ดูแล: ข้อมูลหน้า T07)
+  ('public.term_overview(boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**

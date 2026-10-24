@@ -96,7 +96,7 @@ select is((select jsonb_agg(e ->> 'display_name') from pg_temp.rows('list') e), 
 select is((select e - 'student_id' - 'submission_id' from pg_temp.rows('list') e where e ->> 'display_name' = 'หนึ่ง ครูดู'),
   jsonb_build_object('roll_number', 5, 'display_name', 'หนึ่ง ครูดู', 'member', true,
     'first_submitted_at', '2026-09-29T01:00:00+00:00', 'last_submitted_at', '2026-09-29T05:00:00+00:00',
-    'content_revision', 2, 'timing', 'on_time', 'graded', false, 'file_count', 2),
+    'content_revision', 2, 'timing', 'on_time', 'graded', false, 'reward_granted', false, 'file_count', 2),
   'แถวที่ส่งแล้ว: เวลาส่งแรก/ล่าสุด ครั้งที่ส่ง ทัน จำนวนไฟล์');
 select is((select (e -> 'member') || (e -> 'timing') || (e -> 'roll_number') from pg_temp.rows('list') e where e ->> 'display_name' = 'สาม ครูดู'),
   '[false, "late", 9]'::jsonb, 'ถูกเอาออกแต่เคยส่ง: ยังอยู่ในรายชื่อ member = false ส่งช้า');

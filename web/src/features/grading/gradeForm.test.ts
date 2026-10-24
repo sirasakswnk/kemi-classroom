@@ -3,6 +3,7 @@ import {
   evaluateDraft,
   formulaParts,
   initialDraft,
+  rewardPreview,
   type GradeContext,
   type GradeDraft,
 } from './gradeForm'
@@ -110,5 +111,28 @@ describe('formulaParts', () => {
   it('ยังไม่มีคะแนนหรือไม่หัก → ไม่แสดงสูตร', () => {
     expect(formulaParts(null, 50)).toBeNull()
     expect(formulaParts(7, 0)).toBeNull()
+  })
+})
+
+describe('ผลต่อรางวัลก่อนบันทึก (UX 9)', () => {
+  const base = {
+    pass: true,
+    timing: 'on_time' as const,
+    granted: false,
+    tokens: 2,
+    currentTerm: true,
+  }
+  it('ทัน + ครบถ้วน + เทอมปัจจุบัน → ได้โทเคน', () => {
+    expect(rewardPreview(base)).toBe('will_grant')
+  })
+  it('ได้แล้ว: ไม่ให้ซ้ำ / เปลี่ยนเป็นไม่ครบถ้วนไม่ถอน (I3)', () => {
+    expect(rewardPreview({ ...base, granted: true })).toBe('granted')
+    expect(rewardPreview({ ...base, granted: true, pass: false })).toBe('granted_unpass')
+  })
+  it('ส่งสาย / งานเทอมเก่า / ยังไม่ติ๊ก / งานไม่มีโทเคน', () => {
+    expect(rewardPreview({ ...base, timing: 'late' })).toBe('late')
+    expect(rewardPreview({ ...base, currentTerm: false })).toBe('old_term')
+    expect(rewardPreview({ ...base, pass: false })).toBe('not_passed')
+    expect(rewardPreview({ ...base, tokens: 0 })).toBe('no_reward')
   })
 })

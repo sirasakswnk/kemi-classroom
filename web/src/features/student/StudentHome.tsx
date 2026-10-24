@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, CircleCheck, KeyRound, TriangleAlert } from 'lucide-react'
+import { Archive, ArrowRight, CircleCheck, KeyRound, Lock, TriangleAlert } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
@@ -7,10 +7,10 @@ import { initialOf } from '../../lib/initial'
 import { appErrorOf } from '../../lib/request'
 import { Button, Chip, useToast } from '../../ui'
 import { ClassBanner } from '../classrooms/ClassBanner'
-import { termQuery } from '../classrooms/api'
+import { pastClassroomsQuery, termNamesQuery, termQuery } from '../classrooms/api'
 import { myWorkQuery } from '../work/api'
 import { DueSoon } from '../work/DueSoon'
-import { dueSoon, isPending } from '../work/workState'
+import { dueEmpty, dueSoon, isPending } from '../work/workState'
 import work from '../work/work.module.css'
 import { myClassroomsQuery } from './api'
 import { firstName } from './names'
@@ -39,11 +39,15 @@ export default function StudentHome() {
   const queryClient = useQueryClient()
   const toast = useToast()
   const list = classes.data ?? []
-  const workRows = myWork.data ?? []
+  // นับเฉพาะงานของห้องในภาคเรียนปัจจุบัน — my_work คืนงานของห้องเทอมเก่าที่ยังเป็นสมาชิกด้วย (P5-09)
+  const currentRooms = new Set(list.map((c) => c.id))
+  const workRows = (myWork.data ?? []).filter((r) => currentRooms.has(r.classroom_id))
   const due = dueSoon(workRows)
   const pendingIn = (classId: string) =>
     workRows.filter((r) => r.classroom_id === classId && isPending(r)).length
   const hasWork = (classId: string) => workRows.some((r) => r.classroom_id === classId)
+  // จบภาคเรียนแล้ว (K5): งานที่ยังไม่ส่งกลายเป็นส่งไม่ได้ จึงห้ามสรุปว่า “ส่งงานครบแล้ว”
+  const ended = term.data?.status === 'ended'
 
   return (
     <main className={styles.page} data-width={list.length === 0 ? 'narrow' : undefined}>
@@ -55,21 +59,29 @@ export default function StudentHome() {
         <p>
           {list.length === 0
             ? th.identity.noClass
-            : due.length > 0
-              ? th.work.pendingGreeting(workRows.filter(isPending).length)
-              : myWork.data && workRows.length > 0
-                ? th.work.allSent
-                : th.student.withClasses}
+            : ended
+              ? th.student.termEndedGreeting
+              : due.length > 0
+                ? th.work.pendingGreeting(workRows.filter(isPending).length)
+                : myWork.data && workRows.length > 0
+                  ? th.work.allSent
+                  : th.student.withClasses}
         </p>
       </div>
+      {ended && (
+        <p className={styles.note} data-tone="purple" role="note">
+          <Lock aria-hidden="true" />
+          <span>{th.student.termEnded}</span>
+        </p>
+      )}
       {notice && (
         <p className={styles.note} data-tone="green" role="status">
           <CircleCheck aria-hidden="true" />
           <span>{notice}</span>
         </p>
       )}
-      <div className={work.homeCols} data-single={list.length === 0 || undefined}>
-        {list.length > 0 && (
+      <div className={work.homeCols} data-single={list.length === 0 || ended || undefined}>
+        {list.length > 0 && !ended && (
           <section className={styles.section} aria-labelledby="dueTitle">
             <div className={styles.sectionHead}>
               <h2 id="dueTitle">{th.work.dueSoon}</h2>
@@ -87,7 +99,7 @@ export default function StudentHome() {
                 </Button>
               </div>
             ) : (
-              <DueSoon rows={due} now={now} />
+              <DueSoon rows={due} now={now} empty={dueEmpty(workRows)} />
             )}
           </section>
         )}
@@ -125,7 +137,9 @@ export default function StudentHome() {
                       </span>
                     </ClassBanner>
                     <span className={styles.classFoot}>
-                      {pendingIn(c.id) > 0 ? (
+                      {ended ? (
+                        <Chip tone="plain">{th.work.label.termEnded}</Chip>
+                      ) : pendingIn(c.id) > 0 ? (
                         <Chip tone="amber">{th.work.pendingChip(pendingIn(c.id))}</Chip>
                       ) : (
                         <Chip tone="plain">
@@ -163,6 +177,40 @@ export default function StudentHome() {
           )}
         </section>
       </div>
+      <PastClasses currentTermId={term.data?.id} />
     </main>
+  )
+}
+
+// “ภาคเรียนก่อน” (UX ข้อใหม่ใต้ “[ยืนยัน I5]”): พับไว้เป็นค่าเริ่มต้น แสดงห้องเทอมเก่าที่ยังเป็นสมาชิก (RLS)
+// เข้าไปดูคะแนน ความคิดเห็น และเฉลยแบบอ่านอย่างเดียว — ไม่มีห้องเก่าก็ไม่แสดงส่วนนี้
+function PastClasses({ currentTermId }: { currentTermId: string | undefined }) {
+  const past = useQuery(pastClassroomsQuery(currentTermId))
+  const names = useQuery(termNamesQuery)
+  const rooms = [...(past.data ?? [])].reverse()
+  if (rooms.length === 0) return null
+  const copy = th.classrooms
+  return (
+    <details className={styles.past}>
+      <summary>
+        <Archive aria-hidden="true" />
+        <span>{copy.pastSection}</span>
+        <span className={styles.muted}>{copy.pastSectionCount(rooms.length)}</span>
+      </summary>
+      <p className={styles.muted}>{copy.pastSectionHint}</p>
+      <ul className={styles.pastList}>
+        {rooms.map((c) => (
+          <li key={c.id}>
+            <Link to={`/c/${c.id}`} className={styles.pastRoom}>
+              <span>
+                <b>{c.name}</b>
+                <span className={styles.muted}>{names.data?.get(c.term_id) ?? ''}</span>
+              </span>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }

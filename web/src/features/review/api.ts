@@ -46,6 +46,8 @@ const StatusRowSchema = z.object({
   content_revision: z.number().int().nullable(),
   timing: z.enum(['on_time', 'late']).nullable(),
   graded: z.boolean(),
+  /** ได้โทเคนของงานนี้แล้ว (0036) */
+  reward_granted: z.boolean(),
   file_count: z.number().int(),
 })
 export type StatusRow = z.infer<typeof StatusRowSchema>
@@ -56,6 +58,9 @@ const SubmissionListSchema = z.object({
   server_now: z.string(),
   intake: IntakeSchema,
   solution_published: z.boolean(),
+  /** โทเคนของงาน และห้องอยู่ในเทอมกระเป๋าปัจจุบัน (0036) */
+  reward_tokens: z.number().int(),
+  current_term: z.boolean(),
   rows: z.array(StatusRowSchema),
 })
 export type SubmissionList = z.infer<typeof SubmissionListSchema>

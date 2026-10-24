@@ -21,7 +21,7 @@ import type { FileFieldState } from '../uploads/useFileField'
 import { storageStatusQuery } from '../storage/api'
 import { UploadBlocked } from '../storage/Storage'
 import { submitAssignment, type SubmissionStatus } from './api'
-import { blockedReason, mineBadge, sameFiles, when } from './workState'
+import { blockedReason, mineBadge, sameFiles, when, type GradeView } from './workState'
 import styles from './work.module.css'
 
 const EMPTY: FileFieldState = { assetIds: [], busy: false, hasErrors: false }
@@ -30,7 +30,16 @@ const EMPTY: FileFieldState = { assetIds: [], busy: false, hasErrors: false }
 // ส่งได้หรือไม่และผลถ้าส่งตอนนี้มาจากเซิร์ฟเวอร์ (submission_status.outcome/blocked) — ส่งไม่ได้แสดงเหตุผลแทนฟอร์ม
 // ส่งแก้: ช่องไฟล์เริ่มจากไฟล์ชุดปัจจุบัน เก็บบางไฟล์ เอาออก เพิ่ม เรียงใหม่ได้ (ไฟล์เดิมไม่อัปโหลดซ้ำ)
 // request key เดิมจนกว่าชุดไฟล์เปลี่ยน — กดส่งซ้ำหลังเน็ตหลุดได้ผลเดิม ไม่ส่งซ้ำ
-export function MyWork({ post, status }: { post: Post; status: SubmissionStatus }) {
+export function MyWork({
+  post,
+  status,
+  grade = null,
+}: {
+  post: Post
+  status: SubmissionStatus
+  /** ผลตรวจของชุดที่ส่ง (null = ยังไม่ตรวจ/กำลังโหลด) — ใช้กับป้ายหัวหลังครูตรวจ */
+  grade?: GradeView | null
+}) {
   const copy = th.work
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -49,10 +58,11 @@ export function MyWork({ post, status }: { post: Post; status: SubmissionStatus 
   // J10.3: พื้นที่เต็ม → แทนกล่องเลือกไฟล์ด้วยกล่องแจ้ง (ส่งงานต่อไม่ได้จนมีพื้นที่)
   const storage = useQuery({ ...storageStatusQuery, enabled: showForm })
   const storageFull = showForm && storage.data?.level === 'full'
-  const badge = mineBadge(status, {
-    editing: showForm && !!sub,
-    attached: files.assetIds.length > 0,
-  })
+  const badge = mineBadge(
+    status,
+    { editing: showForm && !!sub, attached: files.assetIds.length > 0 },
+    grade,
+  )
 
   const refresh = () =>
     Promise.all([

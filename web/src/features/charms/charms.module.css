@@ -1,0 +1,394 @@
+/* T06 จัดการเครื่องราง — แบบ v2 .page-head / .charm-admin / .panel / .rate-edit / .sum-line / .cat-grid / .cat-card /
+   .edit-panel / .edit-medal / .tier-pick / .c-preview / .cp-card; จอแคบเป็นคอลัมน์เดียว (ฟอร์มอยู่ใต้รายการ) */
+.head {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px 20px;
+  flex-wrap: wrap;
+}
+
+.head > div {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 320px;
+}
+
+.head h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.head p {
+  color: var(--ink-2);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.layout {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+  }
+
+  .editPanel {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+.mainCol {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  min-width: 0;
+}
+
+.panel h2 {
+  font-size: 1.125rem;
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.muted {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.hint {
+  font-size: 0.78125rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.note svg,
+.alert svg,
+.fieldError svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.alert {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: var(--red-soft);
+  color: var(--red-deep);
+  font-size: 0.875rem;
+}
+
+.alert > span {
+  flex: 1 1 200px;
+}
+
+.fieldError {
+  display: flex;
+  gap: 6px;
+  color: var(--red-deep);
+  font-size: 0.8125rem;
+}
+
+/* อัตรา */
+.rateEdit {
+  display: grid;
+  gap: 12px;
+}
+
+.rateRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px 14px;
+  align-items: center;
+}
+
+.barWrap {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bar {
+  display: block;
+  height: 8px;
+  border-radius: 8px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.pin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.pin input {
+  width: 68px;
+  text-align: center;
+}
+
+.sumLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+}
+
+.sumChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+
+.sumChip[data-ok='true'] {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.sumChip svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* รายการ */
+.catGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 10px;
+}
+
+.catCard {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 14px 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.catCard b {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.catCard[aria-pressed='true'] {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 4px var(--purple-soft);
+}
+
+.catCard:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .catCard:hover {
+    border-color: var(--purple-mid);
+  }
+}
+
+.catAdd {
+  align-content: center;
+  min-height: 150px;
+  border-style: dashed;
+  background: var(--purple-tint);
+  color: var(--purple);
+}
+
+.catAdd svg {
+  width: 28px;
+  height: 28px;
+}
+
+.owners {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+/* ฟอร์ม */
+.editPanel {
+  gap: 16px;
+  scroll-margin-top: 16px;
+}
+
+.editMedal {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.editMedal > svg,
+.editMedal > img {
+  flex: none;
+}
+
+.imageActions {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  flex: 1 1 180px;
+}
+
+.previewImg {
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+}
+
+.lblRow {
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.counter {
+  font-weight: 400;
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tierField {
+  display: grid;
+  gap: 8px;
+}
+
+.lbl {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.tierPick {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tierPick button {
+  min-height: var(--tap-min);
+  padding: 6px 14px;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-pill);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.84375rem;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.tierPick button[aria-pressed='true'] {
+  border-color: currentColor;
+  opacity: 1;
+}
+
+.tierPick button:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+.preview {
+  display: grid;
+  gap: 8px;
+}
+
+.previewCard {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+}
+
+.previewCard > div {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.previewCard b {
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-size: 1.0625rem;
+  color: var(--purple-deep);
+}
+
+.previewCard p {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.previewCard p[data-empty='true'] {
+  color: var(--ink-2);
+}

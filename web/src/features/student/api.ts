@@ -33,6 +33,15 @@ const ClassroomViewSchema = z.object({
       display_name: z.string(),
       roll_number: z.number().int().nullable(),
       is_me: z.boolean(),
+      /** เครื่องรางที่คนนี้เลือกแสดงข้างชื่อ (0038) — null = ไม่แสดง */
+      charm: z
+        .object({
+          name: z.string(),
+          symbol: z.string(),
+          rarity_id: z.number().int(),
+          image_asset_id: z.uuid().nullable(),
+        })
+        .nullable(),
     }),
   ),
 })

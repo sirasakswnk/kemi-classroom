@@ -9,7 +9,8 @@ import { Button, Steps } from '../../ui'
 import { CommentThread } from '../comments/CommentThread'
 import { gradeQuery } from '../grading/api'
 import { postQuery } from '../posts/api'
-import { myClassroomsQuery } from '../student/api'
+import { roomTermQuery } from '../classrooms/api'
+import { PastTermChip } from '../classrooms/RoomTerm'
 import { AttachmentList } from '../uploads/AttachmentList'
 import { submissionStatusQuery } from './api'
 import { MyGrade } from './MyGrade'
@@ -26,7 +27,6 @@ export default function WorkPage() {
   const { postId = '' } = useParams()
   const post = useQuery(postQuery(postId))
   const status = useQuery(submissionStatusQuery(postId))
-  const classes = useQuery(myClassroomsQuery)
   const submissionId = status.data?.submission?.submission_id
   // ผลตรวจ: อ่านผ่าน RLS (เจ้าของงานส่ง) โหลดใหม่ทุกครั้งที่เปิดหน้า เพราะครูตรวจได้ตลอด
   const grade = useQuery({
@@ -44,7 +44,8 @@ export default function WorkPage() {
   }, [notMember, queryClient])
 
   const classroomId = post.data?.classroom_id ?? status.data?.classroom_id
-  const room = classes.data?.find((c) => c.id === classroomId)
+  // ห้องของภาคเรียนก่อนไม่อยู่ใน my_classrooms แล้ว — อ่านชื่อ/ภาคเรียนของห้องตาม RLS (สมาชิก)
+  const room = useQuery(roomTermQuery(classroomId ?? '')).data
   const back = (
     <Link to={classroomId ? `/c/${classroomId}?tab=work` : '/'} className={page.back}>
       <ArrowLeft aria-hidden="true" />
@@ -116,6 +117,7 @@ export default function WorkPage() {
           {copy.eyebrow(a.full_score, thaiDate(p.published_at))}
         </span>
         <h1>{p.title}</h1>
+        <PastTermChip termId={room?.term_id} />
         <div className={styles.metaGrid}>
           <dl className={styles.metaBox}>
             <dt>
@@ -167,9 +169,14 @@ export default function WorkPage() {
           </section>
         </div>
         <div className={styles.side}>
-          <MyWork post={p} status={s} />
+          <MyWork post={p} status={s} grade={view} />
           {sub && !grade.isPending && !grade.isError && (
-            <MyGrade view={view} fullScore={a.full_score} revision={sub.content_revision} />
+            <MyGrade
+              view={view}
+              fullScore={a.full_score}
+              revision={sub.content_revision}
+              status={s}
+            />
           )}
           <CommentThread mode="student" assignmentId={p.id} />
           {s.solution_published && <SolutionSection postId={p.id} />}

@@ -15,6 +15,7 @@ import { appErrorOf } from '../../lib/request'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
 import { Button, Chip } from '../../ui'
 import { classroomQuery } from '../classrooms/api'
+import { PastTermChip } from '../classrooms/RoomTerm'
 import { CommentThread } from '../comments/CommentThread'
 import { GradePanel } from '../grading/GradePanel'
 import { postQuery } from '../posts/api'
@@ -48,6 +49,10 @@ export default function SubmissionViewer() {
 
   const statusTo = `/t/w/${postId}${backSearch}`
   const row = list.data?.rows.find((r) => r.submission_id === submissionId)
+  const reward = {
+    tokens: list.data?.reward_tokens ?? 0,
+    currentTerm: list.data?.current_term ?? true,
+  }
   // ปุ่มดาวน์โหลด PDF รวม — เรียก hook ก่อน return ใด ๆ ของหน้า; ชื่อไฟล์ {เลขที่}_{ชื่อ}_{นามสกุล}.pdf
   const merge = useMergePdf(
     submissionId,
@@ -113,6 +118,7 @@ export default function SubmissionViewer() {
             {row.display_name}
           </h1>
           <span className={styles.chips}>
+            <PastTermChip termId={classroom.data?.term_id} />
             {rowBadges(row).map((b) => (
               <Chip key={b.label} tone={b.tone}>
                 {b.label}
@@ -140,6 +146,7 @@ export default function SubmissionViewer() {
                 postId={postId}
                 row={{ ...row, submission_id: submissionId }}
                 adminMode={adminMode}
+                reward={reward}
               />
               <CommentThread
                 mode="teacher"
@@ -222,6 +229,7 @@ export default function SubmissionViewer() {
                 postId={postId}
                 row={{ ...row, submission_id: submissionId }}
                 adminMode={adminMode}
+                reward={reward}
               />
               <CommentThread
                 mode="teacher"

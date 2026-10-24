@@ -84,9 +84,10 @@ select is_empty(
       where has_function_privilege(r, f, 'EXECUTE') $$,
   'storage_used_bytes/reserve_storage ใช้ภายในเท่านั้น (ไม่ GRANT ใคร)');
 
--- ง: เป้าหมายของการผูกมีเฉพาะที่มี FK (post / solution + submission จาก 0020) — ไม่มีคอลัมน์รอไว้สำหรับ charm
-select columns_are('public', 'attachments', array['id', 'asset_id', 'post_id', 'solution_id', 'position', 'created_at', 'submission_id'],
-  'attachments มีเป้าหมาย post_id/solution_id/submission_id (charm เพิ่มพร้อม FK ในระยะ 5)');
+-- ง: เป้าหมายของการผูกมีเฉพาะที่มี FK (post / solution + submission จาก 0020 + charm จาก 0040)
+select columns_are('public', 'attachments',
+  array['id', 'asset_id', 'post_id', 'solution_id', 'position', 'created_at', 'submission_id', 'charm_id'],
+  'attachments มีเป้าหมาย post_id/solution_id/submission_id/charm_id (charm_id จาก 0040)');
 select fk_ok('public', 'attachments', 'post_id', 'public', 'posts', 'id', 'attachments.post_id อ้าง posts');
 select fk_ok('public', 'attachments', 'solution_id', 'public', 'solutions', 'assignment_id', 'attachments.solution_id อ้าง solutions');
 select fk_ok('public', 'attachments', 'asset_id', 'public', 'assets', 'id', 'attachments.asset_id อ้าง assets');

@@ -4,9 +4,11 @@ import type { Grade } from '../grading/api'
 import type { SubmissionStatus, WorkRow } from './api'
 import {
   blockedReason,
+  dueEmpty,
   dueHint,
   dueSoon,
   filterWork,
+  gradeChip,
   gradeView,
   isPending,
   mineBadge,
@@ -46,6 +48,9 @@ const status = (over: Partial<SubmissionStatus> = {}): SubmissionStatus => ({
   permission_open: false,
   outcome: 'first_on_time',
   blocked: null,
+  reward_tokens: 2,
+  reward_granted: false,
+  current_term: true,
   submission: null,
   ...over,
 })
@@ -120,6 +125,11 @@ describe('เรียงและกรองงาน (UX 5)', () => {
   it('ใกล้กำหนดส่ง (S01) = เฉพาะงานที่ยังต้องส่ง ไม่เกิน limit', () => {
     expect(isPending(closed)).toBe(false)
     expect(dueSoon([done, a, closed, b], 1).map((r) => r.post_id)).toEqual(['b'])
+  })
+  it('ใกล้กำหนดส่งว่าง: ห้องยังไม่มีงาน ≠ ส่งครบแล้ว', () => {
+    expect(dueEmpty([])).toBe('noWork')
+    expect(dueEmpty([done])).toBe('allSent')
+    expect(th.work.noWorkTitle).toBe('ยังไม่มีงานในชั้นเรียนนี้')
   })
   it('ป้ายเวลา: เลยกำหนด / เหลือไม่ถึง 24 ชม. / ไม่มี', () => {
     const due = '2026-11-10T13:00:00Z'
@@ -220,9 +230,65 @@ describe('S03 คะแนนและความครบถ้วน', () => 
       'todo',
     ])
     expect(stepStates(st, gradeView(grade(), 2))).toEqual(['done', 'now', 'todo', 'todo'])
+    const got = status({ outcome: 'resubmit', submission: submitted(), reward_granted: true })
+    expect(stepStates(got, gradeView(grade(), 1))).toEqual(['done', 'done', 'done', 'done'])
+    // ส่งแก้หลังได้รางวัล: รอตรวจชุดใหม่ แต่โทเคนที่ได้แล้วไม่หาย
+    expect(stepStates(got, gradeView(grade(), 2))).toEqual(['done', 'now', 'todo', 'done'])
+  })
+  it('ป้ายรางวัล UX 7: ได้รับแล้ว / งานภาคเรียนก่อน / ครบถ้วน', () => {
+    const v = gradeView(grade(), 1)
+    expect(gradeChip(v, status({ reward_granted: true })).label).toBe(
+      'งานครบถ้วน · ได้รับ 2 โทเคนแล้ว',
+    )
+    expect(gradeChip(v, status({ current_term: false })).label).toBe(
+      'บันทึกคะแนนแล้ว · งานภาคเรียนก่อน',
+    )
+    expect(gradeChip(v, status()).label).toBe(th.work.grade.complete)
+    // งาน 0 โทเคนไม่บอก “ได้รับ 0”; ผ่าน→ไม่ผ่าน (I3) ไม่อ้างว่างานครบถ้วน
+    expect(gradeChip(v, status({ reward_granted: true, reward_tokens: 0 })).label).toBe(
+      th.work.grade.complete,
+    )
+    expect(
+      gradeChip(gradeView(grade({ passed: false }), 1), status({ reward_granted: true })).label,
+    ).toBe(th.work.grade.pending)
+    expect(gradeChip(null, status()).label).toBe(th.work.grade.waiting)
   })
   it('ข้อความไม่ใช้คำว่า “ไม่ผ่าน”', () => {
     expect(JSON.stringify(th.work.grade)).not.toContain('ไม่ผ่าน')
     expect(th.work.grade.pending).toBe('รอครูยืนยันความครบถ้วน')
+  })
+})
+
+describe('S03 ป้ายหัว “งานของฉัน” หลังครูตรวจ (UX 7)', () => {
+  const ui = { editing: false, attached: false }
+  const sent = (over: Partial<SubmissionStatus> = {}) =>
+    status({ outcome: 'resubmit', submission: submitted(), ...over })
+  const label = (s: SubmissionStatus, g: Grade | null) =>
+    mineBadge(s, ui, gradeView(g, s.submission?.content_revision ?? 1)).label
+
+  it('ผ่านและได้รางวัลแล้ว → งานครบถ้วน · ได้รับ … โทเคนแล้ว', () => {
+    expect(label(sent({ reward_granted: true, reward_tokens: 2 }), grade())).toBe(
+      th.work.grade.rewarded(2),
+    )
+  })
+  it('ได้คะแนนแต่ยังไม่ผ่าน → คะแนน … · รอครูยืนยันความครบถ้วน', () => {
+    expect(label(sent(), grade({ passed: false, net_score: 7, raw_score: 7 }))).toBe(
+      'คะแนน 7 · รอครูยืนยันความครบถ้วน',
+    )
+    expect(label(sent(), grade({ passed: false, net_score: null, raw_score: null }))).toBe(
+      th.work.grade.pending,
+    )
+  })
+  it('ผ่าน (งาน 0 โทเคน/ส่งช้า) → งานครบถ้วน · เทอมเก่า → งานภาคเรียนก่อน', () => {
+    expect(label(sent({ reward_tokens: 0 }), grade())).toBe(th.work.grade.complete)
+    expect(label(sent({ current_term: false }), grade({ passed: false }))).toBe(
+      th.work.grade.oldTerm,
+    )
+  })
+  it('ยังไม่ตรวจ/ส่งแก้หลังตรวจ/ครูเปิดให้แก้ → ป้ายเดิม', () => {
+    expect(label(sent(), null)).toBe(th.work.label.onTime)
+    const resent = sent({ submission: submitted({ content_revision: 2 }) })
+    expect(label(resent, grade())).toBe(th.work.label.revised)
+    expect(label(sent({ permission_open: true }), grade())).toBe(th.work.label.permission)
   })
 })

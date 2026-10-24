@@ -8,10 +8,12 @@ import { initialOf } from '../../lib/initial'
 import { Button, useToast } from '../../ui'
 import { NamePicker } from '../identity/NamePicker'
 import { useMyStudent } from '../identity/useMyStudent'
+import { RewardEffect } from '../rewards/RewardEffect'
+import { TokenPill } from '../rewards/TokenPill'
 import { StudentContext, type StudentContextValue } from './studentContext'
 import styles from './student.module.css'
 
-// โครงหน้านักเรียน: หัวเว็บ (ชื่อเว็บ → หน้าแรก, รูปแทนตัว → S06) + ด่านเลือกชื่อ (A02)
+// โครงหน้านักเรียน: หัวเว็บ (ชื่อเว็บ → หน้าแรก, ยอดโทเคน → S04, รูปแทนตัว → S06) + ด่านเลือกชื่อ (A02)
 // ทุกหน้านักเรียนรวมลิงก์เชิญ /join/:code ต้องผูกชื่อก่อน — ยังไม่ผูกแสดง A02 ทับพื้นหลังต้อนรับ (UX 4)
 export function StudentLayout() {
   const { state: auth, signOut } = useAuth()
@@ -53,14 +55,18 @@ export function StudentLayout() {
           <span>{th.appName}</span>
         </Link>
         {value && (
-          <Link to="/me" className={styles.avatarBtn} aria-label={th.student.account}>
-            {initialOf(value.student.display_name)}
-          </Link>
+          <div className={styles.topEnd}>
+            <TokenPill />
+            <Link to="/me" className={styles.avatarBtn} aria-label={th.student.account}>
+              {initialOf(value.student.display_name)}
+            </Link>
+          </div>
         )}
       </header>
       {value ? (
         <StudentContext value={value}>
           <Outlet />
+          <RewardEffect />
         </StudentContext>
       ) : (
         <>
