@@ -20,7 +20,7 @@ begin
 end
 $$;
 
-select plan(48);
+select plan(56);
 
 -- ---------------------------------------------------------------------------
 -- ข้อมูลสมมติ: ครู T สอนห้อง R1 (นักเรียน A, B) · ครู X สอนห้อง R2 (นักเรียน C)
@@ -281,6 +281,66 @@ select is((select array_agg(x ->> 'title') from jsonb_array_elements(public.my_n
           array['ประกาศเหตุการณ์'], 'กระดิ่งของ A ไม่มีรายการที่อ้างงานที่ลบ');
 reset role;
 set local role postgres;
+
+-- ---------------------------------------------------------------------------
+-- 7. ส่งงานผ่านเส้นทางจริง (submit_assignment ในนามนักเรียน) → ครูได้ “งานรอตรวจ”
+-- ---------------------------------------------------------------------------
+select pg_temp.as_user('20440000-0000-4000-8000-000000000001');
+insert into public.posts (id, classroom_id, kind, title) values
+  ('80440000-0000-4000-8000-000000000004', '70440000-0000-4000-8000-000000000001', 'homework', 'งานส่งจริง');
+insert into public.assignments (post_id, full_score, due_at) values
+  ('80440000-0000-4000-8000-000000000004', 10, date_trunc('minute', clock_timestamp()) + interval '3 days');
+insert into public.upload_batches (id, owner_account_id, purpose, classroom_id, post_id, files, reserved_bytes, expires_at) values
+  ('90440000-0000-4000-8000-00000000000a', '30440000-0000-4000-8000-00000000000a', 'submission', '70440000-0000-4000-8000-000000000001',
+   '80440000-0000-4000-8000-000000000004', '[{}]', 10, clock_timestamp() + interval '1 hour'),
+  ('90440000-0000-4000-8000-00000000000b', '30440000-0000-4000-8000-00000000000b', 'submission', '70440000-0000-4000-8000-000000000001',
+   '80440000-0000-4000-8000-000000000004', '[{}]', 10, clock_timestamp() + interval '1 hour');
+insert into public.assets (id, owner_account_id, purpose, upload_batch_id, staging_key, staging_version_id, final_key,
+                           content_type, size_bytes, file_name) values
+  ('a0440000-0000-4000-8000-00000000000a', '30440000-0000-4000-8000-00000000000a', 'submission', '90440000-0000-4000-8000-00000000000a',
+   'staging/t44/a', 'sa', 'files/t44/a.jpg', 'image/jpeg', 1000, 'งาน ก.jpg'),
+  ('a0440000-0000-4000-8000-00000000000b', '30440000-0000-4000-8000-00000000000b', 'submission', '90440000-0000-4000-8000-00000000000b',
+   'staging/t44/b', 'sb', 'files/t44/b.jpg', 'image/jpeg', 1000, 'งาน ข.jpg');
+update public.assets set status = 'ready', version_id = 'v', checksum = 'e', ready_at = clock_timestamp()
+ where id::text like 'a0440000-%';
+delete from public.notifications where kind = 'pending_review';
+set local role authenticated;
+select pg_temp.as_user('20440000-0000-4000-8000-00000000000a');
+select lives_ok($$ select public.submit_assignment('80440000-0000-4000-8000-000000000004',
+                    '{a0440000-0000-4000-8000-00000000000a}', 0, 'e0440000-0000-4000-8000-0000000000f1') $$,
+                'A ส่งงานด้วย submit_assignment');
+select is(pg_temp.n('pending_review', null, '1'), 1, 'ส่งผ่านเส้นทางจริง → ครู T มีงานรอตรวจ');
+select lives_ok($$ select public.submit_assignment('80440000-0000-4000-8000-000000000004',
+                    '{a0440000-0000-4000-8000-00000000000a}', 0, 'e0440000-0000-4000-8000-0000000000f1') $$,
+                'A เรียกซ้ำด้วย request_key เดิม');
+select is(pg_temp.n('pending_review', null, '1'), 1, 'เรียกซ้ำไม่สร้างงานรอตรวจซ้ำ');
+select pg_temp.read_all();
+select pg_temp.as_user('20440000-0000-4000-8000-00000000000b');
+select lives_ok($$ select public.submit_assignment('80440000-0000-4000-8000-000000000004',
+                    '{a0440000-0000-4000-8000-00000000000b}', 0, 'e0440000-0000-4000-8000-0000000000f2') $$,
+                'B ส่งงานด้วย submit_assignment');
+select is(pg_temp.n('pending_review', null, '1') * 10 + pg_temp.unread('pending_review', null, '1'), 11,
+          'คนที่สองส่ง → ใช้แถวเดิมและกลับเป็นยังไม่อ่าน');
+reset role;
+set local role postgres;
+
+-- ตัวควบคุมบวกของ regex ข้างล่าง: ต้องจับ RPC ที่เขียนตารางเหล่านี้จริงได้
+select ok((select count(*) from pg_proc p
+            where p.oid in ('public.submit_assignment(uuid,uuid[],integer,uuid)'::regprocedure,
+                            'public.post_comment(uuid,uuid,text,uuid,boolean)'::regprocedure,
+                            'public.change_due(uuid,timestamptz,uuid[],uuid[],uuid,boolean)'::regprocedure)
+              and p.prosrc ~* '(insert\s+into|update|delete\s+from)\s+public\.(posts|comments|revision_permissions|submissions|assignments|solutions)\M') = 3,
+          'regex จับ submit_assignment / post_comment / change_due ได้ (ตัวควบคุมบวก)');
+-- กันถอยหลัง: ฟังก์ชันที่เขียนตารางที่มี trigger แจ้งเตือนต้องเป็น RPC ที่ผู้ใช้เรียก (มี auth.uid())
+-- ฟังก์ชันของ service_role/งานเบื้องหลังที่เขียนตารางเหล่านี้จะทำให้แจ้งเตือนหายเงียบ — ต้องส่ง actor มาชัดเจนก่อนเพิ่ม
+select is(array(select p.oid::regprocedure::text
+                  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                 where n.nspname in ('public', 'private') and p.prokind = 'f'
+                   and p.prorettype <> 'trigger'::regtype
+                   and p.prosrc ~* '(insert\s+into|update|delete\s+from)\s+public\.(posts|comments|revision_permissions|submissions|assignments|solutions)\M'
+                   and not has_function_privilege('authenticated', p.oid, 'EXECUTE')
+                 order by 1),
+          '{}'::text[], 'ไม่มีฟังก์ชันที่ผู้ใช้เรียกไม่ได้ (service_role/งานเบื้องหลัง) เขียนตารางที่มี trigger แจ้งเตือน');
 
 select * from finish();
 rollback;
