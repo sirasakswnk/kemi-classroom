@@ -156,6 +156,8 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   draw_unavailable: { message: 'ยังไม่มีรายการที่สุ่มได้ รอครูปรับอัตราสุ่ม', action: 'field' },
   // T06 (UX 7.1, P5-07)
   rates_must_total_100: { message: 'อัตรารวมของทุกระดับต้องเท่ากับ 100%', action: 'field' },
+  // T07 (UX 7.1, P5-08)
+  term_name_taken: { message: 'มีภาคเรียนชื่อนี้แล้ว ตั้งชื่ออื่น', action: 'focus_field' },
 }
 
 const FALLBACK = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง ถ้ายังไม่ได้ให้แจ้งคุณครู'

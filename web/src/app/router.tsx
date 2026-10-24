@@ -95,6 +95,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T07 ภาคเรียนและข้อมูลเก่า (P5-09)
+            path: 'term',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).TermPage,
+            }),
+          },
+          {
             // T05 รายชื่อนักเรียน + แก้การผูกบัญชี (นำเข้า Excel อยู่ที่ /t/roster/import)
             path: 'roster',
             lazy: async () => ({

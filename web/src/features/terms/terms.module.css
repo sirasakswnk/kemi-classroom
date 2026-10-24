@@ -1,0 +1,379 @@
+/* T07 ภาคเรียนและข้อมูลเก่า — แบบ v2 .page-head / .term-grid / .term-now / .term-stats / .timeline / .effects /
+   .end-term / .end-act / .old-term / .ret-row / .note; จอแคบ (< 960 px) เป็นคอลัมน์เดียว ไทม์ไลน์เป็นแนวตั้ง */
+.head {
+  display: grid;
+  gap: 4px;
+}
+
+.head h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  line-height: 1.25;
+  color: var(--purple-deep);
+}
+
+.head p,
+.muted {
+  color: var(--ink-2);
+}
+
+.muted {
+  font-size: 0.875rem;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--purple);
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}
+
+.panel,
+.now {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  min-width: 0;
+}
+
+.panel h2 {
+  font-size: 1.125rem;
+}
+
+.now {
+  padding: 22px;
+  background: linear-gradient(160deg, var(--purple-tint), var(--paper) 60%);
+}
+
+.now h2 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  color: var(--purple-deep);
+}
+
+.now h3 {
+  font-size: 1.0625rem;
+  margin-top: 4px;
+}
+
+.chip {
+  justify-self: start;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+@media (min-width: 600px) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+}
+
+.stats dd {
+  margin: 0;
+  font-family: var(--f-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.stats dt {
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+}
+
+/* ไทม์ไลน์: จอแคบแนวตั้ง, ตั้งแต่ 600 px สามช่องแนวนอน */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 18px;
+  bottom: 18px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--purple), var(--gold-bright));
+}
+
+.step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-content: start;
+}
+
+.step b {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.step > span:last-child {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.dot {
+  grid-row: span 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 3px solid var(--purple);
+  color: var(--purple);
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.dot[data-gold] {
+  border-color: var(--gold-bright);
+  color: var(--gold);
+}
+
+.dot svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (min-width: 600px) {
+  .timeline {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .timeline::before {
+    top: 17px;
+    bottom: auto;
+    right: calc((100% - 20px) / 3 - 18px);
+    width: auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--gold-bright));
+  }
+
+  .step {
+    grid-template-columns: 1fr;
+  }
+
+  .dot {
+    grid-row: auto;
+    margin-bottom: 4px;
+  }
+}
+
+.effects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.effects li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.90625rem;
+  line-height: 1.55;
+}
+
+.eIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
+.eIcon[data-gold] {
+  background: var(--gold-soft);
+}
+
+.eIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.eIcon[data-gold] svg {
+  width: 24px;
+  height: 24px;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.note svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.note[data-tone='plain'] {
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+.note[data-tone='amber'] {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.note[data-tone='purple'] {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--purple);
+}
+
+.endAct {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.oldTerm {
+  display: grid;
+  gap: 4px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.oldTerm:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.oldHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+}
+
+.oldHead h3 {
+  font-size: 1.0625rem;
+}
+
+.retRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.retRow b {
+  font-weight: 600;
+}
+
+.locked {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.locked svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.alert {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: var(--red-soft);
+  color: var(--red-deep);
+  font-size: 0.875rem;
+}
+
+.alert svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.alert > span {
+  flex: 1 1 200px;
+}
+
+.loadFailed {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}

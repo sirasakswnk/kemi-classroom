@@ -91,6 +91,7 @@ export const ERROR_CODES = [
   'draw_completed',
   'draw_unavailable',
   'rates_must_total_100',
+  'term_name_taken',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -203,6 +204,8 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   draw_unavailable: 'field',
   // T06 (P5-07): ใต้ช่องอัตรา — หน้าจอต่อท้าย “(ตอนนี้ {n}%)” จากค่าที่กรอก
   rates_must_total_100: 'field',
+  // T07 (P5-09): ใต้ช่องชื่อภาคเรียนใหม่ แล้วย้ายโฟกัสไปที่ช่อง
+  term_name_taken: 'focus_field',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

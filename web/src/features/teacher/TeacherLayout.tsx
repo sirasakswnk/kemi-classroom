@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+  CalendarRange,
   ChevronRight,
   CirclePlus,
   Gem,
@@ -113,6 +114,10 @@ export function TeacherLayout() {
           <NavLink to="/t/charms" className={styles.nav}>
             <Gem aria-hidden="true" />
             {th.teacher.charms}
+          </NavLink>
+          <NavLink to="/t/term" className={styles.nav}>
+            <CalendarRange aria-hidden="true" />
+            {th.teacher.term}
           </NavLink>
           <p className={styles.foot}>
             {value.term?.name}

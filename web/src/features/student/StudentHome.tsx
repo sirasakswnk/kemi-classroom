@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, CircleCheck, KeyRound, TriangleAlert } from 'lucide-react'
+import { ArrowRight, CircleCheck, KeyRound, Lock, TriangleAlert } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
@@ -62,6 +62,12 @@ export default function StudentHome() {
                 : th.student.withClasses}
         </p>
       </div>
+      {term.data?.status === 'ended' && (
+        <p className={styles.note} data-tone="purple" role="note">
+          <Lock aria-hidden="true" />
+          <span>{th.student.termEnded}</span>
+        </p>
+      )}
       {notice && (
         <p className={styles.note} data-tone="green" role="status">
           <CircleCheck aria-hidden="true" />
