@@ -59,6 +59,11 @@ insert into public.comments (id, assignment_id, student_id, author_account_id, b
   ('c0430000-0000-4000-8000-000000000001', '80430000-0000-4000-8000-000000000001', '60430000-0000-4000-8000-00000000000a', '30430000-0000-4000-8000-000000000001', 'ความลับครูกระดิ่ง', '2026-10-21T01:00:00Z'),
   ('c0430000-0000-4000-8000-000000000002', '80430000-0000-4000-8000-000000000001', '60430000-0000-4000-8000-00000000000a', '30430000-0000-4000-8000-00000000000a', 'ความลับนักเรียนกระดิ่ง', '2026-10-21T02:00:00Z');
 
+insert into public.submissions (id, assignment_id, student_id, first_submitted_at, last_submitted_at) values
+  ('50430000-0000-4000-8000-0000000000b1', '80430000-0000-4000-8000-000000000001', '60430000-0000-4000-8000-00000000000b', '2026-10-22T01:00:00Z', '2026-10-22T01:00:00Z');
+-- trigger ของ 0044 สร้างแจ้งเตือนจาก fixture ข้างบน — ล้างทิ้งเพื่อทดสอบการอ่านด้วยชุดที่กำหนดเอง
+delete from public.notifications;
+
 -- แจ้งเตือน (at ไล่เวลา): A มี 4 รายการใน R1 + 1 ใน R2, B 1 รายการ, ครู T 3 รายการ, ครู X 1 รายการ
 insert into public.notifications (id, recipient_student_id, recipient_teacher_id, kind, post_id, comment_id,
                                   subject_student_id, level, dedupe_key, updated_at) values
@@ -72,9 +77,6 @@ insert into public.notifications (id, recipient_student_id, recipient_teacher_id
   ('90430000-0000-4000-8000-0000000000c2', null, '10430000-0000-4000-8000-000000000001', 'student_comment', '80430000-0000-4000-8000-000000000001', 'c0430000-0000-4000-8000-000000000002', '60430000-0000-4000-8000-00000000000a', null, 't43:t2', '2026-10-21T02:00:00Z'),
   ('90430000-0000-4000-8000-0000000000c3', null, '10430000-0000-4000-8000-000000000001', 'storage_threshold', null, null, null, 90, 't43:t3', '2026-10-23T01:00:00Z'),
   ('90430000-0000-4000-8000-0000000000d1', null, '10430000-0000-4000-8000-000000000002', 'pending_review', '80430000-0000-4000-8000-000000000002', null, null, null, 't43:x1', '2026-10-22T01:00:00Z');
-insert into public.submissions (id, assignment_id, student_id, first_submitted_at, last_submitted_at) values
-  ('50430000-0000-4000-8000-0000000000b1', '80430000-0000-4000-8000-000000000001', '60430000-0000-4000-8000-00000000000b', '2026-10-22T01:00:00Z', '2026-10-22T01:00:00Z');
-
 create function pg_temp.as_user(p_sub text) returns void language sql as
   $$ select set_config('request.jwt.claims', json_build_object('sub', p_sub, 'role', 'authenticated')::text, true) $$;
 grant execute on function pg_temp.as_user(text) to authenticated;
