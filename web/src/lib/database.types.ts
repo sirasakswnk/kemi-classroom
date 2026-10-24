@@ -1406,6 +1406,7 @@ export type Database = {
         Returns: Json
       }
       teacher_work_summary: { Args: { p_classroom_id: string }; Returns: Json }
+      term_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
       terms_end: {
         Args: {
           p_admin_mode?: boolean
