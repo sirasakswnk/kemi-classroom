@@ -125,7 +125,9 @@ insert into expected_authenticated values
   ('public.admin_storage_reconcile()'),
   -- 0051_admin_jobs (ผู้ดูแล: งานเบื้องหลังที่ล้มเหลว + ลองใหม่ใน D01)
   ('public.admin_failed_jobs()'),
-  ('public.admin_retry_job(bigint)');
+  ('public.admin_retry_job(bigint)'),
+  -- 0053_admin_term_alert (ผู้ดูแล: ภาคเรียนเปิดค้างเกิน 6 เดือน)
+  ('public.admin_term_alert()');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
