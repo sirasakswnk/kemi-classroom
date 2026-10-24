@@ -71,6 +71,13 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            // T11 แจ้งเตือนของครู (P6-03b)
+            path: 'notifications',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).TeacherBell,
+            }),
+          },
+          {
             // T12 บัญชีของครู
             path: 'me',
             lazy: async () => ({
@@ -141,6 +148,13 @@ export const router = createBrowserRouter([
             path: 'w/:postId/s/:submissionId',
             lazy: async () => ({
               Component: (await import('../features/teacher/pages')).SubmissionViewer,
+            }),
+          },
+          {
+            // หน้าของนักเรียนหนึ่งคน: ส่งแล้วไปหน้าตรวจ · ยังไม่ส่งแสดงช่องความคิดเห็น (ทางจาก T11)
+            path: 'w/:postId/u/:studentId',
+            lazy: async () => ({
+              Component: (await import('../features/teacher/pages')).StudentThreadPage,
             }),
           },
           {

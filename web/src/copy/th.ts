@@ -609,6 +609,30 @@ export const th = {
     retracted: 'ข้อความนี้ถูกยกเลิก',
     fadedSubmitted: 'ส่งแล้ว',
     fadedClosed: 'ปิดรับแล้ว',
+    // T11 กระดิ่งครู — แบบ v2 tNotif/tNotifRow (UX 12 [ข้อเสนอ] วันนี้/ก่อนหน้า, ทั้งหมด/ยังไม่อ่าน)
+    teacher: {
+      eyebrow: 'กระดิ่งในเว็บ · ไม่มีเสียง',
+      intro: 'งานรอตรวจรวมตามงานและห้อง ส่วนความคิดเห็นจากนักเรียนแจ้งแยกรายคน',
+      filtersAria: 'กรองแจ้งเตือน',
+      all: 'ทั้งหมด',
+      unread: 'ยังไม่อ่าน',
+      today: 'วันนี้',
+      earlier: 'ก่อนหน้า',
+      allRead: 'อ่านครบแล้ว',
+      empty: 'ยังไม่มีแจ้งเตือน',
+      emptyHint: 'แจ้งเตือนใหม่จะแสดงที่นี่',
+      hint: 'กดงานรอตรวจเพื่อเปิดสถานะการส่งของงานนั้น กดความคิดเห็นเพื่อเปิดงานของนักเรียนคนนั้นพร้อมช่องความคิดเห็น',
+      pending: (title: string, room: string) => (room ? `${title} — ${room}` : title),
+      pendingCount: (n: number) => `มีงานใหม่รอตรวจ ${n} คน`,
+      pendingDone: 'ตรวจครบแล้ว',
+      studentComment: (name: string) => `${name} เขียนความคิดเห็น`,
+      inWork: (title: string) => `ในงาน ${title}`,
+      storageFull: 'พื้นที่เก็บไฟล์เต็ม',
+      storageFullDetail: 'นักเรียนอัปโหลดงานไม่ได้ชั่วคราว · ขยายกำหนดส่งให้ห้องที่กระทบได้',
+      storageUsed: (pct: number) => `พื้นที่เก็บไฟล์ใช้ไป ${pct}%`,
+      storageUsedDetail: 'ผู้ดูแลได้รับแจ้งแล้ว · ดูไฟล์ภาคเรียนเก่าที่ลบได้',
+      earlierTime: (date: string, time: string) => `${date} ${time} น.`,
+    },
   },
   // T02 สร้างงาน/ประกาศ + รายการโพสต์ใน T08/S02 — UX_DESIGN ส่วน 9 และแบบ v2 (tCreate, previewHTML, sClass)
   posts: {
@@ -1125,6 +1149,11 @@ export const th = {
         retry: 'ลองอีกครั้ง',
       },
       notFound: 'ไม่พบงานส่งนี้ อาจถูกส่งแก้แล้ว กลับไปรายชื่อเพื่อโหลดใหม่',
+      // หน้าของนักเรียนที่ยังไม่ส่ง (UX 9/12 — ถ้อยคำ [ข้อเสนอ])
+      studentNotFound: 'ไม่พบนักเรียนคนนี้ในงานนี้ กลับไปรายชื่อเพื่อโหลดใหม่',
+      notSubmitted:
+        'ยังไม่ส่งงาน · ตอบความคิดเห็นได้ที่นี่ เมื่อนักเรียนส่งแล้วจะเปิดผลงานและให้คะแนนได้',
+      threadAria: (name: string) => `เปิดความคิดเห็นของ ${name} (ยังไม่ส่ง)`,
       noFiles: 'งานส่งนี้ไม่มีไฟล์',
       submittedAt: (when: string) => `ส่งล่าสุด ${when}`,
       revision: (n: number) => `ชุดที่ส่ง ครั้งที่ ${n}`,

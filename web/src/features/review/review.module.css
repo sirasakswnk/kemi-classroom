@@ -445,6 +445,27 @@
   overflow-wrap: anywhere;
 }
 
+/* ชื่อของคนที่ยังไม่ส่ง → หน้าช่องความคิดเห็น */
+.nmLink {
+  display: inline-block;
+  padding: 6px 0;
+  color: var(--purple);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nmLink:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+/* ช่องความคิดเห็นของนักเรียนที่ยังไม่ส่ง */
+.thread {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+}
+
 .st {
   grid-area: st;
   display: flex;

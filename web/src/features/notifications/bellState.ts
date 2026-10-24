@@ -96,3 +96,72 @@ export function studentBellRow(item: NotificationItem, now: Date): BellRow | nul
   if (!faded && !item.relevant) faded = copy.fadedClosed
   return { ...row, faded, unread: !item.read && !faded }
 }
+
+export type TeacherBellIcon = 'pending' | 'comment' | 'storage'
+
+export type TeacherBellRow = Omit<BellRow, 'icon'> & {
+  icon: TeacherBellIcon
+  /** เหตุการณ์ล่าสุดเกิดวันนี้ (เวลาไทย) → กลุ่ม “วันนี้” ไม่งั้น “ก่อนหน้า” */
+  today: boolean
+}
+
+/**
+ * T11 กระดิ่งครู (แบบ v2 tNotifRow) — งานรอตรวจแสดงจำนวนรอตรวจปัจจุบัน ไม่ใช่ตอนเกิดเหตุ
+ * ความคิดเห็นบอกชื่อนักเรียนและงานโดยไม่มีเนื้อข้อความ → หน้าของนักเรียนคนนั้นพร้อมช่องความคิดเห็น (แม้ยังไม่ส่ง)
+ * ชนิดของนักเรียนไม่อยู่ในกระดิ่งครู → null
+ */
+export function teacherBellRow(item: NotificationItem, now: Date): TeacherBellRow | null {
+  const copy = th.bell
+  const t = copy.teacher
+  const title = item.title ?? ''
+  const today = bangkokParts(item.at).date === bangkokParts(now).date
+  const time = today
+    ? copy.today(thaiTime(item.at))
+    : t.earlierTime(thaiDate(item.at, now), thaiTime(item.at))
+  const base = { id: item.id, at: item.at, time, today }
+  let row: Omit<TeacherBellRow, 'unread' | 'faded'>
+  let faded: string | null = null
+  switch (item.kind) {
+    case 'pending_review':
+      row = {
+        ...base,
+        icon: 'pending',
+        title: t.pending(title, item.classroom_name ?? ''),
+        detail: item.relevant ? t.pendingCount(item.pending_count ?? 0) : '',
+        href: `/t/w/${item.post_id}`,
+      }
+      if (!item.relevant) faded = t.pendingDone
+      break
+    case 'student_comment':
+      row = {
+        ...base,
+        icon: 'comment',
+        title: t.studentComment(item.student_name ?? ''),
+        detail: t.inWork(title),
+        href: `/t/w/${item.post_id}/u/${item.student_id}`,
+      }
+      if (item.comment_retracted) faded = copy.retracted
+      break
+    case 'storage_threshold':
+      row =
+        item.level === 100
+          ? {
+              ...base,
+              icon: 'storage',
+              title: t.storageFull,
+              detail: t.storageFullDetail,
+              href: '/t/term',
+            }
+          : {
+              ...base,
+              icon: 'storage',
+              title: t.storageUsed(item.level ?? 0),
+              detail: t.storageUsedDetail,
+              href: '/t/term',
+            }
+      break
+    default:
+      return null
+  }
+  return { ...row, faded, unread: !item.read && !faded }
+}

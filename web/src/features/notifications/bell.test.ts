@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { th } from '../../copy/th'
 import type { NotificationItem } from './api'
-import { bellTime, studentBellRow } from './bellState'
+import { bellTime, studentBellRow, teacherBellRow } from './bellState'
 
 const NOW = new Date('2026-10-24T08:00:00Z') // 24 ต.ค. 15:00 น. เวลาไทย
 const POST = '80480000-0000-4000-8000-000000000001'
@@ -128,5 +128,76 @@ describe('C01 กระดิ่งนักเรียน — แสดงต�
     expect(bellTime('2026-10-23T17:30:00Z', NOW)).toBe('00:30 น.') // 24 ต.ค. 00:30 น. ไทย
     expect(bellTime('2026-10-23T16:30:00Z', NOW)).toBe('23 ต.ค.')
     expect(bellTime('2025-10-23T05:00:00Z', NOW)).toBe('23 ต.ค. 2568')
+  })
+})
+
+describe('T11 กระดิ่งครู — แสดงตามสถานะปัจจุบัน', () => {
+  const STUDENT = '60480000-0000-4000-8000-000000000001'
+
+  it('งานรอตรวจรวมต่องาน: ชื่องาน — ห้อง + จำนวนรอตรวจปัจจุบัน → T03 สถานะการส่ง', () => {
+    const row = teacherBellRow(
+      item({ kind: 'pending_review', at: '2026-10-24T03:10:00Z', pending_count: 7 }),
+      NOW,
+    )
+    expect(row).toMatchObject({
+      icon: 'pending',
+      title: 'สมดุลเคมี — ม.5/1',
+      detail: th.bell.teacher.pendingCount(7),
+      href: `/t/w/${POST}`,
+      unread: true,
+      faded: null,
+      today: true,
+      time: '10:10 น.',
+    })
+  })
+
+  it('ตรวจครบแล้ว: จาง ไม่นับยังไม่อ่าน ไม่บอกจำนวน', () => {
+    const row = teacherBellRow(
+      item({ kind: 'pending_review', relevant: false, pending_count: 0 }),
+      NOW,
+    )
+    expect(row).toMatchObject({ detail: '', faded: th.bell.teacher.pendingDone, unread: false })
+  })
+
+  it('ความคิดเห็นจากนักเรียน: ชื่อ + งาน ไม่มีเนื้อข้อความ → หน้าของนักเรียนคนนั้น (แม้ยังไม่ส่ง)', () => {
+    const row = teacherBellRow(
+      item({ kind: 'student_comment', student_id: STUDENT, student_name: 'อนุชา อินทร์แก้ว' }),
+      NOW,
+    )
+    expect(row).toMatchObject({
+      icon: 'comment',
+      title: 'อนุชา อินทร์แก้ว เขียนความคิดเห็น',
+      detail: 'ในงาน สมดุลเคมี',
+      href: `/t/w/${POST}/u/${STUDENT}`,
+      today: false,
+      time: '22 ต.ค. 12:00 น.',
+    })
+    const retracted = teacherBellRow(
+      item({ kind: 'student_comment', student_id: STUDENT, comment_retracted: true }),
+      NOW,
+    )
+    expect(retracted).toMatchObject({ faded: th.bell.retracted, unread: false })
+  })
+
+  it('พื้นที่เก็บไฟล์ → T07 · เต็มกับ 90% ใช้ถ้อยคำต่างกัน', () => {
+    const full = teacherBellRow(item({ kind: 'storage_threshold', level: 100 }), NOW)
+    expect(full).toMatchObject({
+      icon: 'storage',
+      title: th.bell.teacher.storageFull,
+      href: '/t/term',
+    })
+    const ninety = teacherBellRow(item({ kind: 'storage_threshold', level: 90 }), NOW)
+    expect(ninety?.title).toBe(th.bell.teacher.storageUsed(90))
+  })
+
+  it('วันนี้/ก่อนหน้าตัดตามวันไทย · ชนิดของนักเรียนไม่อยู่ในกระดิ่งครู', () => {
+    expect(
+      teacherBellRow(item({ kind: 'pending_review', at: '2026-10-23T17:30:00Z' }), NOW)?.today,
+    ).toBe(true)
+    expect(
+      teacherBellRow(item({ kind: 'pending_review', at: '2026-10-23T16:59:00Z' }), NOW)?.today,
+    ).toBe(false)
+    expect(teacherBellRow(item({ kind: 'post_published' }), NOW)).toBeNull()
+    expect(teacherBellRow(item({ kind: 'due_reminder' }), NOW)).toBeNull()
   })
 })
