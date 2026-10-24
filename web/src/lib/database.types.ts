@@ -177,6 +177,7 @@ export type Database = {
       attachments: {
         Row: {
           asset_id: string
+          charm_id: string | null
           created_at: string
           id: string
           position: number
@@ -186,6 +187,7 @@ export type Database = {
         }
         Insert: {
           asset_id: string
+          charm_id?: string | null
           created_at?: string
           id?: string
           position: number
@@ -195,6 +197,7 @@ export type Database = {
         }
         Update: {
           asset_id?: string
+          charm_id?: string | null
           created_at?: string
           id?: string
           position?: number
@@ -208,6 +211,13 @@ export type Database = {
             columns: ['asset_id']
             isOneToOne: true
             referencedRelation: 'assets'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'attachments_charm_id_fkey'
+            columns: ['charm_id']
+            isOneToOne: true
+            referencedRelation: 'charms'
             referencedColumns: ['id']
           },
           {
@@ -309,6 +319,7 @@ export type Database = {
           rarity_id: number
           symbol: string
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
@@ -319,6 +330,7 @@ export type Database = {
           rarity_id: number
           symbol: string
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
@@ -329,6 +341,7 @@ export type Database = {
           rarity_id?: number
           symbol?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -1150,6 +1163,7 @@ export type Database = {
         }
         Returns: Json
       }
+      charm_catalog: { Args: { p_admin_mode?: boolean }; Returns: Json }
       claim_identity: { Args: { p_ref: string }; Returns: Json }
       classroom_view: { Args: { p_classroom_id: string }; Returns: Json }
       close_assignment: {
@@ -1333,6 +1347,23 @@ export type Database = {
       }
       reward_effects: { Args: never; Returns: Json }
       roster_overview: { Args: { p_admin_mode?: boolean }; Returns: Json }
+      save_charm: {
+        Args: {
+          p_admin_mode?: boolean
+          p_charm: Json
+          p_expected_version: number
+          p_request_key: string
+        }
+        Returns: Json
+      }
+      save_rarity_weights: {
+        Args: {
+          p_admin_mode?: boolean
+          p_expected_key: string
+          p_weights: Json
+        }
+        Returns: Json
+      }
       save_solution: {
         Args: {
           p_admin_mode?: boolean
