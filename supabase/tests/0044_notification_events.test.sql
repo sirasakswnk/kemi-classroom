@@ -20,7 +20,7 @@ begin
 end
 $$;
 
-select plan(37);
+select plan(48);
 
 -- ---------------------------------------------------------------------------
 -- ข้อมูลสมมติ: ครู T สอนห้อง R1 (นักเรียน A, B) · ครู X สอนห้อง R2 (นักเรียน C)
@@ -74,11 +74,23 @@ grant execute on function pg_temp.read_all() to authenticated;
 -- ---------------------------------------------------------------------------
 -- 1. โพสต์ใหม่ → สมาชิกห้องเท่านั้น (คำสั่งของครู T)
 -- ---------------------------------------------------------------------------
--- ไม่มีผู้ใช้ (เช่นงานเบื้องหลัง) ก็สร้างได้
+-- งานเป็นชุดที่ไม่มีผู้ใช้ในคำขอ (กู้ข้อมูล, seed, SQL ตรง) ไม่สร้างแจ้งเตือน (0045)
 select set_config('request.jwt.claims', '', true);
 insert into public.posts (id, classroom_id, kind, title) values
-  ('80440000-0000-4000-8000-000000000003', '70440000-0000-4000-8000-000000000002', 'announcement', 'ประกาศห้องอื่น');
-select is(pg_temp.n('post_published', '0c'), 1, 'ไม่มีผู้ใช้ในคำขอก็สร้างแจ้งเตือนได้');
+  ('80440000-0000-4000-8000-000000000003', '70440000-0000-4000-8000-000000000002', 'homework', 'งานนำเข้า');
+insert into public.assignments (post_id, full_score, due_at) values
+  ('80440000-0000-4000-8000-000000000003', 10, '2026-11-01T13:00:00Z');
+insert into public.comments (assignment_id, student_id, author_account_id, body) values
+  ('80440000-0000-4000-8000-000000000003', '60440000-0000-4000-8000-00000000000c', '30440000-0000-4000-8000-00000000000c', 'นำเข้า');
+insert into public.submissions (assignment_id, student_id, first_submitted_at, last_submitted_at) values
+  ('80440000-0000-4000-8000-000000000003', '60440000-0000-4000-8000-00000000000c', '2026-10-24T01:00:00Z', '2026-10-24T01:00:00Z');
+update public.assignments set due_at = '2026-11-03T13:00:00Z', closed_at = clock_timestamp()
+ where post_id = '80440000-0000-4000-8000-000000000003';
+insert into public.solutions (assignment_id, body, published_at) values
+  ('80440000-0000-4000-8000-000000000003', 'เฉลยนำเข้า', clock_timestamp());
+select is((select count(*)::integer from public.notifications), 0,
+          'ไม่มีผู้ใช้ในคำขอ: เพิ่มโพสต์/ความคิดเห็น/งานส่ง เปลี่ยนกำหนด ปิดรับ เฉลย ไม่สร้างแจ้งเตือน');
+delete from public.comments where assignment_id = '80440000-0000-4000-8000-000000000003';
 delete from public.posts where id = '80440000-0000-4000-8000-000000000003';
 select pg_temp.as_user('20440000-0000-4000-8000-000000000001');
 insert into public.posts (id, classroom_id, kind, title) values
@@ -95,6 +107,30 @@ select lives_ok($$ select private.notify_students('post_published', '80440000-00
                     'post_published:80440000-0000-4000-8000-000000000001',
                     array['60440000-0000-4000-8000-00000000000a']::uuid[]) $$, 'สร้างซ้ำด้วยคีย์เดิมไม่ error');
 select is(pg_temp.n('post_published', '0a'), 2, 'คีย์กันซ้ำ: สร้างซ้ำไม่เพิ่มแถว');
+
+-- N1: แก้โจทย์/ชื่อ/รายละเอียด/ตั้งค่างานไม่แจ้ง · ไม่มี trigger แจ้งเตือนตอนแก้โพสต์หรือบนไฟล์แนบ
+update public.posts set title = 'งานเหตุการณ์ (แก้)', body = 'โจทย์ใหม่', content_updated_at = clock_timestamp(),
+                        version = version + 1
+ where id = '80440000-0000-4000-8000-000000000001';
+update public.assignments set full_score = 20, late_penalty_pct = 30, reward_tokens = 2
+ where post_id = '80440000-0000-4000-8000-000000000001';
+select is((select count(*)::integer from public.notifications), 4, 'N1: แก้โจทย์และตั้งค่างานไม่สร้างแจ้งเตือน');
+select is((select count(*)::integer from pg_trigger
+            where tgrelid in ('public.posts'::regclass, 'public.attachments'::regclass)
+              and not tgisinternal and tgname like '%notify%'
+              and (tgtype::integer & 16) <> 0), 0,
+          'N1: ไม่มี trigger แจ้งเตือนตอนแก้โพสต์');
+-- รายการ trigger แจ้งเตือนทั้งหมด: ไม่มีบน terms / term_control / memberships / attachments
+select is(array(select c.relname || '.' || t.tgname from pg_trigger t join pg_class c on c.oid = t.tgrelid
+                 where not t.tgisinternal and t.tgname like '%notify%' order by 1),
+          array['assignments.assignments_notify', 'comments.comments_notify', 'posts.posts_notify',
+                'revision_permissions.revision_permissions_notify', 'solutions.solutions_notify_insert',
+                'solutions.solutions_notify_update', 'submissions.submissions_notify_insert',
+                'submissions.submissions_notify_update'],
+          'trigger แจ้งเตือนมีเฉพาะตารางของคำสั่งที่แจ้ง (ภาคเรียน/สมาชิก/ไฟล์แนบไม่แจ้ง)');
+select ok((select bool_and(pg_get_triggerdef(t.oid) like '%auth.uid() IS NOT NULL%') from pg_trigger t
+            where not t.tgisinternal and t.tgname like '%notify%'),
+          'ทุก trigger แจ้งเตือนมีเงื่อนไขผู้ใช้ในคำขอ');
 
 -- ---------------------------------------------------------------------------
 -- 2. ความคิดเห็นผ่าน post_comment (ทรานแซกชันเดียว · เรียกซ้ำ · แจ้งเตือนล้มไม่ทำให้คำสั่งล้ม)
@@ -165,6 +201,9 @@ select is(pg_temp.n('pending_review', null, '1') * 10 + pg_temp.unread('pending_
           'ส่งแก้ใช้แถวเดิมและกลับเป็นยังไม่อ่าน');
 update public.submissions set reward_granted = true where id = '50440000-0000-4000-8000-00000000000a';
 select is(pg_temp.unread('pending_review', null, '1'), 1, 'แก้ช่องอื่นของงานส่งไม่แตะแจ้งเตือน');
+select pg_temp.read_all();
+update public.submissions set last_submitted_at = last_submitted_at where id = '50440000-0000-4000-8000-00000000000a';
+select is(pg_temp.unread('pending_review', null, '1'), 0, 'SET เวลาส่งค่าเดิมไม่กลับเป็นยังไม่อ่าน (IS DISTINCT FROM)');
 insert into public.grades (submission_id, passed, timing, timing_due_at, timing_basis_at, timing_i1,
                            applied_penalty_pct, graded_revision, graded_at, graded_by_account_id) values
   ('50440000-0000-4000-8000-00000000000a', true, 'on_time', '2026-11-01T13:00:00Z', '2026-10-24T01:00:00Z', false,
@@ -191,6 +230,10 @@ select pg_temp.read_all();
 update public.assignments set close_at = '2026-11-05T13:00:00Z' where post_id = '80440000-0000-4000-8000-000000000001';
 select is(pg_temp.n('due_changed', '0a') * 10 + pg_temp.unread('due_changed', '0a'), 11,
           'เปลี่ยนวันปิดรับใช้แถวเดิมและกลับเป็นยังไม่อ่าน');
+select pg_temp.read_all();
+update public.assignments set due_at = due_at, close_at = close_at, closed_at = closed_at
+ where post_id = '80440000-0000-4000-8000-000000000001';
+select is(pg_temp.unread('due_changed'), 0, 'SET กำหนด/วันปิดรับค่าเดิมไม่แจ้ง (IS DISTINCT FROM)');
 update public.assignments set full_score_locked_at = clock_timestamp() where post_id = '80440000-0000-4000-8000-000000000001';
 select is(pg_temp.n('intake_closed'), 0, 'แก้ช่องอื่นของงานไม่สร้างแจ้งเตือน');
 update public.assignments set closed_at = clock_timestamp() where post_id = '80440000-0000-4000-8000-000000000001';
@@ -204,6 +247,9 @@ select is(pg_temp.n('solution_published', '0a') + pg_temp.n('solution_published'
 update public.solutions set body = 'เฉลยแก้', updated_at = clock_timestamp()
  where assignment_id = '80440000-0000-4000-8000-000000000001';
 select is(pg_temp.n('solution_published'), 2, 'แก้เฉลยหลังเผยแพร่ไม่แจ้งซ้ำ');
+select pg_temp.read_all();
+update public.solutions set published_at = published_at where assignment_id = '80440000-0000-4000-8000-000000000001';
+select is(pg_temp.unread('solution_published'), 0, 'SET เวลาเผยแพร่ค่าเดิมไม่แจ้ง');
 
 -- ---------------------------------------------------------------------------
 -- 5. ไม่แจ้งผู้ทำเอง (ฝั่งครู) · ทุกแถวผ่าน check ของ 0043
@@ -217,6 +263,24 @@ select is(pg_temp.n('student_comment'), 0, 'ผู้ทำคำสั่งเ
 select is((select count(*)::integer from public.notifications where recipient_student_id = '60440000-0000-4000-8000-00000000000c'
                                                                  or recipient_teacher_id = '10440000-0000-4000-8000-000000000002'),
           0, 'ห้องอื่นไม่ได้แจ้งเตือนใดเลย');
+
+-- ---------------------------------------------------------------------------
+-- 6. N4: ลบงานด้วย delete_post → แจ้งเตือนที่อ้างงานนั้นหายจากตารางและกระดิ่ง
+-- ---------------------------------------------------------------------------
+select ok((select count(*) from public.notifications where post_id = '80440000-0000-4000-8000-000000000001') > 0,
+          'ก่อนลบมีแจ้งเตือนของงานนี้');
+set local role authenticated;
+select pg_temp.as_user('20440000-0000-4000-8000-000000000001');
+select lives_ok($$ select public.delete_post('80440000-0000-4000-8000-000000000001',
+                    public.post_delete_preview('80440000-0000-4000-8000-000000000001') - 'post_id' - 'classroom_id' - 'kind' - 'title',
+                    'e0440000-0000-4000-8000-0000000000d1') $$, 'ครูลบงาน');
+select is(pg_temp.n('post_published', '0a') + pg_temp.n('teacher_comment', '0a') + pg_temp.n('pending_review'), 1,
+          'แจ้งเตือนของงานที่ลบหายทั้งหมด (เหลือประกาศของ A)');
+select pg_temp.as_user('20440000-0000-4000-8000-00000000000a');
+select is((select array_agg(x ->> 'title') from jsonb_array_elements(public.my_notifications() -> 'items') x),
+          array['ประกาศเหตุการณ์'], 'กระดิ่งของ A ไม่มีรายการที่อ้างงานที่ลบ');
+reset role;
+set local role postgres;
 
 select * from finish();
 rollback;
