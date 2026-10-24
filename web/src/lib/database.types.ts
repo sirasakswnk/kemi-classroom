@@ -747,6 +747,76 @@ export type Database = {
         }
         Relationships: []
       }
+      retention_requests: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by_account_id: string | null
+          confirmed_early: boolean | null
+          created_at: string
+          deleted_at: string | null
+          downloaded_at: string
+          downloaded_by_account_id: string | null
+          downloaded_bytes: number
+          downloaded_count: number
+          downloaded_fingerprint: string
+          scope: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by_account_id?: string | null
+          confirmed_early?: boolean | null
+          created_at?: string
+          deleted_at?: string | null
+          downloaded_at: string
+          downloaded_by_account_id?: string | null
+          downloaded_bytes: number
+          downloaded_count: number
+          downloaded_fingerprint: string
+          scope: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by_account_id?: string | null
+          confirmed_early?: boolean | null
+          created_at?: string
+          deleted_at?: string | null
+          downloaded_at?: string
+          downloaded_by_account_id?: string | null
+          downloaded_bytes?: number
+          downloaded_count?: number
+          downloaded_fingerprint?: string
+          scope?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'retention_requests_confirmed_by_account_id_fkey'
+            columns: ['confirmed_by_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'retention_requests_downloaded_by_account_id_fkey'
+            columns: ['downloaded_by_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'retention_requests_term_id_fkey'
+            columns: ['term_id']
+            isOneToOne: false
+            referencedRelation: 'terms'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       revision_permissions: {
         Row: {
           id: string
@@ -1399,6 +1469,26 @@ export type Database = {
       }
       due_reminder_run: { Args: { p_job_id: number }; Returns: Json }
       ensure_account: { Args: never; Returns: Json }
+      export_files_page: {
+        Args: {
+          p_admin_mode?: boolean
+          p_after?: string
+          p_limit?: number
+          p_term_id: string
+        }
+        Returns: Json
+      }
+      export_mark_downloaded: {
+        Args: {
+          p_admin_mode?: boolean
+          p_bytes: number
+          p_count: number
+          p_fingerprint: string
+          p_scope: string
+          p_term_id: string
+        }
+        Returns: Json
+      }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
       get_draw_options: { Args: never; Returns: Json }
       grade_submission: {
