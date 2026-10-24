@@ -168,6 +168,12 @@ grant execute on function pg_temp.owned(integer) to authenticated;
 create function pg_temp.catalog() returns integer language sql stable security definer as
   $$ select count(*)::integer from public.charms $$;
 grant execute on function pg_temp.catalog() to authenticated;
+-- นักเรียนอ่าน charms ตรงไม่ได้ (0039) — เทียบผลสุ่มกับแคตตาล็อกในนาม postgres
+create function pg_temp.charm_matches(p jsonb) returns boolean language sql stable security definer as
+  $$ select c.name = p #>> '{charm,name}' and r.name = p #>> '{charm,rarity_name}'
+       from public.charms c join public.rarities r on r.id = c.rarity_id
+      where c.id = (p #>> '{charm,id}')::uuid $$;
+grant execute on function pg_temp.charm_matches(jsonb) to authenticated;
 
 set local role authenticated;
 
@@ -240,9 +246,7 @@ select ok((select o.charm_id = (pg_temp.r('d1') #>> '{charm,id}')::uuid
              and o.obtained_at = (pg_temp.r('d1') ->> 'obtained_at')::timestamptz
              from public.owned_charms o where o.student_id = pg_temp.st(1)),
   'ผลสุ่มตรงกับแถวที่บันทึก (หน้าเว็บเล่นเอฟเฟกต์จากผลที่บันทึกแล้ว)');
-select ok((select c.name = pg_temp.r('d1') #>> '{charm,name}' and r.name = pg_temp.r('d1') #>> '{charm,rarity_name}'
-             from public.charms c join public.rarities r on r.id = c.rarity_id
-            where c.id = (pg_temp.r('d1') #>> '{charm,id}')::uuid),
+select ok(pg_temp.charm_matches(pg_temp.r('d1')),
   'ผลมีชื่อและระดับของชิ้นที่ได้');
 select is(public.draw_charm(pg_temp.r('o1') ->> 'rates_key', (pg_temp.r('k1') #>> '{}')::uuid), pg_temp.r('d1'),
   'คำขอซ้ำ (response หาย): คืนผลเดิม');

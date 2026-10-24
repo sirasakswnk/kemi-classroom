@@ -185,8 +185,8 @@ select is((select jsonb_agg(charm_id) from public.owned_charms),
 select is((select jsonb_agg(jsonb_build_array(student_id, charm_id)) from public.student_equipment),
   '[["6e000000-0000-4000-8000-000000000001", "9e000000-0000-4000-8000-000000000001"]]'::jsonb,
   'นักเรียนเห็นการสวมของตัวเองเท่านั้น (เพื่อนเห็นผ่าน RPC แท็บสมาชิก)');
-select is((select count(*)::integer from public.charms where position > 1000), 2,
-  'นักเรียนอ่านชุดเครื่องรางได้ รวมชิ้นที่ยังไม่มี');
+select is((select count(*)::integer from public.charms where position > 1000), 0,
+  'นักเรียนอ่านชุดเครื่องรางตรงไม่ได้ (0039 — ได้ผ่าน RPC เท่านั้น)');
 select throws_ok($$ insert into public.wallets (student_id, term_id, balance)
                     values ('6e000000-0000-4000-8000-000000000001', '4e000000-0000-4000-8000-000000000001', 99) $$,
   '42501', null, 'นักเรียนเขียนตารางตรงไม่ได้');
