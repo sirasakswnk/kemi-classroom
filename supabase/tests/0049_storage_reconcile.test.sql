@@ -80,7 +80,7 @@ select is((select public.storage_reconcile_step(id, '{"ok":true,"truncated":true
               {"k":"files/t49/a2.pdf","v":"v-old","s":50,"l":false}]}'::jsonb, true) from j),
           '{"action":"list","key_marker":"files/t49/a2.pdf","version_id_marker":"v-old"}'::jsonb,
   'หน้ายังไม่หมด + ยังขอต่อได้ → ขอหน้าถัดไปจาก cursor');
-reset role;
+set local role postgres;
 select is((select class_c_requests from public.b2_daily_usage
             where source = 'reconcile' and day = (clock_timestamp() at time zone 'UTC')::date), 1::bigint,
   'นับคำขอ Class C ต่อหน้า (source reconcile)');
@@ -99,7 +99,7 @@ set local role service_role;
 select is((select public.storage_reconcile_step(id, '{"ok":true,"truncated":true,"next_key_marker":"staging/x","next_version_id_marker":"sv-9","delete_markers":0,
   "versions":[{"k":"staging/b1/f1","v":"sv-1","s":1000,"l":true}]}'::jsonb, false) from j),
           '{"action":"later"}'::jsonb, 'ขอต่อไม่ได้ในรอบนี้ → later');
-reset role;
+set local role postgres;
 select ok((select status = 'pending' and attempts = 0 and run_at <= clock_timestamp() and locked_at is null
              and payload ->> 'key_marker' = 'staging/x' and (payload ->> 'requests')::integer = 2
              and (payload -> 'tally' ->> 'staging_bytes')::bigint = 1000
@@ -113,7 +113,7 @@ set local role service_role;
 select is((select public.storage_reconcile_start(id) from j),
           '{"action":"list","allow":20,"key_marker":"staging/x","version_id_marker":"sv-9"}'::jsonb,
   'รอบใหม่ทำต่อจาก cursor');
-reset role;
+set local role postgres;
 select is((select (payload ->> 'runs')::integer from private.jobs where id = (select id from j)), 2, 'นับจำนวนรอบ');
 
 -- ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ select is((select (payload ->> 'runs')::integer from private.jobs where id = (se
 set local role service_role;
 select is((select public.storage_reconcile_step(id, '{"ok":false,"error":"b2_500"}'::jsonb, true) from j),
           '{"action":"failed"}'::jsonb, 'B2 ล้ม → failed (jobs_fail)');
-reset role;
+set local role postgres;
 select ok((select status = 'pending' and last_error = 'b2_500' and run_at > clock_timestamp()
              and payload ->> 'key_marker' = 'staging/x' and (payload ->> 'requests')::integer = 3
              from private.jobs where id = (select id from j)),
@@ -132,7 +132,7 @@ update private.jobs set status = 'running', locked_at = clock_timestamp(), attem
 set local role service_role;
 select is((select public.storage_reconcile_step(id, '{"ok":false,"error":"b2_403","cap":true}'::jsonb, true) from j),
           '{"action":"paused","reason":"b2_cap"}'::jsonb, 'B2 ตอบเกินเพดาน → พักถึงวันใหม่');
-reset role;
+set local role postgres;
 select ok((select status = 'pending' and attempts = 0 and run_at = private.b2_next_day()
              from private.jobs where id = (select id from j)),
   'พักถึง 00:10 UTC ของวันถัดไป (หลังเพดาน B2 ขึ้นวันใหม่) ไม่นับเป็นการล้ม');
@@ -147,7 +147,7 @@ select throws_ok($$ select public.storage_reconcile_step((select id from j), '{"
   'P0001', 'invalid_request', 'ไม่มีรายการ versions → invalid_request');
 select is(public.storage_reconcile_step(-1, '{"ok":true,"versions":[]}'::jsonb, true), '{"action":"skip"}'::jsonb,
   'งานที่ไม่ได้ถืออยู่ → skip');
-reset role;
+set local role postgres;
 
 -- ---------------------------------------------------------------------------
 -- 6. หน้าสุดท้าย: B2 มากกว่า → ค่าชดเชย = ส่วนต่าง + ประวัติ
@@ -156,7 +156,7 @@ set local role service_role;
 select is((select public.storage_reconcile_step(id, '{"ok":true,"truncated":false,"delete_markers":2,
   "versions":[{"k":"other/readme","v":"o1","s":7,"l":true}]}'::jsonb, true) - 'b2_bytes' - 'diff_bytes' - 'offset_bytes' - 'exceeds_threshold' from j),
           '{"action":"done","requests":5}'::jsonb, 'หน้าสุดท้าย → done');
-reset role;
+set local role postgres;
 -- B2 = 350 + 1000 + 7 = 1357 · ยอดที่ระบบนับ = base (ไม่มีค่าชดเชย)
 select is((select b2_bytes from public.storage_reconciliations), 1357::bigint, 'ยอด B2 รวมทุกหน้า');
 select is((select diff_bytes from public.storage_reconciliations), 1357 - (select used from base),
@@ -191,7 +191,7 @@ set local role service_role;
 select is((select public.storage_reconcile_start(id) ->> 'action' from j2), 'list', 'งานที่สองเริ่มได้');
 select is((select (public.storage_reconcile_step(id, '{"ok":true,"truncated":false,"versions":[]}'::jsonb, true) ->> 'offset_bytes')::bigint from j2),
           0::bigint, 'B2 ว่าง (น้อยกว่าที่นับ) → ค่าชดเชย 0 ไม่ลดยอด');
-reset role;
+set local role postgres;
 select ok((select diff_bytes = -(select used from base) and offset_before_bytes = greatest(1357 - (select used from base), 0)
                   and exceeds_threshold
              from public.storage_reconciliations where job_id = (select id from j2)),
@@ -205,7 +205,7 @@ update public.storage_settings set reconcile_daily_budget_requests = 6;  -- ใ�
 set local role service_role;
 select is((select public.storage_reconcile_start(id) from j3),
           '{"action":"paused","reason":"daily_budget"}'::jsonb, 'งบ Class C ของวันหมด → พักถึงวันใหม่');
-reset role;
+set local role postgres;
 select ok((select status = 'pending' and run_at = private.b2_next_day() and payload ? 'started_at'
              from private.jobs where dedupe_key = 'test-3'), 'พักไว้ พร้อมเริ่มนับยอดเมื่อถึงวันใหม่');
 
