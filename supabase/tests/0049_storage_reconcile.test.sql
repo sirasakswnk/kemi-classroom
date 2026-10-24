@@ -24,6 +24,7 @@ select plan(43);
 
 -- ---------------------------------------------------------------------------
 -- ข้อมูลสมมติ: ครู 1 คน ไฟล์ 2 ไฟล์ (100 + 200 ไบต์) · งานอื่นในคิวไม่เกี่ยว (ใส่งานเองทีละงาน)
+-- ล้างงาน/ประวัติการเทียบเดิม (dev มีของจริงจากการทดสอบด้วยมือ) — rollback ตอนจบคืนครบ
 -- ---------------------------------------------------------------------------
 insert into public.teachers (id, display_name) values ('14900000-0000-4000-8000-000000000001', 'ครูทดสอบเทียบยอด');
 insert into public.accounts (id, auth_user_id, provider, provider_subject, email, role, teacher_id) values
@@ -34,6 +35,7 @@ insert into public.assets (id, owner_account_id, purpose, staging_key, staging_v
   ('a4900000-0000-4000-8000-000000000002', '34900000-0000-4000-8000-000000000001', 'post', 'staging/t49/a2', 'sv-a2', 'files/t49/a2.pdf', 'v-a2', 'application/pdf', 200, 'a2.pdf');
 delete from private.jobs where kind = 'storage_reconcile';
 delete from public.b2_daily_usage where source = 'reconcile';
+delete from public.storage_reconciliations;
 update public.storage_settings set storage_offset_bytes = 0, reconciled_at = null,
   reconcile_run_max_requests = 20, reconcile_daily_budget_requests = 500;
 

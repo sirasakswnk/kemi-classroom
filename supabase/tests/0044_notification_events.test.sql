@@ -71,6 +71,9 @@ create function pg_temp.read_all() returns void language sql security definer se
   $$ update public.notifications set read_at = clock_timestamp() where read_at is null $$;
 grant execute on function pg_temp.read_all() to authenticated;
 
+-- เทสต์นับแจ้งเตือนทั้งตาราง — ล้างของเดิมใน dev (แจ้งเตือนจริงจากการทดสอบหน้าเว็บ) ก่อน · rollback ตอนจบคืนครบ
+delete from public.notifications;
+
 -- ---------------------------------------------------------------------------
 -- 1. โพสต์ใหม่ → สมาชิกห้องเท่านั้น (คำสั่งของครู T)
 -- ---------------------------------------------------------------------------
