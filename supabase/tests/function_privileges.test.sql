@@ -116,7 +116,11 @@ insert into expected_authenticated values
   ('public.terms_start(text,uuid,uuid,boolean)'),
   ('public.terms_end(uuid,uuid,boolean)'),
   -- 0042_term_overview (ครู/ผู้ดูแล: ข้อมูลหน้า T07)
-  ('public.term_overview(boolean)');
+  ('public.term_overview(boolean)'),
+  -- 0043_notifications (นักเรียน/ครู: กระดิ่งของตัวเอง)
+  ('public.my_notifications(timestamptz,integer)'),
+  ('public.unread_notification_count()'),
+  ('public.mark_notifications_read(uuid[])');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
