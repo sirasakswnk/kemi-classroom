@@ -104,7 +104,8 @@ select ok((select bool_and(p < p2) from (
 select is(pg_temp.slot(public.my_collection(), 9801),
   '{"position": 9801, "rarity_id": 1, "rarity_name": "ทั่วไป", "owned": true,
     "charm_id": "9e380000-0000-4000-8000-000000000001", "name": "ชิ้นตู้ทดสอบหนึ่ง",
-    "description": "คำอธิบายหนึ่ง", "symbol": "T1", "obtained_at": "2026-10-20T03:00:00+00:00"}'::jsonb,
+    "description": "คำอธิบายหนึ่ง", "symbol": "T1", "obtained_at": "2026-10-20T03:00:00+00:00",
+    "image_asset_id": null}'::jsonb,
   'A: ช่องที่ได้รับแล้วมีชื่อ คำอธิบาย สัญลักษณ์ วันที่ได้รับ');
 select is(pg_temp.slot(public.my_collection(), 9803),
   '{"position": 9803, "rarity_id": 4, "rarity_name": "ตำนาน", "owned": false}'::jsonb,
@@ -128,7 +129,7 @@ select ok((select bool_and(not (x ->> 'owned')::boolean and not x ? 'name')
 -- ---------------------------------------------------------------------------
 select is(pg_temp.member(public.classroom_view('70380000-0000-4000-8000-000000000001'), 'ก ตู้ทดสอบ'),
   '{"display_name": "ก ตู้ทดสอบ", "roll_number": 1, "is_me": false,
-    "charm": {"name": "ชิ้นตู้ทดสอบหนึ่ง", "symbol": "T1", "rarity_id": 1}}'::jsonb,
+    "charm": {"name": "ชิ้นตู้ทดสอบหนึ่ง", "symbol": "T1", "rarity_id": 1, "image_asset_id": null}}'::jsonb,
   'B เห็นชิ้นที่ A แสดงข้างชื่อ (ชื่อ สัญลักษณ์ ระดับ)');
 select is(pg_temp.member(public.classroom_view('70380000-0000-4000-8000-000000000001'), 'ข ตู้ทดสอบ') -> 'charm',
   'null'::jsonb, 'B ไม่ได้เลือกแสดง → charm = null');

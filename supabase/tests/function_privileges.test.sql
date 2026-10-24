@@ -107,7 +107,11 @@ insert into expected_authenticated values
   ('public.draw_charm(text,uuid)'),
   ('public.set_equipment(uuid)'),
   -- 0038_collection (นักเรียน: ตู้สะสมส่วนตัว)
-  ('public.my_collection()');
+  ('public.my_collection()'),
+  -- 0040_charm_admin (ครู/ผู้ดูแล: T06 แคตตาล็อก อัตรา เพิ่ม/แก้เครื่องราง)
+  ('public.charm_catalog(boolean)'),
+  ('public.save_rarity_weights(jsonb,text,boolean)'),
+  ('public.save_charm(jsonb,integer,uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
