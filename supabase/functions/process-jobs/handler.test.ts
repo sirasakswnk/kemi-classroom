@@ -207,6 +207,44 @@ test('งานชนิดที่ไม่รู้จัก → jobs_fail un
   })
 })
 
+test('due_reminder: due_reminder_run ปิดงานเอง · skip ไม่นับ · RPC ล้ม → jobs_fail', async () => {
+  const claim = claimOnce([
+    { id: 21, kind: 'due_reminder', payload: { assignment_id: A1 }, attempts: 1 },
+    { id: 22, kind: 'due_reminder', payload: { assignment_id: A2 }, attempts: 1 },
+    { id: 23, kind: 'due_reminder', payload: { assignment_id: A2 }, attempts: 1 },
+  ])
+  const { handler, calls } = setup({
+    rpc: (fn, body, n) =>
+      fn === 'copying_stale'
+        ? []
+        : fn === 'jobs_claim'
+          ? claim(n)
+          : fn === 'due_reminder_run'
+            ? body.p_job_id === 21
+              ? { action: 'done', sent: 3 }
+              : body.p_job_id === 22
+                ? { action: 'skip' }
+                : json({ code: 'XX000', message: 'boom' }, 500)
+            : 'pending',
+  })
+  const res = await handler(call())
+  const summary = (await res.json()) as { jobs: Record<string, number> }
+  assert.deepEqual(
+    calls.filter((c) => c.url.endsWith('/due_reminder_run')).map((c) => c.body),
+    [{ p_job_id: 21 }, { p_job_id: 22 }, { p_job_id: 23 }],
+  )
+  assert.equal(rpcNames(calls).includes('jobs_complete'), false, 'ฐานข้อมูลปิดงานเอง')
+  const fails = calls.filter((c) => c.url.endsWith('/jobs_fail'))
+  assert.equal(fails.length, 1)
+  assert.equal(fails[0].body.p_job_id, 23)
+  assert.match(String(fails[0].body.p_error), /^due_reminder_/)
+  assert.deepEqual(
+    { done: summary.jobs.done, reminded: summary.jobs.reminded, failed: summary.jobs.failed },
+    { done: 1, reminded: 3, failed: 1 },
+  )
+  assert.equal(b2Calls(calls).length, 0, 'งานเตือนไม่เรียก B2')
+})
+
 test('sweeper copying: HEAD มีไฟล์ → finish พร้อมเวอร์ชัน · 404 → finish null · นับ Class B ทุก HEAD', async () => {
   const { handler, calls } = setup({
     rpc: (fn, body) =>

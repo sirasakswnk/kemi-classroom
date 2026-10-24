@@ -143,7 +143,9 @@ insert into expected_service_only values
   ('public.delete_asset_finish(bigint)'),
   ('public.copying_stale(integer)'),
   ('public.sweep_copying_finish(uuid,text)'),
-  ('public.jobs_maintenance()');
+  ('public.jobs_maintenance()'),
+  -- 0047_due_reminder_run (process-jobs: งานเตือน 24 ชม.)
+  ('public.due_reminder_run(bigint)');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);

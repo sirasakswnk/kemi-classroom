@@ -4,6 +4,8 @@
 //   1. sweeper แถว copying ที่ค้าง: HEAD ไฟล์ปลายทาง (Class B นับแหล่ง complete) → มี = เข้าคิวลบ / ไม่มี = ลบแถว
 //   2. ดึงงานทีละชุด (jobs_claim, SKIP LOCKED) — delete_asset: delete_asset_begin ตัดสิน (ธงสำรอง/ยังผูก/ไม่มีแล้ว)
 //      → DeleteObject ระบุ versionId (Class A ไม่นับเพดาน) → 200/204/404 = delete_asset_finish · อื่น ๆ = jobs_fail
+//      due_reminder: due_reminder_run สร้างแจ้งเตือนใกล้กำหนด + ปิดงานในทรานแซกชันเดียว (ตรวจกำหนด/ปิดรับ/ภาคเรียนล่าสุดเอง)
+//      → RPC ล้ม = jobs_fail (ลองใหม่ตามรอบ)
 // ฐานข้อมูลตัดสินทุกอย่าง ฟังก์ชันเรียก B2 ตามที่ RPC บอกเท่านั้น; RPC ทั้งหมดเรียกด้วย service role
 // ไม่มี CORS (เรียกจากฐานข้อมูล ไม่ใช่เบราว์เซอร์) และไม่ log key/รหัสลับ
 import {
@@ -29,7 +31,14 @@ interface Job {
 
 export interface Summary {
   copying: { checked: number; queued: number; removed: number; errors: number }
-  jobs: { claimed: number; deleted: number; done: number; deferred: number; failed: number }
+  jobs: {
+    claimed: number
+    deleted: number
+    done: number
+    deferred: number
+    failed: number
+    reminded: number
+  }
 }
 
 const reply = (body: unknown, status: number) =>
@@ -93,7 +102,7 @@ export async function runOnce(ctx: Ctx): Promise<Summary> {
   const started = now().getTime()
   const summary: Summary = {
     copying: { checked: 0, queued: 0, removed: 0, errors: 0 },
-    jobs: { claimed: 0, deleted: 0, done: 0, deferred: 0, failed: 0 },
+    jobs: { claimed: 0, deleted: 0, done: 0, deferred: 0, failed: 0, reminded: 0 },
   }
   await sweepCopying(ctx, summary)
   while (now().getTime() - started < DEADLINE_MS) {
@@ -102,6 +111,7 @@ export async function runOnce(ctx: Ctx): Promise<Summary> {
     for (const job of claimed.data as Job[]) {
       summary.jobs.claimed++
       if (job.kind === 'delete_asset') await deleteAsset(ctx, job, summary)
+      else if (job.kind === 'due_reminder') await dueReminder(ctx, job, summary)
       else await failJob(ctx, job, 'unknown_kind', summary)
     }
   }
@@ -148,6 +158,18 @@ async function deleteAsset(ctx: Ctx, job: Job, summary: Summary) {
     return
   }
   await failJob(ctx, job, `b2_${status}`, summary)
+}
+
+async function dueReminder(ctx: Ctx, job: Job, summary: Summary) {
+  const r = await serviceRpc(ctx, 'due_reminder_run', { p_job_id: job.id })
+  if (!r.ok) {
+    await failJob(ctx, job, `due_reminder_${r.code}`, summary)
+    return
+  }
+  const result = r.data as { action?: string; sent?: number }
+  if (result.action !== 'done') return
+  summary.jobs.done++
+  summary.jobs.reminded += Number(result.sent) || 0
 }
 
 async function sweepCopying(ctx: Ctx, summary: Summary) {
