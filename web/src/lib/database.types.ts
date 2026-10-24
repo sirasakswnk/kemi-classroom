@@ -568,6 +568,87 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          level: number | null
+          post_id: string | null
+          read_at: string | null
+          recipient_student_id: string | null
+          recipient_teacher_id: string | null
+          subject_student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind: string
+          level?: number | null
+          post_id?: string | null
+          read_at?: string | null
+          recipient_student_id?: string | null
+          recipient_teacher_id?: string | null
+          subject_student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          level?: number | null
+          post_id?: string | null
+          read_at?: string | null
+          recipient_student_id?: string | null
+          recipient_teacher_id?: string | null
+          subject_student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: false
+            referencedRelation: 'comments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_recipient_student_id_fkey'
+            columns: ['recipient_student_id']
+            isOneToOne: false
+            referencedRelation: 'students'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_recipient_teacher_id_fkey'
+            columns: ['recipient_teacher_id']
+            isOneToOne: false
+            referencedRelation: 'teachers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_subject_student_id_fkey'
+            columns: ['subject_student_id']
+            isOneToOne: false
+            referencedRelation: 'students'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       owned_charms: {
         Row: {
           charm_id: string
@@ -1263,12 +1344,17 @@ export type Database = {
       jobs_maintenance: { Args: never; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       mark_reward_effect_seen: {
         Args: { p_submission_ids: string[] }
         Returns: Json
       }
       my_classrooms: { Args: never; Returns: Json }
       my_collection: { Args: never; Returns: Json }
+      my_notifications: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: Json
+      }
       my_work: { Args: { p_classroom_id?: string }; Returns: Json }
       open_revision_permission: {
         Args: {
@@ -1428,6 +1514,7 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_student_id: string }
         Returns: Json
       }
+      unread_notification_count: { Args: never; Returns: number }
       update_post: {
         Args: {
           p_admin_mode?: boolean
