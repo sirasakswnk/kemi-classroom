@@ -250,3 +250,62 @@
 .tEmpty b {
   color: var(--ink);
 }
+
+/* แผง “แจ้งเตือนล่าสุด” ในภาพรวมครู — แบบ v2 .panel / .section-head */
+.panel {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  margin-top: 22px;
+  padding: 18px 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.panelHead h2 {
+  font-size: 1.125rem;
+}
+
+.seeAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  color: var(--purple);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.seeAll svg {
+  width: 16px;
+  height: 16px;
+}
+
+.seeAll:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .seeAll:hover {
+    text-decoration: underline;
+  }
+}
+
+.panelNote {
+  margin: 0;
+  padding: 4px 20px 14px;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}

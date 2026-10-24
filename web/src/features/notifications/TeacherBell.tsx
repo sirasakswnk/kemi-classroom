@@ -1,22 +1,16 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bell, Check, HardDrive, Inbox, MessageCircle, TriangleAlert } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
+import { Bell, Check, TriangleAlert } from 'lucide-react'
+import { useState } from 'react'
 import { th } from '../../copy/th'
-import { cx } from '../../lib/cx'
 import { appErrorOf } from '../../lib/request'
 import { Button } from '../../ui'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { markNotificationsRead, notificationsQuery, unreadCountQuery } from './api'
-import { teacherBellRow, type TeacherBellIcon, type TeacherBellRow } from './bellState'
+import { teacherBellRow } from './bellState'
+import { TeacherBellItem } from './TeacherBellItem'
+import { useSettleRead } from './useSettleRead'
 import styles from './notifications.module.css'
 import review from '../review/review.module.css'
-
-const ICONS: Record<TeacherBellIcon, ReactNode> = {
-  pending: <Inbox />,
-  comment: <MessageCircle />,
-  storage: <HardDrive />,
-}
 
 type Filter = 'all' | 'unread'
 
@@ -26,20 +20,13 @@ type Filter = 'all' | 'unread'
 export default function TeacherBell() {
   const copy = th.bell
   const t = copy.teacher
-  const queryClient = useQueryClient()
   const list = useInfiniteQuery(notificationsQuery)
   const unread = useQuery(unreadCountQuery)
   const [filter, setFilter] = useState<Filter>('all')
   const now = new Date()
 
-  const settle = (count: number) => {
-    queryClient.setQueryData(unreadCountQuery.queryKey, count)
-    void queryClient.invalidateQueries({ queryKey: notificationsQuery.queryKey })
-  }
+  const settle = useSettleRead()
   const readAll = useMutation({ mutationFn: () => markNotificationsRead(null), onSuccess: settle })
-  const readOne = (id: string) => {
-    markNotificationsRead([id]).then(settle, () => undefined)
-  }
 
   const rows = (list.data?.pages.flatMap((p) => p.items) ?? []).flatMap((item) => {
     const row = teacherBellRow(item, now)
@@ -51,28 +38,6 @@ export default function TeacherBell() {
     { label: t.today, rows: shown.filter(({ row }) => row.today) },
     { label: t.earlier, rows: shown.filter(({ row }) => !row.today) },
   ].filter((g) => g.rows.length > 0)
-
-  const item = ({ row, read }: { row: TeacherBellRow; read: boolean }) => (
-    <li key={row.id}>
-      <Link
-        to={row.href}
-        className={cx(styles.row, row.unread && styles.unread, row.faded && styles.faded)}
-        onClick={() => {
-          if (!read) readOne(row.id)
-        }}
-      >
-        <span className={styles.ic} data-tone={row.icon} aria-hidden="true">
-          {ICONS[row.icon]}
-        </span>
-        <span className={styles.text}>
-          <b>{row.title}</b>
-          {row.detail && <span className={styles.detail}>{row.detail}</span>}
-          {row.faded && <span className={styles.fadedNote}>{row.faded}</span>}
-        </span>
-        <time dateTime={row.at}>{row.time}</time>
-      </Link>
-    </li>
-  )
 
   return (
     <TeacherPage crumbs={[{ label: th.teacher.overview, to: '/t' }, { label: copy.title }]}>
@@ -121,7 +86,8 @@ export default function TeacherBell() {
                     onClick={() => setFilter(f)}
                   >
                     {t[f]}
-                    <span className={review.n}>{f === 'all' ? rows.length : count}</span>
+                    {/* ตัวเลขเฉพาะ “ยังไม่อ่าน” จากเซิร์ฟเวอร์ — จำนวนทั้งหมดเปลี่ยนตามการโหลดเพิ่มจึงไม่แสดง */}
+                    {f === 'unread' && <span className={review.n}>{count}</span>}
                   </button>
                 ))}
               </div>
@@ -136,7 +102,11 @@ export default function TeacherBell() {
               groups.map((g) => (
                 <div key={g.label}>
                   <h2 className={styles.group}>{g.label}</h2>
-                  <ul className={styles.tList}>{g.rows.map(item)}</ul>
+                  <ul className={styles.tList}>
+                    {g.rows.map((r) => (
+                      <TeacherBellItem key={r.row.id} row={r.row} read={r.read} />
+                    ))}
+                  </ul>
                 </div>
               ))
             )}
