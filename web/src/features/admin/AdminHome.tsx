@@ -18,6 +18,7 @@ import { appErrorOf } from '../../lib/request'
 import { Button, Chip, Field, Input, Modal, Select, useToast } from '../../ui'
 import { AdminStorageAlerts, StoragePanel } from '../storage/Storage'
 import { enterAdminMode } from '../teacher/adminMode'
+import { FailedJobsPanel } from './FailedJobsPanel'
 import { addTeacher, adminTeachersQuery, removeTeacher, type AllowlistRow } from './api'
 import styles from './AdminHome.module.css'
 
@@ -66,6 +67,7 @@ export default function AdminHome() {
         </section>
 
         <StoragePanel />
+        <FailedJobsPanel />
 
         <div className={styles.cols}>
           <TeachersPanel />

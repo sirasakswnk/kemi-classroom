@@ -1308,7 +1308,9 @@ export type Database = {
         Returns: Json
       }
       admin_b2_usage: { Args: never; Returns: Json }
+      admin_failed_jobs: { Args: never; Returns: Json }
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
+      admin_retry_job: { Args: { p_job_id: number }; Returns: Json }
       admin_storage_reconcile: { Args: never; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
