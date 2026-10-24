@@ -39,7 +39,9 @@ export default function StudentHome() {
   const queryClient = useQueryClient()
   const toast = useToast()
   const list = classes.data ?? []
-  const workRows = myWork.data ?? []
+  // นับเฉพาะงานของห้องในภาคเรียนปัจจุบัน — my_work คืนงานของห้องเทอมเก่าที่ยังเป็นสมาชิกด้วย (P5-09)
+  const currentRooms = new Set(list.map((c) => c.id))
+  const workRows = (myWork.data ?? []).filter((r) => currentRooms.has(r.classroom_id))
   const due = dueSoon(workRows)
   const pendingIn = (classId: string) =>
     workRows.filter((r) => r.classroom_id === classId && isPending(r)).length
