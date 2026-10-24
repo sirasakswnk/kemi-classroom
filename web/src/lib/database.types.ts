@@ -1489,6 +1489,10 @@ export type Database = {
         }
         Returns: Json
       }
+      export_term_data: {
+        Args: { p_admin_mode?: boolean; p_term_id: string }
+        Returns: Json
+      }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
       get_draw_options: { Args: never; Returns: Json }
       grade_submission: {
