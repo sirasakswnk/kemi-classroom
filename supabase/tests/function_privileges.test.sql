@@ -127,7 +127,10 @@ insert into expected_authenticated values
   ('public.admin_failed_jobs()'),
   ('public.admin_retry_job(bigint)'),
   -- 0053_admin_term_alert (ผู้ดูแล: ภาคเรียนเปิดค้างเกิน 6 เดือน)
-  ('public.admin_term_alert()');
+  ('public.admin_term_alert()'),
+  -- 0054_retention (ครู/ผู้ดูแล: รายการไฟล์ภาคเรียนเก่าสำหรับ ZIP + บันทึกว่าดาวน์โหลดครบ)
+  ('public.export_files_page(uuid,uuid,integer,boolean)'),
+  ('public.export_mark_downloaded(uuid,text,text,integer,bigint,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
