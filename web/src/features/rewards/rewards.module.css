@@ -346,6 +346,8 @@
 }
 
 .equipBar {
+  color: inherit;
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -608,6 +610,274 @@
   }
 }
 
+/* ---------- S05 ตู้สะสม (แบบ v2 .col-head / .col-grid / .charm-tile / .sheet-art) ---------- */
+.colPage {
+  width: 100%;
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: 18px 16px 28px;
+}
+
+@media (min-width: 600px) {
+  .colPage {
+    max-width: 720px;
+    margin-inline: auto;
+    padding: 28px 32px 36px;
+  }
+}
+
+@media (min-width: 960px) {
+  .colPage {
+    max-width: 1100px;
+  }
+}
+
+.colBack {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap-min);
+  color: var(--purple);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.colBack svg {
+  width: 18px;
+  height: 18px;
+}
+
+.colHead {
+  display: grid;
+  gap: 10px;
+}
+
+.colHead h1 {
+  font-size: 1.625rem;
+  color: var(--purple-deep);
+}
+
+.colProgress {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.colProgress b {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.meter {
+  height: 6px;
+  border-radius: 6px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #6b3fa0, #e9b949);
+}
+
+.colNote {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.colNote svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.colError {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: var(--red-soft);
+  color: var(--red-deep);
+  font-size: 0.875rem;
+}
+
+.colGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.colGrid > li {
+  display: grid;
+}
+
+@media (min-width: 600px) {
+  .colGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 960px) {
+  .colGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 16px 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: center;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tile b {
+  font-weight: 600;
+  font-size: 0.90625rem;
+  line-height: 1.35;
+}
+
+button.tile:focus-visible {
+  outline: 3px solid var(--purple-mid);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  button.tile:hover {
+    border-color: var(--purple-mid);
+    box-shadow: var(--shadow);
+  }
+}
+
+.tile[data-equipped='true'] {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 4px var(--purple-soft);
+}
+
+.tileLocked {
+  border-style: dashed;
+  background: var(--bg-2);
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.tileLocked .tierChip {
+  opacity: 0.7;
+}
+
+.eq {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
+}
+
+.eq svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sheetBody {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.sheetArt {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 16px 0 10px;
+  border-radius: var(--r-lg);
+  background: radial-gradient(circle at 50% 50%, var(--glow) 0%, transparent 62%);
+}
+
+.glow0 {
+  --glow: #cde8dc;
+}
+.glow1 {
+  --glow: #d8dffb;
+}
+.glow2 {
+  --glow: #f4d0ee;
+}
+.glow3 {
+  --glow: #fce2a0;
+}
+
+.sheetMedal {
+  filter: drop-shadow(0 12px 18px rgba(75, 42, 118, 0.25));
+  animation: float 3s ease-in-out infinite;
+}
+
+.sheetDesc {
+  max-width: 34ch;
+  font-size: 0.96875rem;
+  line-height: 1.7;
+}
+
+.sheetDesc[data-empty='true'] {
+  color: var(--ink-2);
+}
+
+.sheetMeta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.sheetMeta svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sheetHint {
+  font-size: 0.78125rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* ชิ้นที่แสดงข้างชื่อในแท็บสมาชิก (แบบ v2 .m-charm) */
+.memberCharm {
+  flex: none;
+  display: inline-flex;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pillNum,
   .wrap::before,
@@ -617,7 +887,8 @@
   .reveal,
   .bigMedal,
   .fx,
-  .fxCoin {
+  .fxCoin,
+  .sheetMedal {
     animation: none;
   }
 

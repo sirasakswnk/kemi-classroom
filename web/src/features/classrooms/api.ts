@@ -82,12 +82,31 @@ const MemberRowSchema = z
     joined_at: z.string(),
     students: z.object({
       display_name: z.string(),
+      // ชิ้นที่แสดงข้างชื่อ (ครูอ่านได้ตาม RLS ของ student_equipment/owned_charms)
+      student_equipment: z
+        .object({
+          owned_charms: z
+            .object({
+              charms: z.object({
+                name: z.string(),
+                symbol: z.string(),
+                rarity_id: z.number().int(),
+              }),
+            })
+            .nullable(),
+        })
+        .nullable(),
       roster_entries: z.array(
         z.object({ group_name: z.string(), roll_number: z.number().int(), term_id: z.uuid() }),
       ),
     }),
   })
-  .transform((m) => ({ student_id: m.student_id, joined_at: m.joined_at, ...m.students }))
+  .transform(({ students: { student_equipment, ...s }, ...m }) => ({
+    student_id: m.student_id,
+    joined_at: m.joined_at,
+    ...s,
+    charm: student_equipment?.owned_charms?.charms ?? null,
+  }))
 
 export interface Member {
   student_id: string
@@ -96,6 +115,8 @@ export interface Member {
   /** ห้องและเลขที่ตามรายชื่อของภาคเรียนนี้ (ไม่มีถ้าไม่อยู่ในรายชื่อเทอมนี้) */
   group_name: string | null
   roll_number: number | null
+  /** เครื่องรางที่เลือกแสดงข้างชื่อ (null = ไม่แสดง) */
+  charm: { name: string; symbol: string; rarity_id: number } | null
 }
 
 export const membersQuery = (classroomId: string, termId: string | undefined) =>
@@ -107,7 +128,7 @@ export const membersQuery = (classroomId: string, termId: string | undefined) =>
         supabase
           .from('memberships')
           .select(
-            'student_id, joined_at, students(display_name, roster_entries(group_name, roll_number, term_id))',
+            'student_id, joined_at, students(display_name, student_equipment(owned_charms(charms(name, symbol, rarity_id))), roster_entries(group_name, roll_number, term_id))',
           )
           .eq('classroom_id', classroomId),
         z.array(MemberRowSchema),
@@ -121,6 +142,7 @@ export const membersQuery = (classroomId: string, termId: string | undefined) =>
             display_name: m.display_name,
             group_name: entry?.group_name ?? null,
             roll_number: entry?.roll_number ?? null,
+            charm: m.charm,
           }
         })
         .sort(compareMembers)

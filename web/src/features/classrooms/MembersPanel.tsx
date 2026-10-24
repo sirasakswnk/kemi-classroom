@@ -7,6 +7,7 @@ import { Button, Chip, MenuButton, Modal, useToast } from '../../ui'
 import { initialOf as initialOfTeacher } from '../../lib/initial'
 import { appErrorOf, membersQuery, removeMember, type Classroom, type Member } from './api'
 import styles from './classrooms.module.css'
+import { MemberCharm } from '../rewards/MemberCharm'
 
 // แท็บสมาชิกของครู (UX 9): เฉพาะคนที่เข้าห้องแล้ว + ป้ายห้องตามรายชื่อ (เห็นคนที่เข้าผิดห้อง)
 // แต่ละแถวมีเมนู “เอาออกจากชั้นเรียน” → กล่องยืนยัน; ลิงก์ไปดูคนที่ยังไม่เข้าใน T05
@@ -101,6 +102,7 @@ export function MembersPanel({
                       <span className="sr-only">, {copy.roll(m.roll_number)}</span>
                     )}
                   </span>
+                  {m.charm && <MemberCharm charm={m.charm} />}
                   {m.group_name ? (
                     <Chip tone="purple">{m.group_name}</Chip>
                   ) : (

@@ -11,6 +11,7 @@ import StudentHome from '../features/student/StudentHome'
 import { StudentLayout } from '../features/student/StudentLayout'
 import WorkPage from '../features/work/WorkPage'
 import DrawPage from '../features/rewards/DrawPage'
+import CollectionPage from '../features/rewards/CollectionPage'
 
 // เส้นทางระยะ 1 (TECHNICAL_BUILD_PLAN ส่วน 6) — หน้าแรกตามบทบาท: นักเรียน /, ครู /t, ผู้ดูแล /admin
 const devRoutes: RouteObject[] = import.meta.env.DEV
@@ -47,6 +48,8 @@ export const router = createBrowserRouter([
           { path: 'me', element: <MyAccount /> },
           // S04 สุ่มเครื่องราง (P5-05)
           { path: 'draw', element: <DrawPage /> },
+          // S05 ตู้สะสม (P5-06)
+          { path: 'collection', element: <CollectionPage /> },
           { path: 'join/:code', element: <JoinPage /> },
         ],
       },

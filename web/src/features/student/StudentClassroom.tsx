@@ -21,6 +21,7 @@ import {
   seenKey,
 } from './seenAnnouncements'
 import styles from './student.module.css'
+import { MemberCharm } from '../rewards/MemberCharm'
 
 const TABS = ['general', 'work', 'members'] as const
 
@@ -144,6 +145,7 @@ export default function StudentClassroom() {
                     <span className={styles.mNo}>{m.roll_number ?? '–'}</span>
                     <span className={styles.mName}>{m.display_name}</span>
                     {m.is_me && <Chip tone="purple">{copy.me}</Chip>}
+                    {m.charm && <MemberCharm charm={m.charm} />}
                   </li>
                 ))}
               </ul>

@@ -56,6 +56,7 @@ export default function DrawPage() {
       const wait = reducedMotion() ? 0 : CHARGE_MS - (performance.now() - started)
       if (wait > 0) await new Promise((r) => setTimeout(r, wait))
       setResult(res)
+      void queryClient.invalidateQueries({ queryKey: ['collection'] })
       await queryClient.invalidateQueries({ queryKey: ['draw-options'] })
     } catch (e) {
       const err = appErrorOf(e)
@@ -150,13 +151,13 @@ export default function DrawPage() {
       <div className={styles.side}>
         {o ? <Rates options={o} /> : <div className={styles.skel} aria-hidden="true" />}
         {o && (
-          <div className={cx(styles.card, styles.equipBar)}>
+          <Link to="/collection" className={cx(styles.card, styles.equipBar)}>
             <Coin size={40} />
             <span>
               <b>{copy.collection(o.owned, o.total)}</b>
               <span>{copy.collectionHint}</span>
             </span>
-          </div>
+          </Link>
         )}
       </div>
 
@@ -231,6 +232,7 @@ function Rates({ options }: { options: DrawOptions }) {
 }
 
 function Reveal({ result, onClose }: { result: DrawResult; onClose: () => void }) {
+  const queryClient = useQueryClient()
   const toast = useToast()
   const id = useId()
   const [saving, setSaving] = useState(false)
@@ -244,6 +246,8 @@ function Reveal({ result, onClose }: { result: DrawResult; onClose: () => void }
     setError(null)
     try {
       await setEquipment(charm.id)
+      void queryClient.invalidateQueries({ queryKey: ['collection'] })
+      void queryClient.invalidateQueries({ queryKey: ['classroom-view'] })
       toast(copy.equipped(charm.name), { tone: 'success' })
       onClose()
     } catch (e) {

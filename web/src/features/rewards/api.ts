@@ -68,10 +68,10 @@ export const drawCharm = (ratesKey: string, requestKey: string) =>
     DrawResultSchema,
   )
 
-/** แสดงเครื่องรางชิ้นนี้ข้างชื่อ */
-export const setEquipment = (charmId: string) =>
+/** แสดงเครื่องรางชิ้นนี้ข้างชื่อ — null = ไม่แสดง (type ที่สร้างจาก CLI ไม่รู้ว่า null ได้ จึง cast) */
+export const setEquipment = (charmId: string | null) =>
   run(
-    supabase.rpc('set_equipment', { p_charm_id: charmId }),
+    supabase.rpc('set_equipment', { p_charm_id: charmId as string }),
     z.object({ charm_id: z.uuid().nullable() }),
   )
 
@@ -96,3 +96,42 @@ export const markRewardEffectSeen = (submissionIds: string[]) =>
     supabase.rpc('mark_reward_effect_seen', { p_submission_ids: submissionIds }),
     z.object({ marked: z.number().int() }),
   )
+
+const SlotSchema = z.discriminatedUnion('owned', [
+  z.object({
+    owned: z.literal(false),
+    position: z.number().int(),
+    rarity_id: z.number().int(),
+    rarity_name: z.string(),
+  }),
+  z.object({
+    owned: z.literal(true),
+    position: z.number().int(),
+    rarity_id: z.number().int(),
+    rarity_name: z.string(),
+    charm_id: z.uuid(),
+    name: z.string(),
+    description: z.string(),
+    symbol: z.string(),
+    obtained_at: z.string(),
+  }),
+])
+export type CollectionSlot = z.infer<typeof SlotSchema>
+export type OwnedSlot = Extract<CollectionSlot, { owned: true }>
+
+const CollectionSchema = z.object({
+  total: z.number().int(),
+  owned: z.number().int(),
+  equipped_charm_id: z.uuid().nullable(),
+  /** ช่องที่ยังไม่ได้รับมีแค่ลำดับและระดับ — เซิร์ฟเวอร์ไม่ส่งชื่อ/รูป/คำอธิบาย */
+  items: z.array(SlotSchema),
+})
+export type Collection = z.infer<typeof CollectionSchema>
+
+/** S05 ตู้สะสมส่วนตัว (0038) */
+export const collectionQuery = queryOptions({
+  queryKey: ['collection'],
+  queryFn: () => run(supabase.rpc('my_collection'), CollectionSchema),
+  staleTime: 0,
+  retry: false,
+})
