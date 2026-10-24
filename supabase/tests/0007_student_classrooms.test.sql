@@ -85,8 +85,8 @@ set local request.jwt.claims to '{"sub": "27000000-0000-4000-8000-000000000002",
 select is(public.classroom_view('77000000-0000-4000-8000-000000000001') - 'id',
   '{"name": "เคมีทดสอบ ม.5/1", "description": null, "teacher_name": "ครูทดสอบห้องนักเรียน",
     "term_name": "ภาคทดสอบปัจจุบัน", "member_count": 2,
-    "members": [{"display_name": "สอง ห้องนักเรียน", "roll_number": 3, "is_me": false},
-                {"display_name": "หนึ่ง ห้องนักเรียน", "roll_number": 7, "is_me": true}]}'::jsonb,
+    "members": [{"display_name": "สอง ห้องนักเรียน", "roll_number": 3, "is_me": false, "charm": null},
+                {"display_name": "หนึ่ง ห้องนักเรียน", "roll_number": 7, "is_me": true, "charm": null}]}'::jsonb,
   'สมาชิกเห็นชื่อและเลขที่ของเพื่อน เรียงตามเลขที่ บอกว่าแถวไหนคือตัวเอง');
 select ok(
   (select public.classroom_view('77000000-0000-4000-8000-000000000001')::text !~ '4440000|@example\.com|ม\.5/2|QQQQ27'),

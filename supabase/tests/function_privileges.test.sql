@@ -105,7 +105,9 @@ insert into expected_authenticated values
   -- 0037_draw (นักเรียน: อัตราสุ่มจริง, สุ่ม, เลือกชิ้นที่แสดงข้างชื่อ)
   ('public.get_draw_options()'),
   ('public.draw_charm(text,uuid)'),
-  ('public.set_equipment(uuid)');
+  ('public.set_equipment(uuid)'),
+  -- 0038_collection (นักเรียน: ตู้สะสมส่วนตัว)
+  ('public.my_collection()');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
