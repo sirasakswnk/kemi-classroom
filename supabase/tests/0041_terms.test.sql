@@ -249,7 +249,7 @@ select pg_temp.as_user('20410000-0000-4000-8000-000000000002');
 select is(public.terms_end((pg_temp.r('start2') ->> 'term_id')::uuid, gen_random_uuid(), true) ->> 'status', 'ended',
   'ผู้ดูแลในโหมดผู้ดูแลจบภาคเรียนแทนครูได้');
 
-reset role;
+set local role postgres;
 -- เริ่ม/จบล็อก term_control แบบ exclusive (รอคำสั่งที่ถือ share) — การชนจริงทดสอบใน ops/concurrency/term-start.mjs
 select ok((select bool_and(pg_get_functiondef(f) ~* 'from public\.term_control c where c\.singleton for update')
              from unnest(array['public.terms_start(text,uuid,uuid,boolean)'::regprocedure,
