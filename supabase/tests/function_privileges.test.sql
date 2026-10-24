@@ -122,7 +122,10 @@ insert into expected_authenticated values
   ('public.unread_notification_count()'),
   ('public.mark_notifications_read(uuid[])'),
   -- 0050_storage_threshold (ผู้ดูแล: ผลเทียบยอดพื้นที่ล่าสุดใน D01)
-  ('public.admin_storage_reconcile()');
+  ('public.admin_storage_reconcile()'),
+  -- 0051_admin_jobs (ผู้ดูแล: งานเบื้องหลังที่ล้มเหลว + ลองใหม่ใน D01)
+  ('public.admin_failed_jobs()'),
+  ('public.admin_retry_job(bigint)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
