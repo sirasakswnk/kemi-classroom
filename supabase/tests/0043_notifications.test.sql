@@ -126,7 +126,7 @@ select is((public.my_notifications() ->> 'unread_count')::integer, 5, 'A ยั�
 select is(public.unread_notification_count(), 5, 'ตัวเลขบนกระดิ่งตรงกับรายการ');
 select is(pg_temp.item(public.my_notifications(), 'a3') - 'at',
           jsonb_build_object('id', '90430000-0000-4000-8000-0000000000a3', 'kind', 'teacher_comment', 'read', false,
-                             'relevant', true, 'post_id', '80430000-0000-4000-8000-000000000001', 'post_kind', 'homework',
+                             'relevant', true, 'submitted', null, 'post_id', '80430000-0000-4000-8000-000000000001', 'post_kind', 'homework',
                              'title', 'งานกระดิ่ง', 'classroom_id', '70430000-0000-4000-8000-000000000001',
                              'classroom_name', 'ห้องกระดิ่ง', 'due_at', '2026-11-01T13:00:00+00:00',
                              'comment_id', 'c0430000-0000-4000-8000-000000000001', 'comment_retracted', false,
