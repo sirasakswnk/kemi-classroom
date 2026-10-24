@@ -207,8 +207,8 @@ select is(
     where n.nspname in ('public', 'private') and p.prosrc ~* 'public\.wallets'),
   array['draw_charm(text,uuid)', 'get_draw_options()',
         'grade_submission(uuid,integer,boolean,integer,text,integer,integer,uuid,boolean)',
-        'roster_overview(boolean)', 'wallet_adjust(uuid,integer,integer,uuid,boolean)'],
-  'แตะ wallets มีแค่ grade_submission + wallet_adjust + draw_charm (เขียน) และ roster_overview + get_draw_options (อ่าน) — เปลี่ยนกำหนด/เฉลย/ลบงานไม่แตะ; RPC ใหม่ที่แตะยอดต้องเพิ่มที่นี่');
+        'roster_overview(boolean)', 'term_overview(boolean)', 'wallet_adjust(uuid,integer,integer,uuid,boolean)'],
+  'แตะ wallets มีแค่ grade_submission + wallet_adjust + draw_charm (เขียน) และ roster_overview + get_draw_options + term_overview (อ่าน) — เปลี่ยนกำหนด/เฉลย/ลบงาน/เริ่ม-จบภาคเรียนไม่แตะ; RPC ใหม่ที่แตะยอดต้องเพิ่มที่นี่');
 
 select * from finish();
 rollback;
