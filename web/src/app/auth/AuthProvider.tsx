@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { markManualSignOut } from '../../lib/redirect'
 import { supabase, toAppError, type AppError } from '../../lib/supabase'
 import { AccountSchema, type Account } from './account'
 import { AuthContext, type AuthContextValue, type AuthState } from './authContext'
@@ -73,8 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : { status: 'error', session, error: result.error }
   }, [session, result, notice, reloadKey])
 
+  // ออกจากระบบเอง: ไม่จำหน้านี้เป็นหน้าหลังล็อกอินครั้งถัดไป (เซสชันหลุดเองยังจำ — RequireRole)
   const signOut = useCallback(async () => {
     setNotice(undefined)
+    const { pathname, search, hash } = window.location
+    markManualSignOut(pathname + search + hash)
     await supabase.auth.signOut({ scope: 'local' })
   }, [])
 
