@@ -581,6 +581,35 @@ export const th = {
       google: 'เข้าสู่ระบบด้วย Google',
     },
   },
+  // C01 กระดิ่งนักเรียน (UX 12, แบบ v2 NOTIFS/sNotif) — [ข้อเสนอถ้อยคำ] ที่ไม่มีในแบบ: revisionOpened, intakeClosed,
+  // fadedSubmitted, fadedClosed, empty, more, loadFailed
+  bell: {
+    title: 'แจ้งเตือน',
+    buttonAria: (n: number) => (n ? `แจ้งเตือน ยังไม่อ่าน ${n} รายการ` : 'แจ้งเตือน'),
+    backHome: 'หน้าแรก',
+    readAll: 'อ่านทั้งหมด',
+    empty: 'ยังไม่มีแจ้งเตือน เมื่อครูโพสต์งานหรือเขียนความคิดเห็นถึงคุณจะแสดงที่นี่',
+    more: 'ดูแจ้งเตือนก่อนหน้า',
+    loadFailed: 'โหลดแจ้งเตือนไม่สำเร็จ',
+    retry: 'ลองใหม่',
+    footer:
+      'แจ้งเตือนอยู่ในเว็บเท่านั้น ไม่มีเสียง และเตือนงานที่ยังไม่ส่งก่อนกำหนด 24 ชั่วโมงครั้งเดียว',
+    newWork: 'ครูโพสต์งานใหม่',
+    newAnnouncement: 'ประกาศใหม่ในโพสต์ทั่วไป',
+    dueReminder: 'อีก 24 ชั่วโมงถึงกำหนดส่ง',
+    teacherComment: 'ครูเขียนความคิดเห็นถึงคุณ',
+    revisionOpened: 'ครูเปิดให้แก้ไขงาน',
+    dueChanged: 'ครูเปลี่ยนกำหนดส่ง',
+    intakeClosed: 'ครูปิดรับงาน',
+    solutionPublished: 'ครูเผยแพร่เฉลยแล้ว',
+    due: (date: string, time: string) => `${date} ${time} น.`,
+    withDue: (title: string, due: string) => (due ? `${title} · ${due}` : title),
+    newDue: (title: string, due: string) => (due ? `${title} → ${due}` : title),
+    today: (time: string) => `${time} น.`,
+    retracted: 'ข้อความนี้ถูกยกเลิก',
+    fadedSubmitted: 'ส่งแล้ว',
+    fadedClosed: 'ปิดรับแล้ว',
+  },
   // T02 สร้างงาน/ประกาศ + รายการโพสต์ใน T08/S02 — UX_DESIGN ส่วน 9 และแบบ v2 (tCreate, previewHTML, sClass)
   posts: {
     create: {
