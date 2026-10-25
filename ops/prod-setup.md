@@ -125,10 +125,10 @@ Dashboard `kemi-prod` → **Edge Functions → Secrets** → Add new secret (ห
    - ชื่อ remote ต้องเป็น `gdrive` / `gcrypt` / `b2ro` เหมือนของ dev — สคริปต์สำรองเรียกด้วยชื่อนี้
 5. ตรวจ: `rclone mkdir gcrypt:` แล้ว `rclone lsd gdrive:` ต้องเห็น `kemi-backup-prod` (และ `kemi-backup` ของ dev ถ้ายังไม่ลบ)
 6. **ทดสอบถอดรหัสจากสำเนาออฟไลน์ทันที ก่อนใส่ secret ข้อ 8** (กันกรณีสำเนาจดผิด — สำรองจะเปิดไม่ได้โดยไม่มีใครรู้จนวันที่ต้องกู้):
-   - `rclone copyto <ไฟล์เล็กในเครื่อง เช่น test.txt> gcrypt:probe/test.txt` (เขียนไฟล์ทดสอบ 1 ไฟล์ลงโฟลเดอร์ prod ใหม่ซึ่งยังว่าง)
-   - เปิด PowerShell **หน้าต่างใหม่** → ทำตาม `ops/restore-manual.md` ข้อ 1–3 แต่ให้ `RCLONE_CONFIG_GCRYPT_REMOTE` = `gdrive:kemi-backup-prod` และวางรหัส/salt **จากสำเนาออฟไลน์** (ถ้าจดค่าจริง 43 ตัว ให้แปลงก่อนด้วย `rclone obscure` ในหน้าต่างนั้น หรือใช้ `rclone config` แบบ “type in my own password”)
-   - `rclone cat gcrypt:probe/test.txt` ต้องได้เนื้อไฟล์เดิม → ลบ config/ตัวแปรของหน้าต่างทดสอบ (restore-manual ข้อ 5) แล้วกลับหน้าต่างแรก `rclone purge gcrypt:probe`
-   - ไม่ผ่าน = สำเนาไม่ตรง → แก้สำเนาจากค่าใน config ของหน้าต่างแรก (`rclone reveal`) แล้วทดสอบซ้ำ **ห้ามข้ามไปข้อ 8 จนกว่าจะผ่าน**
+   - `rclone copyto <ไฟล์เล็ก> gcrypt:probe/probe.txt` (ไฟล์ทดสอบ 1 ไฟล์ในโฟลเดอร์ prod ที่ยังว่าง)
+   - สร้าง remote ทดสอบ `pcheck` จากตัวแปรสภาพแวดล้อมเท่านั้น (ไม่ใช้ค่าในไฟล์ config): `RCLONE_CONFIG_PCHECK_TYPE=crypt`, `RCLONE_CONFIG_PCHECK_REMOTE=gdrive:kemi-backup-prod`, `RCLONE_CONFIG_PCHECK_PASSWORD(2)` = ค่าจริง**จากสำเนาที่จดไว้** อ่านด้วย `Read-Host -AsSecureString` แล้วส่งเข้า `rclone obscure -` (ไม่ลงประวัติคำสั่ง)
+   - `rclone cat pcheck:probe/probe.txt` ต้องได้เนื้อไฟล์เดิม → `rclone purge gcrypt:probe` + ลบตัวแปร `RCLONE_CONFIG_PCHECK_*`
+   - ไม่ผ่าน = สำเนาไม่ตรง → แก้สำเนา (`rclone reveal` ค่าในไฟล์ config ในเทอร์มินัลตัวเอง) แล้วทดสอบซ้ำ **ห้ามข้ามไปข้อ 8 จนกว่าจะผ่าน** · คำสั่งทีละบรรทัดอยู่ในแชตวันที่ 25 ต.ค. (ขั้น 6)
 
 ## 8. Healthchecks.io + GitHub Secrets ชุด prod
 
