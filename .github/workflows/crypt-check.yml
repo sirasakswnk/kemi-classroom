@@ -1,0 +1,56 @@
+# P7-02a: เทียบรหัส crypt ใน secret RCLONE_CONFIG กับสำเนาออฟไลน์ของผู้ใช้ โดยไม่เปิดเผยค่า
+# พิมพ์เฉพาะความยาว + 8 ตัวแรกของ SHA-256 ของ password / password2 ของ remote gcrypt (ค่าจริงหลัง reveal)
+# และของค่า obscured ที่เก็บใน config (เผื่อสำเนาออฟไลน์จดค่า obscured ไว้) — ผู้ใช้คำนวณแบบเดียวกันในเครื่อง
+# ตามคำสั่งใน PROGRESS (P7-02a) แล้วเทียบ
+# ความลับ: ไม่เปิด set -x, ไม่ echo ค่า, ::add-mask:: ทันทีที่ได้ค่า, ไฟล์ config ชั่วคราวลบในขั้นเดียวกัน
+# Drive: อ่านรายชื่อโฟลเดอร์บนสุดของ gcrypt: อย่างเดียว (ยืนยันว่า hash มาจากกุญแจที่ถอดชื่อได้จริง) — ไม่เขียนอะไร
+name: crypt-check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [phase-7]
+    paths: [.github/workflows/crypt-check.yml]
+
+permissions:
+  contents: read
+
+env:
+  RCLONE_PKG_VERSION: v1.75.1
+  RCLONE_PKG_SHA256: 09c9f7606ed9e31eecc1eec26a89992cf2931a8d2d1a5f0ae2bb1c11630ffb15
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: ติดตั้ง rclone
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/rclone.deb" "https://downloads.rclone.org/$RCLONE_PKG_VERSION/rclone-$RCLONE_PKG_VERSION-linux-amd64.deb"
+          echo "$RCLONE_PKG_SHA256  $RUNNER_TEMP/rclone.deb" | sha256sum -c -
+          sudo dpkg -i "$RUNNER_TEMP/rclone.deb" >/dev/null
+          rclone version | sed -n 1p
+
+      - name: hash ของรหัส crypt ใน RCLONE_CONFIG
+        env:
+          RCLONE_CONFIG_CONTENT: ${{ secrets.RCLONE_CONFIG }}
+        run: |
+          set -euo pipefail
+          umask 077
+          conf=$(mktemp "$RUNNER_TEMP/rc.XXXXXX")
+          trap 'rm -f "$conf"' EXIT
+          [ -n "$RCLONE_CONFIG_CONTENT" ] || { echo '::error::ไม่มี secret RCLONE_CONFIG'; exit 1; }
+          printf '%s\n' "$RCLONE_CONFIG_CONTENT" >"$conf"
+          short() { printf '%s' "$1" | sha256sum | cut -c1-8; }
+          for k in password password2; do
+            ob=$(rclone --config "$conf" config dump | jq -r --arg k "$k" '.gcrypt[$k] // empty')
+            if [ -z "$ob" ]; then echo "::error::gcrypt ไม่มี $k"; exit 1; fi
+            echo "::add-mask::$ob"
+            val=$(rclone reveal "$ob")
+            echo "::add-mask::$val"
+            echo "$k: ค่าจริง ยาว ${#val} sha256[0:8]=$(short "$val") · ค่า obscured ยาว ${#ob} sha256[0:8]=$(short "$ob")"
+            unset ob val
+          done
+          echo 'โฟลเดอร์บนสุดของ gcrypt: (ถอดชื่อด้วยกุญแจชุดนี้ — ต้องเห็น files/ และ runs/):'
+          rclone --config "$conf" lsf --dirs-only gcrypt: 2>&1 | sed -E 's/^.*(Skipping undecryptable).*$/  ถอดชื่อไม่ได้ 1 รายการ/'
+          rm -f "$conf"
