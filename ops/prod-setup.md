@@ -28,7 +28,7 @@
    - Rate limit for token refreshes: คง `150` requests/5 min · ช่องอื่นคงค่าเริ่มต้น
 6. **ห้ามปิด legacy API keys** (Project Settings → API Keys) — Edge Functions ยังใช้ `SUPABASE_SERVICE_ROLE_KEY` แบบ legacy (BUILD_PLAN ส่วน 3)
 7. ส่วนขยาย `pg_cron`, `pg_net` ไม่ต้องเปิดเอง — migration เปิดให้ตอน Claude `db push` (ถ้าแจ้งว่าไม่มีให้ ค่อยเปิดที่ Database → Extensions)
-8. แจ้ง Claude → Claude (ขออนุญาตก่อนทุกขั้น) push migration ทั้งหมด, deploy Edge Functions (`uploads`, `files`, `process-jobs`), ตั้งรหัสลับของ `process-jobs` (`ops/jobs/set-secret.mjs` ต้องเพิ่มโหมด prod ก่อน), seed — **ชื่อภาคเรียนแรกตามภาคเรียนจริง (ถามครู)**, allowlist อีเมลครู, `storage_settings.quota_bytes` = 9,500,000,000 แล้วผูก CLI กลับ `kemi-dev`
+8. แจ้ง Claude → Claude (ขออนุญาตก่อนทุกขั้น) push migration ทั้งหมด, deploy Edge Functions (`uploads`, `files`, `process-jobs`), ตั้งรหัสลับของ `process-jobs` (`ops/jobs/set-secret.mjs` ต้องเพิ่มโหมด prod ก่อน), seed — **ชื่อภาคเรียนแรกตามภาคเรียนจริง (ถามครู)**, `storage_settings.quota_bytes` = 9,500,000,000 แล้วผูก CLI กลับ `kemi-dev` · ผู้ดูแลแรกและ allowlist ครูผู้ใช้ทำเองในข้อ 5.5–5.6 (Claude ไม่เห็นอีเมล)
 
 ## 2. Google ล็อกอินของ prod
 
@@ -85,6 +85,18 @@ Dashboard `kemi-prod` → **Edge Functions → Secrets** → Add new secret (ห
    - **ลบ** `https://kemi-classroom.pages.dev/auth/callback` ออกจาก Redirect URLs (เหลือ `http://localhost:5173/auth/callback` และ `https://*.kemi-classroom.pages.dev/auth/callback`)
    - Site URL เปลี่ยนเป็น `http://localhost:5173`
 4. แจ้ง Claude → ตรวจว่า `https://kemi-classroom.pages.dev` ไม่มีแถบ “ระบบทดสอบ”, CSP `connect-src` ชี้ `kemi-prod` และล็อกอินบัญชีใน Test users ได้ (BUILD_PLAN 10 ระยะ 7 ตรวจรับข้อ 3)
+
+**บัญชีผู้ดูแลแรกและครู** — อีเมลจริงไม่อยู่ในแชต ไม่อยู่ใน repo: ผู้ใช้พิมพ์เองใน SQL Editor หรือในหน้าเว็บเท่านั้น
+
+5. **ผู้ดูแลแรก:** ระบบไม่ตั้งบทบาทผู้ดูแลให้ใครเอง (`ensure_account()` ตั้งได้แค่นักเรียน/ครู) จึงต้องตั้งในฐานข้อมูลครั้งเดียว
+   - ล็อกอิน `https://kemi-classroom.pages.dev` ด้วยบัญชี Google ของผู้ดูแล 1 ครั้ง (ต้องอยู่ใน Test users ข้อ 2.2) — จะเข้าเป็นนักเรียนและขึ้นหน้าเลือกชื่อ ปิดไว้ได้ (ยังไม่มีรายชื่อ)
+   - Supabase **`kemi-prod`** → **SQL Editor → New query** → วางเนื้อไฟล์ `ops/prod-bootstrap-admin.sql` → แก้ `'ใส่อีเมลผู้ดูแลที่นี่'` เป็นอีเมลของผู้ดูแล**ใน SQL Editor เท่านั้น** → Run → ต้องเห็นข้อความ “ตั้งเป็นผู้ดูแลแล้ว” และตาราง `admin 1` (ถ้าขึ้น “ไม่พบบัญชีนี้” = ยังไม่ได้ล็อกอินหรือพิมพ์อีเมลผิด)
+   - ไม่บันทึก query นี้ใน SQL Editor (หรือลบทิ้งหลังรัน) · โหลดหน้าเว็บใหม่ → ไปหน้า `/admin`
+6. **ครู (allowlist):** ในหน้าเว็บ ไม่ต้องใช้ SQL
+   - `/admin` → แผง **ครูและผู้ดูแล** → ใส่ชื่อที่แสดงของครู + อีเมล Google ของครู → **เพิ่ม** (เก็บอีเมลใน `private.teacher_allowlist` หน้าเว็บแสดงแบบปิดบางส่วน)
+   - เพิ่มอีเมลครูใน Google **Audience → Test users** ด้วย จนกว่าจะเผยแพร่ล็อกอินในข้อ 6 ถัดไป (P7-05b)
+   - ครูล็อกอินครั้งแรก → ได้บทบาทครูทันที (ระบบตรึงบัญชี Google นั้นไว้กับรายการ)
+7. แจ้ง Claude ว่าผู้ดูแล/ครูล็อกอินได้แล้ว → Claude ตรวจด้วย select อ่านอย่างเดียว (จำนวนบัญชีตามบทบาท ไม่ดึงอีเมล) แล้วรัน `node ops/security-check.mjs` กับ prod (ข้อที่ต้องตรวจซ้ำของ P7-04)
 
 ## 6. เผยแพร่ล็อกอิน Google (P7-05b — หลังหน้าแรกและ `/privacy` ขึ้นบน production แล้ว)
 
