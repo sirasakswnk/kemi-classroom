@@ -92,6 +92,8 @@ export const ERROR_CODES = [
   'draw_unavailable',
   'rates_must_total_100',
   'term_name_taken',
+  'export_mismatch',
+  'export_budget_reached',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -206,6 +208,10 @@ const ACTIONS: Record<ErrorCode, ErrorAction> = {
   rates_must_total_100: 'field',
   // T07 (P5-09): ใต้ช่องชื่อภาคเรียนใหม่ แล้วย้ายโฟกัสไปที่ช่อง
   term_name_taken: 'focus_field',
+  // T07 ข้อมูลภาคเรียนเก่า (P6-05): ชุดเปลี่ยนระหว่างดาวน์โหลด — แสดงที่แถวภาคเรียน ปุ่มยืนยันลบยังกดไม่ได้
+  export_mismatch: 'field',
+  // T07 (P6-05a3): งบดาวน์โหลดของวันไม่พอสำหรับหน้าถัดไป — ต่อจากที่ค้างได้หลัง 07:00 น.
+  export_budget_reached: 'retry_later',
 }
 
 const isErrorCode = (value: unknown): value is ErrorCode =>

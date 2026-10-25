@@ -78,6 +78,9 @@ const STATUS: Record<string, number> = {
   upload_type_mismatch: 422,
   upload_failed: 502,
   download_budget_reached: 503,
+  // POST /files/exports (P6-05a3) — งบวันนี้ไม่พอสำหรับหน้านี้ / ชุดไฟล์เปลี่ยนระหว่างดาวน์โหลด
+  export_budget_reached: 503,
+  export_mismatch: 409,
 }
 
 export function errorResponse(code: string, base: Headers): Response {

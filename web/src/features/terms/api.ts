@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
-import { run } from '../../lib/request'
-import { supabase } from '../../lib/supabase'
+import { functionError } from '../../lib/files'
+import { RequestError, run } from '../../lib/request'
+import { supabase, toAppError } from '../../lib/supabase'
 import { z } from '../../lib/zod'
 
 // T07 ภาคเรียนและข้อมูลเก่า — RPC ของ 0041_terms (เริ่ม/จบ) และ 0042_term_overview (อ่าน)
@@ -156,6 +157,70 @@ export const exportTermData = (termId: string, adminMode: boolean) =>
     supabase.rpc('export_term_data', { p_term_id: termId, p_admin_mode: adminMode }),
     TermDataSchema,
   )
+
+const ExportFileSchema = z.object({
+  asset_id: z.uuid(),
+  /** ลิงก์ GET แบบ attachment อายุ 600 วินาที (นับงบดาวน์โหลดของวันตอนออกลิงก์แล้ว) */
+  url: z.url(),
+  file_name: z.string(),
+  content_type: z.string(),
+  size_bytes: z.number().int(),
+  purpose: z.string(),
+  position: z.number().int(),
+  classroom_id: z.uuid(),
+  classroom_name: z.string(),
+  post_id: z.uuid(),
+  post_kind: z.string(),
+  post_title: z.string(),
+  /** งานส่งของนักเรียน — ไฟล์โจทย์/เฉลย/ประกาศเป็น null */
+  student: z
+    .object({
+      student_id: z.uuid(),
+      student_code: z.string(),
+      display_name: z.string(),
+      group_name: z.string().nullable(),
+      roll_number: z.number().int().nullable(),
+    })
+    .nullable(),
+})
+export type ExportFile = z.infer<typeof ExportFileSchema>
+
+const ExportPageSchema = z.object({
+  term_id: z.uuid(),
+  /** ของทั้งชุดตอนขอหน้านี้ — ต่างจากหน้าแรก = ชุดเปลี่ยนระหว่างดาวน์โหลด */
+  fingerprint: z.string(),
+  total_count: z.number().int(),
+  total_bytes: z.number().int(),
+  /** null = หน้าสุดท้าย */
+  next_after: z.uuid().nullable(),
+  expires_at: z.string(),
+  files: z.array(ExportFileSchema),
+})
+export type ExportPage = z.infer<typeof ExportPageSchema>
+
+/**
+ * ไฟล์ภาคเรียนเก่าหนึ่งหน้า (POST /files/exports, ≤ 20 ไฟล์) — ส่ง after = next_after ของหน้าก่อน
+ * งบวันนี้ไม่พอ = export_budget_reached: เก็บ after เดิมไว้ ขอหน้าเดิมอีกครั้งหลัง 07:00 น.
+ */
+export async function exportFilesPage(
+  termId: string,
+  after: string | null,
+  adminMode: boolean,
+  limit?: number,
+): Promise<ExportPage> {
+  let result: { data: unknown; error: unknown }
+  try {
+    result = await supabase.functions.invoke('files/exports', {
+      body: { term_id: termId, after, admin_mode: adminMode, ...(limit ? { limit } : {}) },
+    })
+  } catch (error) {
+    throw new RequestError(toAppError(error))
+  }
+  if (result.error) throw new RequestError(await functionError(result.error))
+  const page = ExportPageSchema.safeParse(result.data)
+  if (!page.success) throw new RequestError(toAppError({ name: 'InvalidResponse' }))
+  return page.data
+}
 
 /** บันทึกว่าดาวน์โหลดครบ — จำนวน/ไบต์/fingerprint ไม่ตรงชุดตอนนี้ = export_mismatch */
 export const markDownloaded = (
