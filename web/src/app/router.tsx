@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 import { AuthCallback } from './auth/AuthCallback'
 import { LoginPage } from './auth/LoginPage'
+import { PrivacyPage } from './auth/PrivacyPage'
 import { RequireRole } from './auth/RequireRole'
 import { AppShell } from './common/AppShell'
 import { FullPageStatus } from './common/FullPageStatus'
@@ -33,6 +34,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/auth/callback', element: <AuthCallback /> },
+      // หน้าสาธารณะ ไม่ต้องล็อกอิน (P7-05b) — privacy policy URL ของ Google OAuth
+      { path: '/privacy', element: <PrivacyPage /> },
       {
         // หน้านักเรียน S01 / S02 / S03 / S04 / S06 และลิงก์เชิญ — ยังไม่ผูกชื่อ → A02 ก่อนทุกหน้า (UX 4)
         // ยังไม่ล็อกอิน: RequireRole จำปลายทาง (ตัวกรอง path จาก P1-08) แล้วไป A01

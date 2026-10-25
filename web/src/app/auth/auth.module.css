@@ -112,6 +112,16 @@
   text-align: center;
 }
 
+/* ลิงก์นโยบายความเป็นส่วนตัว (P7-05b) — พื้นที่กดสูงพอสำหรับนิ้ว */
+.footLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding-inline: 8px;
+  color: var(--purple);
+  font-weight: 600;
+}
+
 /* ข้อความแจ้งใกล้จุดที่เกิด (UX 13, 7.1) */
 .notePurple,
 .noteRed {
