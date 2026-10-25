@@ -58,13 +58,18 @@ const isCodeHeader = (h: string) => {
   return c.includes('ประจำตัว') || c.includes('รหัสนักเรียน') || editDistance(c, 'เลขประจำตัว') <= 2
 }
 const isNameHeader = (h: string) => compact(h).startsWith('ชื่อ')
+// หัวแยกเป็นคอลัมน์ละช่อง (P7-06a — ไฟล์แบบ เลขที่ | เลขประจำตัว | คำนำหน้า | ชื่อ | นามสกุล)
+const isPrefixHeader = (h: string) => compact(h).startsWith('คำนำหน้า')
+const isFirstOnlyHeader = (h: string) => ['ชื่อ', 'ชื่อจริง', 'ชื่อตัว'].includes(compact(h))
+const isLastHeader = (h: string) => ['นามสกุล', 'สกุล'].includes(compact(h))
 
 function mergeAt(merges: SheetData['merges'], row: number, col: number) {
   return merges.find((m) => m.s.r === row && m.s.c === col)
 }
 
 // หาแถวหัวตารางจาก “เลขที่” ในไม่กี่แถวแรก แล้วเดาคอลัมน์จากหัว
-// “ชื่อ - สกุล” ที่ผสาน 3 ช่อง = คำนำหน้า · ชื่อ · นามสกุล (ไฟล์จริงของครู); 2 ช่อง = ชื่อ · นามสกุล
+// หัวแยก “คำนำหน้า” · “ชื่อ” · “นามสกุล” คนละคอลัมน์ = ใช้ตามนั้น (คำนำหน้าไม่บังคับ)
+// ไม่งั้น “ชื่อ - สกุล” ที่ผสาน 3 ช่อง = คำนำหน้า · ชื่อ · นามสกุล (ไฟล์จริงของครู); 2 ช่อง = ชื่อ · นามสกุล
 export function detectLayout(sheet: SheetData): DetectedLayout | null {
   const { grid, merges } = sheet
   const limit = Math.min(grid.length, ROSTER_LIMITS.headerSearchRows)
@@ -74,11 +79,19 @@ export function detectLayout(sheet: SheetData): DetectedLayout | null {
     if (roll < 0) continue
 
     const code = headers.findIndex((h, c) => c !== roll && isCodeHeader(h))
-    const nameCol = headers.findIndex((h, c) => c !== roll && c !== code && isNameHeader(h))
+    const free = (c: number) => c !== roll && c !== code
+    const prefixCol = headers.findIndex((h, c) => free(c) && isPrefixHeader(h))
+    const firstCol = headers.findIndex((h, c) => free(c) && isFirstOnlyHeader(h))
+    const lastCol = headers.findIndex((h, c) => free(c) && isLastHeader(h))
+    const nameCol = headers.findIndex((h, c) => free(c) && isNameHeader(h))
     let prefix: number | null = null
     let first: number | null = null
     let last: number | null = null
-    if (nameCol >= 0) {
+    if (firstCol >= 0 && lastCol >= 0) {
+      prefix = prefixCol >= 0 ? prefixCol : null
+      first = firstCol
+      last = lastCol
+    } else if (nameCol >= 0) {
       const merge = mergeAt(merges, r, nameCol)
       const span = merge ? merge.e.c - merge.s.c + 1 : 1
       const nextEmpty = !headers[nameCol + 1] && !headers[nameCol + 2]
@@ -87,6 +100,7 @@ export function detectLayout(sheet: SheetData): DetectedLayout | null {
         first = nameCol + 1
         last = nameCol + 2
       } else if (span === 2) {
+        prefix = prefixCol >= 0 ? prefixCol : null
         first = nameCol
         last = nameCol + 1
       }

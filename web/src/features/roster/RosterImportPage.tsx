@@ -20,7 +20,15 @@ import {
 import { PlanSchema, type Plan } from './plan'
 import { readSheet, ROSTER_LIMITS, type SheetData } from './readSheet'
 import styles from './RosterImportPage.module.css'
-import { isCodeText, rowLabel, toPayload, validateRoster, type RosterIssue } from './validateRoster'
+import {
+  isCodeText,
+  nameKey,
+  rowLabel,
+  spacingSuggestion,
+  toPayload,
+  validateRoster,
+  type RosterIssue,
+} from './validateRoster'
 
 type FileErrorKind = keyof typeof th.roster.fileErrors
 type Loaded = { fileName: string; sheet: SheetData; layout: DetectedLayout }
@@ -45,6 +53,8 @@ export function RosterImportPage() {
   const [group, setGroup] = useState('')
   const [edits, setEdits] = useState<Record<number, Partial<RosterDraftRow>>>({})
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set())
+  // ช่องชื่อที่ครูเลือกคงค่าเดิมแม้มีช่องว่างแทรก (nameKey) — ไม่แก้ชื่อให้เอง
+  const [keptNames, setKeptNames] = useState<ReadonlySet<string>>(new Set())
   const [plan, setPlan] = useState<{
     key: string
     plan: Plan | null
@@ -89,7 +99,10 @@ export function RosterImportPage() {
       }),
     [extracted, edits],
   )
-  const clientIssues = useMemo(() => validateRoster(rows, confirmed), [rows, confirmed])
+  const clientIssues = useMemo(
+    () => validateRoster(rows, confirmed, keptNames),
+    [rows, confirmed, keptNames],
+  )
   // รายการที่ต้องแก้จากไฟล์ตอนแรก — ยังแสดงต่อเมื่อแก้แล้ว (ช่องไม่หายระหว่างพิมพ์ โฟกัสไม่หลุด)
   const initialIssues = useMemo(() => validateRoster(extracted?.rows ?? []), [extracted])
   const payload = useMemo(() => toPayload(rows), [rows])
@@ -156,6 +169,7 @@ export function RosterImportPage() {
     setMapping(null)
     setEdits({})
     setConfirmed(new Set())
+    setKeptNames(new Set())
     setPlan(null)
     setDone(null)
     setCommitError(null)
@@ -185,12 +199,26 @@ export function RosterImportPage() {
     setMapping({ ...mapping, [field]: value === '' ? null : Number(value) })
     setEdits({})
     setConfirmed(new Set())
+    setKeptNames(new Set())
   }
 
   const editRow = (index: number, field: keyof RosterDraftRow, value: string) => {
     setEdits((prev) => ({ ...prev, [index]: { ...prev[index], [field]: value } }))
     if (field === 'code') setConfirmed((prev) => new Set([...prev].filter((i) => i !== index)))
+    // แก้ชื่อแล้ว การเลือก “คงค่าเดิม” ของช่องนั้นไม่ใช้แล้ว
+    if (field === 'first' || field === 'last') {
+      const key = nameKey(index, field)
+      setKeptNames((prev) => new Set([...prev].filter((k) => k !== key)))
+    }
   }
+
+  const keepName = (index: number, field: 'first' | 'last', keep: boolean) =>
+    setKeptNames((prev) => {
+      const next = new Set(prev)
+      if (keep) next.add(nameKey(index, field))
+      else next.delete(nameKey(index, field))
+      return next
+    })
 
   const commit = async () => {
     if (!ready) return
@@ -428,7 +456,36 @@ export function RosterImportPage() {
                           className={styles.fixInput}
                         />
                       </Field>
-                      {slot.confirmable && isCodeText(row.code) && (
+                      {slot.kind === 'name_spacing' &&
+                        (slot.field === 'first' || slot.field === 'last') &&
+                        (() => {
+                          const field = slot.field
+                          const suggestion = spacingSuggestion(row[field])
+                          const kept = keptNames.has(nameKey(slot.index, field))
+                          if (!suggestion && !kept) return null
+                          return (
+                            <div className={styles.nameChoice}>
+                              {suggestion && !kept && (
+                                <Button
+                                  variant="soft"
+                                  size="sm"
+                                  onClick={() => editRow(slot.index, field, suggestion)}
+                                >
+                                  {th.roster.useSuggestion(suggestion)}
+                                </Button>
+                              )}
+                              <label className={styles.confirm}>
+                                <input
+                                  type="checkbox"
+                                  checked={kept}
+                                  onChange={(e) => keepName(slot.index, field, e.target.checked)}
+                                />
+                                {th.roster.keepName}
+                              </label>
+                            </div>
+                          )
+                        })()}
+                      {slot.kind === 'code_length' && isCodeText(row.code) && (
                         <label className={styles.confirm}>
                           <input
                             type="checkbox"

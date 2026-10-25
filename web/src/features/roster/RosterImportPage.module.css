@@ -207,6 +207,19 @@
   max-width: 320px;
 }
 
+/* ช่องว่างกลางชื่อ: ปุ่มใช้ค่าเสนอ + ช่องคงค่าเดิม (ขึ้นบรรทัดใหม่ได้บนจอแคบ) */
+.nameChoice {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.nameChoice .confirm {
+  grid-column: auto;
+}
+
 .confirm {
   grid-column: 2;
   display: inline-flex;

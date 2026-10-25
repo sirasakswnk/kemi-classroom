@@ -3,6 +3,8 @@ import type { RosterDraftRow } from './parseRoster'
 
 // ตรวจรายชื่อก่อนส่งให้เซิร์ฟเวอร์ (กติกาเดียวกับ private.roster_import_plan ใน 0003_roster.sql)
 // แล้วเพิ่มข้อที่ต้องให้ครูดูเอง: เลขประจำตัวยาวไม่เท่าคนอื่น (อาจพิมพ์เกินหรือ Excel ตัดศูนย์นำหน้า) — ไม่เดารหัสแทน
+// และชื่อ/นามสกุลที่มีช่องว่างแทรก (P7-06a เช่น “อิ นทร์แก้ว”, “ศร ีสมบูรณ์” — ทำให้ค้นชื่อตอนผูกบัญชีไม่เจอ
+// และชื่อไฟล์ PDF เพี้ยน) — เสนอค่าที่ตัดช่องว่าง แต่ไม่แก้เอง ครูเลือกใช้ค่าเสนอหรือคงค่าเดิมทีละช่อง
 
 export type IssueField = 'roll' | 'code' | 'first' | 'last'
 export type IssueKind =
@@ -15,6 +17,7 @@ export type IssueKind =
   | 'code_duplicate'
   | 'code_length'
   | 'name_required'
+  | 'name_spacing'
 
 export interface RosterIssue {
   /** ตำแหน่งในรายการ (ไม่ใช่เลขแถว Excel) */
@@ -24,7 +27,21 @@ export interface RosterIssue {
   message: string
   /** code_length ยืนยันว่าถูกต้องได้ ข้ออื่นต้องแก้ */
   confirmable: boolean
+  /** name_spacing: ค่าที่เสนอ (ตัดช่องว่างทั้งหมด) — ครูกดใช้หรือเลือกคงค่าเดิม */
+  suggestion?: string
 }
+
+// ช่องว่างทุกแบบรวมช่องว่างที่มองไม่เห็น (NBSP, zero-width) — trim() ตัดได้แค่หัวท้ายบางตัว
+const SPACING = /[\s\u00a0\u200b-\u200d\u2060\ufeff]/
+const SPACING_ALL = /[\s\u00a0\u200b-\u200d\u2060\ufeff]+/g
+
+/** ชื่อ/นามสกุลที่มีช่องว่างอยู่ข้างใน → ค่าที่เสนอ (ตัดออกทั้งหมด) · ไม่มี = null */
+export function spacingSuggestion(name: string): string | null {
+  return SPACING.test(name) ? name.replace(SPACING_ALL, '') : null
+}
+
+/** กุญแจของช่องชื่อที่ครูเลือกคงค่าเดิม */
+export const nameKey = (index: number, field: 'first' | 'last') => `${index}:${field}`
 
 export const isRollText = (s: string) => /^[0-9]{1,3}$/.test(s) && Number(s) >= 1
 export const isCodeText = (s: string) => /^[0-9]{1,20}$/.test(s)
@@ -46,10 +63,12 @@ function commonCodeLength(rows: RosterDraftRow[]): number | null {
 
 /**
  * @param confirmedCodes เลขแถว (index) ที่ครูยืนยันว่าเลขประจำตัวยาวไม่เท่าคนอื่นแต่ถูกต้อง
+ * @param keptNames ช่องชื่อ (nameKey) ที่ครูเลือกคงค่าเดิมแม้มีช่องว่างแทรก
  */
 export function validateRoster(
   rows: RosterDraftRow[],
   confirmedCodes: ReadonlySet<number> = new Set(),
+  keptNames: ReadonlySet<string> = new Set(),
 ): RosterIssue[] {
   const issues: RosterIssue[] = []
   const add = (
@@ -58,7 +77,16 @@ export function validateRoster(
     kind: IssueKind,
     message: string,
     confirmable = false,
-  ) => issues.push({ index, field, kind, message, confirmable })
+    suggestion?: string,
+  ) =>
+    issues.push({
+      index,
+      field,
+      kind,
+      message,
+      confirmable,
+      ...(suggestion === undefined ? {} : { suggestion }),
+    })
 
   const byRoll = new Map<string, number[]>()
   const byCode = new Map<string, number[]>()
@@ -92,6 +120,12 @@ export function validateRoster(
 
     if (!r.first) add(i, 'first', 'name_required', th.roster.issues.name_required)
     else if (!r.last) add(i, 'last', 'name_required', th.roster.issues.name_required)
+
+    for (const field of ['first', 'last'] as const) {
+      const suggestion = spacingSuggestion(r[field])
+      if (suggestion && !keptNames.has(nameKey(i, field)))
+        add(i, field, 'name_spacing', th.roster.issues.name_spacing(suggestion), true, suggestion)
+    }
   })
   return issues
 }

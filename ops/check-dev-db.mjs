@@ -8,28 +8,29 @@ import { fileURLToPath } from 'node:url'
 
 export const DEV_PROJECT = { ref: 'igchlnmxbghsigyziomk', name: 'kemi-dev' }
 
-/** คืนข้อความผิดพลาด (ภาษาไทย) หรือ null เมื่อผูกกับ kemi-dev */
-export function checkLinkedProject(tempDir) {
+/** คืนข้อความผิดพลาด (ภาษาไทย) หรือ null เมื่อผูกกับโปรเจกต์ที่ต้องการ (ค่าเริ่มต้น kemi-dev) */
+export function checkLinkedProject(tempDir, expected = DEV_PROJECT) {
   let ref = ''
   let name = ''
   try {
     ref = readFileSync(join(tempDir, 'project-ref'), 'utf8').trim()
   } catch {
-    return 'ยังไม่ได้ผูกโปรเจกต์ (ไม่มี supabase/.temp/project-ref) — รัน npx supabase link --project-ref ของ kemi-dev ก่อน'
+    return `ยังไม่ได้ผูกโปรเจกต์ (ไม่มี supabase/.temp/project-ref) — รัน npx supabase link --project-ref ของ ${expected.name} ก่อน`
   }
   try {
     name = JSON.parse(readFileSync(join(tempDir, 'linked-project.json'), 'utf8')).name ?? ''
   } catch {
     name = ''
   }
-  if (ref !== DEV_PROJECT.ref || (name && name !== DEV_PROJECT.name)) {
-    return `โปรเจกต์ที่ผูกอยู่ไม่ใช่ ${DEV_PROJECT.name} (ref ${ref || '-'}${name ? `, ชื่อ ${name}` : ''}) — ห้ามรัน pgTAP กับฐานข้อมูลนี้`
+  if (ref !== expected.ref || (name && name !== expected.name)) {
+    return `โปรเจกต์ที่ผูกอยู่ไม่ใช่ ${expected.name} (ref ${ref || '-'}${name ? `, ชื่อ ${name}` : ''}) — ห้ามรัน pgTAP กับฐานข้อมูลนี้`
   }
   return null
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const tempDir = process.argv[2] ?? join(fileURLToPath(new URL('..', import.meta.url)), 'supabase', '.temp')
+  const tempDir =
+    process.argv[2] ?? join(fileURLToPath(new URL('..', import.meta.url)), 'supabase', '.temp')
   const error = checkLinkedProject(tempDir)
   if (error) {
     console.error(`หยุด: ${error}`)
