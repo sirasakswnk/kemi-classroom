@@ -6,18 +6,74 @@
 
 ## สถานะล่าสุด
 
-- ระยะปัจจุบัน: 7 ตามแผนเปิดใช้เร็ว (branch `phase-7` สร้างจาก `main` @ `06ac3cc` 25 ต.ค. 2026) · **merge `phase-7` ส่วนแรกเข้า `main` 25 ต.ค. @ `274f5c5`** (ผู้ใช้อนุญาต — ให้รอบสำรองตามตารางใช้โค้ด dev|prod) — CI phase-7 @ `1c78aee` และ main @ `274f5c5` run 40188651422 `web` + `db` ผ่าน · Pages production build ใหม่ (`index-Bqfm1iHT.js` มีโค้ด P7-06a) ยังชี้ kemi-dev + แถบระบบทดสอบ · ทำงานต่อบน `phase-7` · **ระยะ 6 (ส่วนที่ทำแล้ว) ปิด 25 ต.ค. 2026:** merge `phase-6` เข้า `main` แบบ merge commit @ `06ac3cc` — CI `phase-6` @ `4f6c6f2` run 40169703172 `web` + `db` ผ่าน; CI `main` @ `06ac3cc` run 40170071541 `web` + `db` ผ่าน; Pages production มี build ใหม่ (bundle `index-B4zs0lsO.js` มีโค้ด P6-05a3) ยังมีแถบ “ระบบทดสอบ” และชี้ kemi-dev (`igchlnmxbghsigyziomk`) เท่านั้น, CSP `connect-src` = kemi-dev + B2 · P6-05b/P6-06 ย้ายไปกลุ่ม “ก่อนกดจบภาคเรียนแรก” · **ระยะ 5 ปิดแล้ว 24 ต.ค. 2026:** merge `phase-5` เข้า `main` แบบ merge commit @ `cfdb6da` — CI phase-5 ก่อน merge: `web` ผ่านที่ `d887df8`/run 40096944589 (`db` ข้าม ไม่มีไฟล์ฐานข้อมูลเปลี่ยน; ผ่านล่าสุดที่ `275bb69`); CI บน `main` @ `cfdb6da` run 40097033748 `web` + `db` ผ่าน; Pages production มี build ใหม่ (มีข้อความ P5-10g) ยังแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” และ bundle ชี้ kemi-dev (`igchlnmxbghsigyziomk`) เท่านั้น · **ระยะ 4 ปิดแล้ว 19 ต.ค. 2026:** merge `phase-4` เข้า `main` แบบ merge commit @ `5f226c2` — CI ของ phase-4 ก่อน merge: `web` ผ่านที่ `ee77fb9` (โค้ดล่าสุด; commit หลังจากนั้นแก้แค่ .md จึงไม่รันตาม `paths-ignore`), `db` ผ่านที่ `7aac7e3` (รวม migration ล่าสุด `0033`); CI บน `main` @ `5f226c2` run 39190653865 `web` + `db` ผ่าน; Cloudflare Pages production “Deploy successful”; production ยังแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” และ bundle ชี้ kemi-dev (`igchlnmxbghsigyziomk`) · ระยะ 3 ปิดแล้ว 11 ต.ค. 2026: merge `phase-3` เข้า `main` @ `ea48714` (CI + Cloudflare Pages ผ่าน, production ยังมีแถบระบบทดสอบและต่อ kemi-dev, ตาราง `backup.yml` 02:30/14:30 น. เริ่มทำงาน) · ระยะ 2 ปิด 4 ต.ค. @ `aff3cb5` · ระยะ 1 ปิด 2 ต.ค. @ `137ea08`
-- **แผนเปิดใช้เร็ว (25 ต.ค.):** ลำดับงานอยู่ในส่วน “แผนเปิดใช้เร็ว” ใต้สถานะนี้ · P7-02a กู้คืนด้วยมือ ✅ · P7-04 ความปลอดภัย (dev) ✅ 25 ต.ค. — รอผู้ใช้ตัดสิน rate limit sign-in ของ Auth บน prod · P7-06a ✅ 25 ต.ค. · งานถัดไป: P7-06 เตรียม prod **[ต้องได้รับอนุญาตทุกขั้น]** (แตกเป็น P7-06-0…4; -0/-1/-2 เสร็จ — ต่อไป -3 สลับ Pages, -4 ผู้ดูแล/ครู) — รอผู้ใช้ทำ `ops/prod-setup.md` ข้อ 1–4 + ชื่อภาคเรียนแรกจากครู · ระหว่างรอทำ P7-06-1 ได้ · คู่มือฝั่งผู้ใช้ของ prod: `ops/prod-setup.md` (ทำข้อ 1–4 ล่วงหน้าได้) · จุดสาธิต 3 + go/no-go (P7-07) นัดได้ทุกเมื่อ · **kemi-dev ตอนนี้:** epoch 2 “ภาคเรียนทดสอบ 2 (สมมติ)” (เทอมเก่า “ภาคเรียนที่ 2/2569” ended 24 ต.ค.) ไม่มีห้อง/รายชื่อในเทอมใหม่ · อนุชา อินทร์แก้ว ยอด 0 มีพญาเคมี (มีรูปแล้ว) · แคตตาล็อก 13 ชิ้น อัตรา 60/25/10/5
-- สำรองตามตาราง (ตรวจ 17 ต.ค.): สำเร็จทุกรอบตั้งแต่ 12 ต.ค. (GitHub เริ่มรอบช้ากว่า cron 2.5–5.5 ชม.) · รอบ 02:30 น. 17 ต.ค. เริ่ม 05:09 น. ใช้ ~2 นาที อ่าน B2 0 คำขอ ping สำเร็จไม่มี warning · ล้าง Drive แล้ว: จุดกู้คืน 7 ต.ค. 3 จุดลบในรอบ 14 ต.ค. 19:58 น., PDF จริงของ P3-12d ลบในรอบ 15 ต.ค. 19:46 น. (`ขอ 1 ยืนยัน 1`, `backup_manifests` ไม่มี key นั้นแล้ว 0/20) — §13 ข้อ 14 (token ไม่หมดอายุ 7 วัน) ผ่าน
-- เว็บ: production `https://kemi-classroom.pages.dev` (จาก `main`; ชี้ kemi-dev + แถบระบบทดสอบ จนถึงระยะ 7) · preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `phase-2`) · ตัวแปร build ของ Pages: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (ทั้ง Production/Preview = kemi-dev ถึงระยะ 7), `VITE_DEPLOY_ENV=prod` ตั้งเฉพาะ Production ตอนระยะ 7
-- บัญชีทดสอบบน kemi-dev (อีเมลไม่จดในไฟล์ ดูได้จากตาราง `accounts`): admin 1 · ครูทดสอบ 1 (+ อีเมลจริงของครูใน allowlist ยังไม่เคยล็อกอิน) · นักเรียนทดสอบ 1 — ทั้งหมดอยู่ใน Google Test users (สถานะ Testing)
-- Supabase Auth (kemi-dev) — ผู้ใช้ตั้งจริงเมื่อ 2 ต.ค. 2026 **หลัง** preview ของ `phase-1` build แล้ว (ตอนแจ้งว่า P1-09b เสร็จครั้งแรกยังไม่ได้ตั้ง): Site URL `https://kemi-classroom.pages.dev` · Redirect URLs: `http://localhost:5173/auth/callback`, `https://kemi-classroom.pages.dev/auth/callback`, `https://*.kemi-classroom.pages.dev/auth/callback` · provider ที่เปิด: google เท่านั้น — **Email ปิดแล้ว** (ผู้ใช้แจ้ง 2 ต.ค.; Claude ยังไม่ได้ตรวจซ้ำจาก `/auth/v1/settings`)
-- **ข้อสรุปฟังก์ชันช่วยของ RLS (ผู้ใช้ตัดสิน 30 ก.ย.):** อยู่ใน `private` ไม่ย้ายไป `public` (ไม่งั้นกลายเป็น `/rest/v1/rpc/…` ที่นักเรียนเรียกเองได้) — SECURITY DEFINER + GRANT EXECUTE ให้ `authenticated` รายฟังก์ชัน, **ไม่ GRANT USAGE บน `private`** (policy ต้องการแค่ EXECUTE; เรียกตรงถูกปฏิเสธ “permission denied for schema private”), ใน policy เขียน `(select private.current_account())`; P1-07 ต้องมี pgTAP บน `kemi-dev` (PG17) ยืนยันว่า policy ทำงานโดยไม่มี USAGE และ `authenticated` เรียกฟังก์ชันช่วยตรง ๆ ไม่ได้ (TECHNICAL_DESIGN 3.1 ข้อ 5, BUILD_PLAN 4.1 ข้อ 3)
-- **ดีไซน์ (ผู้ใช้ตัดสิน 30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`) ตามเดิม — P1-03/P1-04 ไม่ต้องรอแล้ว
-- บริการที่ตั้งแล้ว (30 ก.ย. 2026): Supabase `kemi-dev` · Google OAuth client `kemi-dev` (Web application) ใส่ใน Supabase → Google provider แล้ว · หน้าขอสิทธิ์ Google อยู่สถานะ **Testing** (ล็อกอินได้เฉพาะบัญชีใน Test users)
-- Healthchecks `kemi-backup`: Grace 6 ชม. (ผู้ใช้ตั้งเองและดูสถานะ UP เอง — 17 ต.ค.) · **ทุกครั้งที่ตรวจ log สำรอง: ถ้ารอบไหนเริ่มช้ากว่าเวลา cron เกิน 6 ชม. หรือหายไปทั้งรอบ ให้จดวันเวลาไว้ที่นี่** (02:30 น. = 19:30 UTC, 14:30 น. = 07:30 UTC) · ยังไม่มีรอบที่ช้าเกิน 6 ชม.
-- รอผู้ใช้: Google OAuth อยู่สถานะ Testing: บัญชีที่จะล็อกอินทดสอบ (เช่นบัญชีโรงเรียนในจุดสาธิต 1 และอีเมลจริงของครู) ต้องเพิ่มใน Test users ก่อน · เปิดบัญชีบริการตาม `ops/SIGNUP_CHECKLIST.md` · รัน `node ops/b2-latency.mjs --rounds 10 --label school` ที่ Wi-Fi โรงเรียน และ `--label mobile` ที่เน็ตมือถือ (หลายช่วงเวลา) แล้วส่งบรรทัด “สรุป” มา ก่อนสมัคร B2
-- ค่าบริการที่ไม่ใช่ความลับ (กรอกเมื่อได้): Supabase dev URL `https://igchlnmxbghsigyziomk.supabase.co` (ref `igchlnmxbghsigyziomk`, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`, ภูมิภาค Singapore ยืนยันแล้ว; pg_cron/pg_net มีให้เปิด; รหัสฐานข้อมูลเปลี่ยนใหม่แล้ว 30 ก.ย.) · **prod (สร้าง 25 ต.ค.):** URL `https://fcwbomasayvlubijsssh.supabase.co` (ref `fcwbomasayvlubijsssh`, publishable key `sb_publishable_aIiWdIN8Tj3gXCibIK5ZwA_8aqFDnZx`, `ap-southeast-1` ยืนยันด้วย `supabase projects list`, Postgres 17.11 · Session pooler `aws-0-ap-southeast-1.pooler.supabase.com` user `postgres.fcwbomasayvlubijsssh`) — สร้างครั้งแรกได้โตเกียว (`ap-northeast-1`) เพราะเลือกแค่ “Asia-Pacific” ผู้ใช้ลบแล้วสร้างใหม่ · Auth: Email/Phone/Anonymous ปิด (ตรวจ `/auth/v1/settings`), Google ยังไม่เปิด, Rate Limits/URL/legacy keys ตั้งแล้ว (ผู้ใช้แจ้ง) · Postgres รุ่น 17.6 (ใช้ `pg_dump` รุ่น 17) · B2 ภูมิภาค eu-central-003 (S3 endpoint `https://s3.eu-central-003.backblazeb2.com`; bucket dev `kemi-dev-files` แบบ private ยืนยันแล้ว 5 ต.ค.) · GitHub repo `sirasakswnk/kemi-classroom` (private, remote `origin`, push `main` + `phase-1` แล้ว 30 ก.ย.; ติดตั้ง `gh` 2.102 ล็อกอินแล้ว — ถ้า bash หา `gh` ไม่เจอให้เติม PATH `/c/Program Files/GitHub CLI`) · ชื่อเว็บ `kemi-classroom` (→ kemi-classroom.pages.dev ยืนยันใน P1-09)
+### ภาพรวม (อัปเดต 25 ต.ค. 2026 ค่ำ)
+
+- **ระบบจริงพร้อมใช้งานแล้ว:** เว็บ production ชี้ `kemi-prod` · ล็อกอิน Google เผยแพร่เป็น In production (นักเรียนทุกคนล็อกอินได้) · ผู้ดูแลแรก + ครูตั้งแล้ว · สำรองตามตารางสำรอง prod · จุดสาธิต 3 กับครูผ่าน = **go**
+- **งานถัดไป: P8-01 นำร่อง 1 ห้อง** (แนะนำ 5/4 — 28 คน คำเตือนชื่อ 1 รายการ) — ครูทำบนเว็บจริง: ล็อกอิน → สร้างชั้นเรียน → นำเข้า Excel (เลือกใช้ค่าเสนอ/คงค่าเดิมทีละช่อง) → แจกรหัสห้อง → โพสต์การบ้าน 1 ชิ้น · **เมื่อเริ่มมีการส่งงาน ผู้ใช้บอก Claude** เพื่อตรวจ: รอบสำรองแรกที่มีไฟล์ (พิสูจน์ `kemi-backup-ro` อ่าน `kemi-files`), งานเบื้องหลัง failed, พื้นที่/งบ B2, ขนาดรูปเฉลี่ย/ความเร็วอัปโหลด
+- **Branch:** ทำงานต่อบน `phase-7` · `main` ล่าสุด `59fe239` (merge ส่วนสอง: `/privacy` + คู่มือ prod) ก่อนหน้า `274f5c5` (ส่วนแรก: กู้คืนด้วยมือ ความปลอดภัย คำเตือนนำเข้า เตรียม prod สำรอง dev|prod) · CI main `59fe239` ผ่าน · `phase-7` มี commit PROGRESS หลัง merge
+
+### ระบบจริง (prod)
+
+- **เว็บ** `https://kemi-classroom.pages.dev` (Cloudflare Pages Production จาก `main`) — ตัวแปร Production: `VITE_SUPABASE_URL` = `https://fcwbomasayvlubijsssh.supabase.co`, `VITE_SUPABASE_PUBLISHABLE_KEY` = `sb_publishable_aIiWdIN8Tj3gXCibIK5ZwA_8aqFDnZx`, `VITE_DEPLOY_ENV=prod` (ไม่มีแถบระบบทดสอบ; ตรวจจาก bundle) · CSP `connect-src` = kemi-prod + B2 · หน้าสาธารณะ `/privacy` (ตรวจกับครูแล้ว) + ลิงก์จาก A01 · **Preview ไม่แตะ** (ยังชี้ dev)
+- **Supabase `kemi-prod`** ref `fcwbomasayvlubijsssh` · `ap-southeast-1` สิงคโปร์ (ครั้งแรกสร้างผิดที่โตเกียว ลบแล้ว) · Postgres 17.11 · Session pooler `aws-0-ap-southeast-1.pooler.supabase.com` user `postgres.fcwbomasayvlubijsssh` · Security: Data API เปิด, Automatically expose new tables ปิด, automatic RLS เปิด (เหมือน dev)
+  - migration 0001–0055 (`db push` 25 ต.ค.) · seed: ภาคเรียน “ภาคเรียนที่ 2/2569 เคมี 3 ว30223” (ครูยืนยัน, active) · ระดับ 60/25/10/5 · เครื่องราง 12 ชิ้น · `storage_settings` quota 9,500,000,000 / margin 300,000,000 / เตือน 80/90
+  - Edge Functions `uploads` `files` `process-jobs` deploy แล้ว · secrets: `B2_KEY_ID` `B2_APP_KEY` (kemi-edge) `B2_BUCKET=kemi-files` `B2_ENDPOINT` `WEB_ORIGINS=https://kemi-classroom.pages.dev` + `JOBS_SECRET` และ Vault `process_jobs_url/secret` (`ops/jobs/set-secret.mjs --prod`) · cron 3 งาน (process-jobs ทุก 2 นาที, storage-reconcile 21:30 UTC, storage-threshold ทุก 5 นาที) ไม่มีรอบล้ม
+  - Auth: Google เท่านั้น (Email/Phone/Anonymous ปิด) · Site URL + Redirect = `https://kemi-classroom.pages.dev` (/auth/callback) อย่างเดียว · Rate limits: sign-ins **150/5 นาที/IP**, token refresh 150 · ไม่ปิด legacy API keys (Edge ใช้ service role แบบ legacy)
+  - บัญชี (25 ต.ค.): ผู้ดูแล 1 (ตั้งด้วย `ops/prod-bootstrap-admin.sql` ผู้ใช้กรอกอีเมลใน SQL Editor) · ครูใน allowlist 1 (เพิ่มผ่าน `/admin`; ยังไม่ล็อกอิน ณ ตอนตรวจ) · นักเรียนไม่ผูกชื่อ 1 (บัญชีทดสอบตอนเผยแพร่ล็อกอิน — ทิ้งไว้ได้) · `private.settings` ว่าง (ไม่มี allow_test_logins)
+  - ความปลอดภัย: `node ops/security-check.mjs --publishable-key <prod>` (ผูก CLI กับ prod ชั่วคราว) **33/33** · Security Advisor WARN `authenticated_security_definer_function_executable` 68 ตัว อยู่ในรายการที่ตั้งใจทั้งหมด · **ห้ามรัน pgTAP บน prod**
+- **B2 `kemi-files`** Private · Object Lock ปิด · SSE-B2 เปิด (เหมือน dev) · CORS เฉพาะ production (`ops/b2/cors-prod.json`; preview/localhost ได้ 403) · lifecycle files/ + staging/ · กุญแจสิทธิ์แคบจาก `ops/b2/prod-keys.mjs`: `kemi-edge` keyID `0036727247a6c4e000000000b` (list/read/write/deleteFiles) · `kemi-backup-ro` keyID `0036727247a6c4e000000000c` (readFiles prefix files/) — สิทธิ์แคบกับ bucket เข้ารหัส **ยังไม่ได้พิสูจน์กับไฟล์จริง** (ข้าม `--test-on-dev`) → ดูตอนนักเรียนส่งงานแรก
+- **Google OAuth แอปล็อกอิน** (โปรเจกต์ที่มี client `kemi-dev`/`kemi-prod`): **In production** · Branding homepage `https://kemi-classroom.pages.dev` + privacy `/privacy` + authorized domains pages.dev และ `<ref>.supabase.co` ของ prod/dev · ไม่ใส่โลโก้ · Data Access `openid` `userinfo.email` `userinfo.profile` (non-sensitive; user cap 100 ไม่มีผล) · ทดสอบบัญชีนอก Test users ล็อกอินได้
+- **CLI** ผูกกับ `kemi-dev` เป็นปกติ — ทุกครั้งที่แตะ prod: ผูก prod ชั่วคราว (`npx supabase link --project-ref fcwbomasayvlubijsssh`) แล้วผูกกลับ dev + `node ops/check-dev-db.mjs` · ทุกขั้นที่เขียนลง prod ต้องขออนุญาตผู้ใช้ก่อน
+
+### สำรองข้อมูล
+
+- repository variable **`BACKUP_TARGET=prod`** (ตั้ง 25 ต.ค. 13:04 UTC) → รอบ 02:30 / 14:30 น. (19:30 / 07:30 UTC) สำรอง **prod อย่างเดียว** · dev หยุดแล้ว (รันมือ Actions → backup → target `dev` ได้) · ย้อนกลับ: ลบตัวแปรหรือตั้ง `dev`
+- ปลายทาง Drive บัญชีสำรอง: prod `gcrypt:` → `gdrive:kemi-backup-prod` (rclone ชุดใหม่ รหัส crypt + salt สุ่ม 256 บิต **ผู้ใช้จดค่าจริง 43 ตัว** และทดสอบสำเนาออฟไลน์ผ่านแล้ว) · dev เดิม `gdrive:kemi-backup` (สำเนาออฟไลน์ของ dev เป็นค่า obscured — ใช้ได้ผ่าน `RCLONE_CONFIG_GCRYPT_PASSWORD(2)` ตาม `ops/restore-manual.md`)
+- GitHub secrets: dev `BACKUP_DB_PASSWORD` `RCLONE_CONFIG` `HC_PING_URL` `SUPABASE_PING_KEY` · prod `PROD_BACKUP_DB_PASSWORD` `PROD_RCLONE_CONFIG` `PROD_HC_PING_URL` `PROD_SUPABASE_PING_KEY` · `ops/backup.sh` ตรวจชุด ref + bucket + โฟลเดอร์ Drive ต้องตรงเป้าหมาย ไม่งั้นหยุด · `meta.json` มี `target` + `table_rows`
+- Healthchecks: `kemi-backup-prod` (12 ชม. + grace 6 ชม.) ทำงาน · `kemi-backup` (dev) **Pause**
+- รอบ prod สำเร็จแล้ว 2 รอบ (run 40188158351 จาก phase-7, run 40196043501 จาก main แบบ target=auto) — manifest 0 ไฟล์ นับแถว 36 ตาราง ping pong · **ทุกครั้งที่ตรวจ log สำรอง: รอบไหนเริ่มช้ากว่าเวลา cron เกิน 6 ชม. หรือหายทั้งรอบ ให้จดวันเวลาไว้ที่นี่** — ยังไม่มี
+- กู้คืน: ทดสอบด้วยมือกับ dev ผ่าน (P7-02a) · `restore-test.yml` อัตโนมัติยังไม่ทำ (ภายในเดือนแรก)
+
+### ระบบทดสอบ (dev)
+
+- เว็บทดสอบ = preview ต่อ branch `https://<branch>.kemi-classroom.pages.dev` (เช่น `https://phase-7.kemi-classroom.pages.dev`) ชี้ `kemi-dev` + แถบ “ระบบทดสอบ” — ใช้สาธิต/ลองของ · ตัวแปร Preview ของ Pages = kemi-dev
+- Supabase `kemi-dev` ref `igchlnmxbghsigyziomk` (สิงคโปร์, PG 17.6, publishable key `sb_publishable_kpY6n1jpQSDKeqLBXZPAYQ_LY_pyyYR`) · Auth: Site URL `http://localhost:5173` · Redirect `http://localhost:5173/auth/callback` + `https://*.kemi-classroom.pages.dev/auth/callback` (เอาโดเมนจริงออกแล้ว 25 ต.ค.) · Email ปิด
+- ข้อมูล dev: epoch 2 “ภาคเรียนทดสอบ 2 (สมมติ)” (เทอมเก่า “ภาคเรียนที่ 2/2569” ended 24 ต.ค.) · ห้อง `เคมี 5/4 (ทดสอบ 2)` รหัส `AREE9V` · อนุชา (นักเรียนทดสอบ) มีพญาเคมี · แคตตาล็อก 13 ชิ้น อัตรา 60/25/10/5 · มีข้อมูลจากจุดสาธิต 3 กับครู
+- บัญชี dev (อีเมลไม่จดในไฟล์): admin 1 · ครูทดสอบ 1 + อีเมลจริงของครูใน allowlist · นักเรียนทดสอบ 3 บัญชีผูกชื่อ
+- B2 `kemi-dev-files` (กุญแจ `kemi-edge-dev`, `kemi-backup-ro-dev` — **ห้ามลบ**) · กุญแจทดสอบ `kemi-edge-test`/`kemi-backup-ro-test` ที่สร้างค้าง (อายุ 1 วัน) หมดอายุเอง
+
+### ความลับที่ผู้ใช้ถือ (ไม่อยู่ใน repo/แชต — password manager + สำเนาออฟไลน์)
+
+รหัสผ่านฐานข้อมูล kemi-dev/kemi-prod · B2 Master Application Key (สร้างใหม่ 25 ต.ค.) · applicationKey ของ `kemi-edge` / `kemi-backup-ro` (prod) · รหัส crypt + salt ของ dev (ค่า obscured) และ prod (ค่าจริง ติดป้าย prod) · Ping URL ของ Healthchecks · secret key `github_backup` ของ dev/prod · client secret ของ OAuth client `rclone`
+
+### งานที่เหลือ (ตามลำดับ)
+
+1. **P8-01 นำร่อง** (ผู้ใช้/ครู) → Claude ติดตามเมื่อเริ่มส่งงาน (ดูภาพรวม) → P8-02 แก้ปัญหาระหว่างนำร่อง → P8-03 สรุปตามข้อ 65 แล้วเปิด 3 ห้อง
+2. **ภายในเดือนแรก:** P7-01 job `guard` · P7-02 `restore-test.yml` + check `kemi-restore-test` · P7-03 แผงสำรองใน D01
+3. **ก่อนครูกดจบภาคเรียนแรก:** P6-05b ยืนยันลบ/ลบก่อนกำหนด · P6-06a T07 ข้อมูลเก่า + CSV · P6-06b ZIP (เพดานย่อย 400 MB/วัน)
+4. **ติดตามระหว่างนำร่อง:** P7-05 (สำรองต่อเนื่อง, อุปกรณ์จริง, ความเร็วอัปโหลด)
+
+### รอผู้ใช้ (เอกสารที่ Claude แก้เองไม่ได้)
+
+- SYSTEM_SPEC J9.3: ลงผล **โรงเรียนอนุญาตแล้ว** (ผู้ใช้แจ้ง 25 ต.ค.) และส่วน 12 ค่าของ prod (P0-03)
+- ที่เก็บไฟล์ B2 อยู่ **เนเธอร์แลนด์ (eu-central-003)** ไม่ใช่สหรัฐฯ — เอกสารที่เขียน “สิงคโปร์/สหรัฐฯ” ควรแก้ให้ตรง (หน้า `/privacy` เขียนถูกแล้ว)
+- รายละเอียดจุดสาธิต 3 (รุ่นเครื่อง/เบราว์เซอร์) ถ้ามี
+
+### ข้อควรรู้จากงานรอบนี้ (25 ต.ค.)
+
+- Supabase: ต้องกด “Need a specific region?” เลือก Singapore — เลือกแค่ Asia-Pacific ได้โตเกียว
+- rclone: จดรหัส crypt จากค่าที่แสดงตอนสุ่ม (43 ตัว) ไม่ใช่ค่าในไฟล์ config (obscured ราว 79 ตัว ใส่ในช่องรหัสของ `rclone config` ไม่ได้)
+- Chrome `resize_window` อาจค้าง → ตรวจความกว้างด้วย iframe บน Vite dev server แยกพอร์ต · **TaskStop ไม่ปิด process ลูกของ Vite** — ปิดด้วย PID จาก `Get-NetTCPConnection` ไม่งั้นค้างพอร์ตและแย่งคำขอกับ `csp-serve`
+- เครื่องมือของ Claude แปลง escape แบบ backslash-u ในข้อความที่ส่งเป็นอักขระจริง — เขียน escape ลง source ผ่านสคริปต์ (`String.fromCharCode(92)`)
+- ไฟล์ Excel จริงของครู 3 ไฟล์อยู่ที่ root ของ repo และถูก git ignore — ห้ามพิมพ์ชื่อ/รหัส ห้ามขึ้น dev
+
+### ประวัติปิดระยะ
+
+- ระยะ 6 (ส่วนที่ทำแล้ว) ปิด 25 ต.ค. 2026 @ `06ac3cc` (CI phase-6 `4f6c6f2` + main ผ่าน) · ระยะ 5 ปิด 24 ต.ค. @ `cfdb6da` · ระยะ 4 ปิด 19 ต.ค. @ `5f226c2` · ระยะ 3 ปิด 11 ต.ค. @ `ea48714` (ตาราง backup.yml เริ่มทำงาน) · ระยะ 2 ปิด 4 ต.ค. @ `aff3cb5` · ระยะ 1 ปิด 2 ต.ค. @ `137ea08`
+- สำรอง dev ช่วง 12–24 ต.ค. สำเร็จทุกรอบ (GitHub เริ่มรอบช้ากว่า cron 2.5–5.5 ชม.) · ล้าง Drive ตามอายุทำงาน (§13 ข้อ 14 token ไม่หมดอายุ 7 วัน ผ่าน)
+- **ข้อสรุปฟังก์ชันช่วยของ RLS (30 ก.ย.):** อยู่ใน `private` — SECURITY DEFINER + GRANT EXECUTE ให้ `authenticated` รายฟังก์ชัน ไม่ GRANT USAGE บน `private`; policy เขียน `(select private.current_account())` (TECHNICAL_DESIGN 3.1 ข้อ 5)
+- **ดีไซน์ (30 ก.ย.):** ใช้แบบ v2 (`exports/chemistry-design-v2.html`)
+- GitHub repo `sirasakswnk/kemi-classroom` (private) · `gh` อยู่ที่ `/c/Program Files/GitHub CLI` (เติม PATH ใน bash) · B2 endpoint `https://s3.eu-central-003.backblazeb2.com`
 
 ## แผนเปิดใช้เร็ว (ตัดสิน 25 ต.ค. 2026 — TECHNICAL_BUILD_PLAN ส่วน 10)
 
@@ -27,11 +83,11 @@
 2. P7-02a กู้คืนด้วยมือ 1 ครั้ง ✅ 25 ต.ค.
 3. P7-04 รายการความปลอดภัยส่วน 11 ครบทุกข้อ ✅ dev 25 ต.ค. (ข้อที่อ้าง prod ตรวจใน P7-06)
 4. P7-06a คำเตือนตอนนำเข้า ✅ 25 ต.ค.
-5. P7-06 เตรียม prod (ผู้ใช้ทำตาม `ops/prod-setup.md`)
+5. P7-06 เตรียม prod (ผู้ใช้ทำตาม `ops/prod-setup.md`) ✅ 25 ต.ค.
 6. P7-05b หน้าแรก + `/privacy` + เผยแพร่ OAuth ล็อกอินเป็น production ✅ 25 ต.ค.
-7. P7-08 สลับ `backup.yml` ไป prod — ไม่ข้าม
+7. P7-08 สลับ `backup.yml` ไป prod ✅ 25 ต.ค. (`BACKUP_TARGET=prod`)
 8. P7-07 จุดสาธิต 3 + go/no-go ✅ 25 ต.ค. (go)
-9. P8-01–P8-03 นำร่อง 1 ห้อง แล้วเปิดอีก 2 ห้อง
+9. P8-01–P8-03 นำร่อง 1 ห้อง แล้วเปิดอีก 2 ห้อง ← **ถัดไป**
 
 ### ต้องเสร็จก่อนครูกดจบภาคเรียนแรก (หรือเริ่มภาคเรียนใหม่)
 
@@ -753,6 +809,8 @@
 ## ระยะ 8 — นำร่องและเปิดใช้
 
 - [ ] P8-01 นำเข้ารายชื่อห้องนำร่อง + ครูตั้งห้องและโพสต์งานจริง (ทำร่วมกับผู้ใช้)
+    - ขั้นตอน (ส่งให้ผู้ใช้ 25 ต.ค.): (1) ครูล็อกอิน `https://kemi-classroom.pages.dev` ต้องได้หน้าครู (allowlist ตรึง subject ครั้งแรก) · (2) สร้างชั้นเรียน · (3) รายชื่อนักเรียน → นำเข้า Excel ไฟล์ห้องนำร่อง (แนะนำ 5/4: 28 คน คำเตือนช่องว่างกลางชื่อ 1 · 5/2: 47/4 · 5/3: 48/2) เลือกใช้ค่าเสนอหรือคงค่าเดิมทีละช่อง → นำเข้า · (4) แจกรหัสห้อง 6 ตัว นักเรียนล็อกอิน → เลือกชื่อ → ใส่รหัส (ล็อกอินเผยแพร่แล้ว ไม่ต้องอยู่ใน Test users; rate limit 150/5 นาที/IP) · (5) ครูโพสต์การบ้านจริง 1 ชิ้น
+    - Claude ติดตามเมื่อผู้ใช้แจ้งว่าเริ่มส่งงาน (อ่านอย่างเดียว ผูก prod ชั่วคราว): รอบสำรองแรกที่มีไฟล์ — `kemi-backup-ro` อ่าน `kemi-files` ได้ (ไฟล์ใหม่ > 0, ความครบผ่าน) · `admin_failed_jobs`/งาน failed · `storage_status` + ตัวนับ B2 วันนี้ · ขนาดรูปเฉลี่ย (assets) และเวลา batch → ready · ห้ามดึงชื่อ/อีเมล/เนื้อความของนักเรียนจริงออกมาในแชต (ใช้จำนวน/สถิติเท่านั้น)
 - [ ] P8-02 ติดตามและแก้ปัญหาระหว่างนำร่อง (เพิ่มงานย่อยตามที่พบ)
 - [ ] P8-03 สรุปผลตามข้อ 65 และเปิดครบ 3 ห้อง (จุดสาธิต 5)
 
