@@ -1,6 +1,6 @@
 import { Info, KeyRound, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
-import { Navigate, useLocation } from 'react-router'
+import { Link, Navigate, useLocation } from 'react-router'
 import { th } from '../../copy/th'
 import { peekNextPath } from '../../lib/redirect'
 import { supabase, toAppError, type AppError } from '../../lib/supabase'
@@ -106,7 +106,13 @@ export function LoginPage() {
         </ol>
       </main>
 
-      <footer className={styles.foot}>{th.login.foot}</footer>
+      <footer className={styles.foot}>
+        {th.login.foot}
+        <br />
+        <Link to="/privacy" className={styles.footLink}>
+          {th.login.privacyLink}
+        </Link>
+      </footer>
     </div>
   )
 }

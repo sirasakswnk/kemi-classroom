@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { AccountSchema, homeFor } from './account'
 import { AuthContext, type AuthState } from './authContext'
 import { LoginPage } from './LoginPage'
+import { PrivacyPage } from './PrivacyPage'
 
 describe('ผลของ ensure_account()', () => {
   const ok = {
@@ -62,5 +63,55 @@ describe('A01 LoginPage', () => {
   it('ข้อความแจ้งจากการออกจากระบบให้ (เช่น provider_not_allowed)', () => {
     const html = render({ status: 'signed_out', notice: 'เข้าสู่ระบบได้ด้วยบัญชี Google เท่านั้น' })
     expect(html).toContain('เข้าสู่ระบบได้ด้วยบัญชี Google เท่านั้น')
+  })
+})
+
+describe('/privacy (P7-05b)', () => {
+  const html = renderToString(
+    <MemoryRouter initialEntries={['/privacy']}>
+      <PrivacyPage />
+    </MemoryRouter>,
+  )
+
+  it('แสดงหัวข้อครบ 6 หัวข้อ และไม่ต้องล็อกอิน (ไม่ใช้ AuthContext)', () => {
+    for (const heading of [
+      'ข้อมูลที่เก็บ',
+      'ใช้ข้อมูลเพื่ออะไร',
+      'ใครเห็นข้อมูล',
+      'เก็บข้อมูลที่ไหน',
+      'เก็บนานเท่าไร',
+      'ติดต่อและขอแก้ไขข้อมูล',
+    ]) {
+      expect(html).toContain(`<h2>${heading}</h2>`)
+    }
+  })
+
+  it('ระบุที่เก็บและอายุข้อมูลตาม SYSTEM_SPEC (สิงคโปร์ · เนเธอร์แลนด์ · 60 วัน · 1 ปี · 7 วัน)', () => {
+    expect(html).toContain('สิงคโปร์')
+    expect(html).toContain('เนเธอร์แลนด์')
+    expect(html).toContain('60 วัน')
+    expect(html).toContain('1 ปี')
+    expect(html).toContain('7 วัน')
+    expect(html).toContain('href="/login"')
+  })
+})
+
+describe('A01 ลิงก์นโยบายความเป็นส่วนตัว', () => {
+  it('หน้าเข้าสู่ระบบมีลิงก์ไป /privacy', () => {
+    const html = renderToString(
+      <MemoryRouter initialEntries={['/login']}>
+        <AuthContext
+          value={{
+            state: { status: 'signed_out' },
+            signOut: async () => {},
+            reloadAccount: () => {},
+          }}
+        >
+          <LoginPage />
+        </AuthContext>
+      </MemoryRouter>,
+    )
+    expect(html).toContain('href="/privacy"')
+    expect(html).toContain('นโยบายความเป็นส่วนตัว')
   })
 })
