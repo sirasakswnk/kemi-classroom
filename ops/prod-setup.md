@@ -11,7 +11,8 @@
 ## 1. โปรเจกต์ Supabase `kemi-prod`
 
 1. https://supabase.com/dashboard → **New project** · Organization เดียวกับ `kemi-dev`
-   - Name `kemi-prod` · Region **Southeast Asia (Singapore)** · Plan **Free** (ห้ามเลือกแผนเสียเงิน)
+   - Name `kemi-prod` · Region: กด **Need a specific region?** → **Southeast Asia (Singapore)** `ap-southeast-1` (ไม่ใช่แค่ “Asia-Pacific”) · Plan **Free** (ห้ามเลือกแผนเสียเงิน)
+   - Security (ตั้งเหมือน kemi-dev, P1-06): ✅ **Enable Data API** · ⬜ **Automatically expose new tables: ปิด** (migration GRANT ให้ `authenticated` เอง และ `0001_base` ถอนสิทธิ์เริ่มต้นไว้) · ✅ **Enable automatic RLS** (ตัวกันชั้นที่สอง เหมือน dev)
    - Database password: กด **Generate a password** → เก็บใน password manager ทันที (ใช้กับงานสำรองข้อ 8)
 2. รอสร้างเสร็จ แล้วส่งค่าที่ไม่ใช่ความลับให้ Claude:
    - Project Settings → General → **Project ID** (ref)
