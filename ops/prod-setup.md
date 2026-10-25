@@ -46,7 +46,7 @@
 
 1. **Caps & Alerts:** ตรวจว่าเพดานรายวันของ storage, download, Class B, Class C ยังเป็น **$0** (เพดานใช้ทั้งบัญชี ตั้งไว้ตั้งแต่ระยะ 0)
 2. **Buckets → Create a Bucket:**
-   - Bucket Unique Name `kemi-files` · Files in Bucket are: **Private** · Default Encryption: **Disable** (เหมือน `kemi-dev-files`) · Object Lock: **Disable**
+   - Bucket Unique Name `kemi-files` · Files in Bucket are: **Private** · Default Encryption: **Enable** (SSE-B2 เหมือน `kemi-dev-files` — ตรวจ 25 ต.ค.; กุญแจสิทธิ์แคบใช้กับ bucket ที่เข้ารหัสได้หรือไม่ พิสูจน์ด้วย `--test-on-dev` ข้อ 3.4) · Object Lock: **Disable**
    - Create
 3. **ยังไม่สร้าง Application Key จากหน้าเว็บ** — หน้าเว็บสร้างได้แค่ Read and Write ที่มีสิทธิ์จัดการ bucket ติดมาด้วย (รั่วแล้วเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS ได้ — BUILD_PLAN ส่วน 7 ข้อ 5) จึงทำข้อ 4 ด้วยสคริปต์
 4. **CORS + lifecycle + กุญแจสิทธิ์แคบ — `node ops/b2/prod-keys.mjs`** (รันใน PowerShell ที่โฟลเดอร์ repo):
