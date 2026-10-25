@@ -23,9 +23,12 @@
 4. **Authentication → URL Configuration:**
    - Site URL `https://kemi-classroom.pages.dev`
    - Redirect URLs: `https://kemi-classroom.pages.dev/auth/callback` **อย่างเดียว** (ไม่ใส่ localhost หรือ `*.kemi-classroom.pages.dev` ของ preview)
-5. **ห้ามปิด legacy API keys** (Project Settings → API Keys) — Edge Functions ยังใช้ `SUPABASE_SERVICE_ROLE_KEY` แบบ legacy (BUILD_PLAN ส่วน 3)
-6. ส่วนขยาย `pg_cron`, `pg_net` ไม่ต้องเปิดเอง — migration เปิดให้ตอน Claude `db push` (ถ้าแจ้งว่าไม่มีให้ ค่อยเปิดที่ Database → Extensions)
-7. แจ้ง Claude → Claude (ขออนุญาตก่อนทุกขั้น) push migration ทั้งหมด, deploy Edge Functions (`uploads`, `files`, `process-jobs`), ตั้งรหัสลับของ `process-jobs` (`ops/jobs/set-secret.mjs` ต้องเพิ่มโหมด prod ก่อน), seed — **ชื่อภาคเรียนแรกตามภาคเรียนจริง (ถามครู)**, allowlist อีเมลครู, `storage_settings.quota_bytes` = 9,500,000,000 แล้วผูก CLI กลับ `kemi-dev`
+5. **Authentication → Rate Limits** (ตัดสิน 25 ต.ค. 2026, BUILD_PLAN 10 ข้อ 5 — ค่าเริ่มต้น 30 ทำให้นักเรียนทั้งห้องที่ล็อกอินพร้อมกันผ่าน Wi-Fi โรงเรียน (IP เดียว) โดนกันตั้งแต่คนที่ 31):
+   - **Rate limit for sign-ups and sign-ins: `150`** requests/5 min → Save changes
+   - Rate limit for token refreshes: คง `150` requests/5 min · ช่องอื่นคงค่าเริ่มต้น
+6. **ห้ามปิด legacy API keys** (Project Settings → API Keys) — Edge Functions ยังใช้ `SUPABASE_SERVICE_ROLE_KEY` แบบ legacy (BUILD_PLAN ส่วน 3)
+7. ส่วนขยาย `pg_cron`, `pg_net` ไม่ต้องเปิดเอง — migration เปิดให้ตอน Claude `db push` (ถ้าแจ้งว่าไม่มีให้ ค่อยเปิดที่ Database → Extensions)
+8. แจ้ง Claude → Claude (ขออนุญาตก่อนทุกขั้น) push migration ทั้งหมด, deploy Edge Functions (`uploads`, `files`, `process-jobs`), ตั้งรหัสลับของ `process-jobs` (`ops/jobs/set-secret.mjs` ต้องเพิ่มโหมด prod ก่อน), seed — **ชื่อภาคเรียนแรกตามภาคเรียนจริง (ถามครู)**, allowlist อีเมลครู, `storage_settings.quota_bytes` = 9,500,000,000 แล้วผูก CLI กลับ `kemi-dev`
 
 ## 2. Google ล็อกอินของ prod
 
