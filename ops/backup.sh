@@ -5,10 +5,12 @@
 # ทดสอบในเครื่องด้วย ops/backup-test/ (Postgres ในเครื่อง + remote ปลอม ไม่แตะ B2/Drive จริง)
 #
 # ตัวแปรที่ต้องมี
-#   PGHOST PGPORT PGUSER PGDATABASE PGPASSWORD   Session pooler ของ kemi-dev (รหัสผ่านเป็น secret ตัวเดียว)
-#   RCLONE_CONFIG_CONTENT                        rclone.conf ที่มี remote gcrypt (crypt ครอบ gdrive:kemi-backup) และ b2ro
+#   PGHOST PGPORT PGUSER PGDATABASE PGPASSWORD   Session pooler ของโปรเจกต์เป้าหมาย (รหัสผ่านเป็น secret ตัวเดียว)
+#   RCLONE_CONFIG_CONTENT                        rclone.conf ที่มี remote gcrypt (crypt ครอบ gdrive:kemi-backup หรือ
+#                                                gdrive:kemi-backup-prod ตามเป้าหมาย) และ b2ro
 #   B2_BUCKET B2_S3_ENDPOINT B2_REGION           bucket ที่อ่าน (อ่านด้วยกุญแจ b2ro ผ่าน S3 API ระบุ versionId)
 # ไม่บังคับ
+#   BACKUP_TARGET              dev (ค่าเริ่มต้น) | prod — ต้องตรงกับ PGUSER/bucket/โฟลเดอร์ Drive ทั้งชุด (P7-08)
 #   HC_PING_URL                ว่าง = ไม่ ping (ทดสอบในเครื่อง)
 #   HC_STATE_FILE              ไฟล์บอก workflow ว่าส่ง ping ผล (success/fail) แล้ว
 #   SUPABASE_URL SUPABASE_PING_KEY   ข้อ 9: เรียก public.ping() ผ่าน Data API (secret key แยกของงานนี้)
@@ -21,10 +23,15 @@ set -Eeuo pipefail
 umask 077
 
 # ---------------------------------------------------------------------------
-# ตัวกัน: จนถึงระยะ 7 รันได้กับ kemi-dev เท่านั้น (ค่าเขียนตายในสคริปต์ ไม่รับจาก env)
+# ตัวกัน: รันได้เฉพาะชุด dev หรือ prod ที่เขียนตายในสคริปต์ (ไม่รับ ref/bucket/โฟลเดอร์จาก env)
+# ชุดต้องตรงกันทั้ง ref + bucket + โฟลเดอร์ Drive — ห้ามสำรอง dev กับ prod ปนกัน (BUILD_PLAN 10 ระยะ 7)
 # ---------------------------------------------------------------------------
 readonly DEV_REF=igchlnmxbghsigyziomk
 readonly DEV_BUCKET=kemi-dev-files
+readonly DEV_DRIVE=kemi-backup
+readonly PROD_REF=fcwbomasayvlubijsssh
+readonly PROD_BUCKET=kemi-files
+readonly PROD_DRIVE=kemi-backup-prod
 readonly KEY_RE='^files/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$'
 
 STEP=init
@@ -50,13 +57,37 @@ die() {
 # ---------------------------------------------------------------------------
 # ฟังก์ชันล้วน (ทดสอบได้โดยไม่ต่ออะไร — ops/backup-test/unit.sh)
 # ---------------------------------------------------------------------------
-# อนุญาตเป้าหมาย: ผู้ใช้ pooler ต้องเป็น postgres.<ref ของ kemi-dev>; ฐานข้อมูลในเครื่องได้เฉพาะเมื่อตั้ง BACKUP_ALLOW_LOCAL=1
-target_allowed() { # $1 PGUSER $2 PGHOST $3 bucket $4 allow_local
-  local user=$1 host=$2 bucket=$3 allow_local=${4:-}
-  [ "$bucket" = "$DEV_BUCKET" ] || return 1
-  [ "$user" = "postgres.$DEV_REF" ] && return 0
-  [ "$allow_local" = 1 ] && [[ "$host" =~ ^(localhost|127\.0\.0\.1|host\.docker\.internal)$ ]] && return 0
+# ค่าของเป้าหมาย: target_value dev|prod ref|bucket|drive → ค่าที่เขียนตาย (เป้าหมายอื่น = ล้ม)
+target_value() { # $1 target $2 field
+  case "$1:$2" in
+    dev:ref) printf '%s' "$DEV_REF" ;;
+    dev:bucket) printf '%s' "$DEV_BUCKET" ;;
+    dev:drive) printf '%s' "$DEV_DRIVE" ;;
+    prod:ref) printf '%s' "$PROD_REF" ;;
+    prod:bucket) printf '%s' "$PROD_BUCKET" ;;
+    prod:drive) printf '%s' "$PROD_DRIVE" ;;
+    *) return 1 ;;
+  esac
+}
+
+# อนุญาตเป้าหมาย: bucket และผู้ใช้ pooler (postgres.<ref>) ต้องเป็นของเป้าหมายเดียวกัน
+# ฐานข้อมูลในเครื่องได้เฉพาะ dev เมื่อตั้ง BACKUP_ALLOW_LOCAL=1 (ops/backup-test)
+target_allowed() { # $1 PGUSER $2 PGHOST $3 bucket $4 allow_local $5 target (dev ถ้าว่าง)
+  local user=$1 host=$2 bucket=$3 allow_local=${4:-} target=${5:-dev} ref want_bucket
+  ref=$(target_value "$target" ref) || return 1
+  want_bucket=$(target_value "$target" bucket) || return 1
+  [ "$bucket" = "$want_bucket" ] || return 1
+  [ "$user" = "postgres.$ref" ] && return 0
+  [ "$target" = dev ] && [ "$allow_local" = 1 ] &&
+    [[ "$host" =~ ^(localhost|127\.0\.0\.1|host\.docker\.internal)$ ]] && return 0
   return 1
+}
+
+# remote gcrypt ต้องครอบโฟลเดอร์ Drive ของเป้าหมาย (gdrive:kemi-backup / gdrive:kemi-backup-prod) — กันใส่ config ผิดชุด
+crypt_remote_ok() { # $1 ค่า remote ของ gcrypt $2 target
+  local drive
+  drive=$(target_value "$2" drive) || return 1
+  [[ "$1" =~ ^[A-Za-z0-9_-]+:$drive/?$ ]]
 }
 
 key_ok() { [[ "$1" =~ $KEY_RE ]] && [[ "$1" != *..* ]]; }
@@ -94,12 +125,15 @@ export PGPORT=${PGPORT:-5432} PGDATABASE=${PGDATABASE:-postgres} PGCLIENTENCODIN
 export PGAPPNAME=kemi-backup PGCONNECT_TIMEOUT=20
 
 STEP=guard
-target_allowed "$PGUSER" "$PGHOST" "$B2_BUCKET" "${BACKUP_ALLOW_LOCAL:-}" ||
-  die "target_not_allowed: รันได้เฉพาะ kemi-dev ($DEV_REF / $DEV_BUCKET) จนถึงระยะ 7"
+TARGET=${BACKUP_TARGET:-dev}
+target_value "$TARGET" ref >/dev/null || die "target_not_allowed: BACKUP_TARGET ต้องเป็น dev หรือ prod"
+target_allowed "$PGUSER" "$PGHOST" "$B2_BUCKET" "${BACKUP_ALLOW_LOCAL:-}" "$TARGET" ||
+  die "target_not_allowed: PGUSER/bucket ไม่ตรงชุด $TARGET ($(target_value "$TARGET" ref) / $(target_value "$TARGET" bucket))"
 if [ -n "${SUPABASE_URL:-}" ] && [ "${BACKUP_ALLOW_LOCAL:-}" != 1 ] &&
-  [ "$SUPABASE_URL" != "https://$DEV_REF.supabase.co" ]; then
-  die "target_not_allowed: SUPABASE_URL ไม่ใช่ kemi-dev"
+  [ "$SUPABASE_URL" != "https://$(target_value "$TARGET" ref).supabase.co" ]; then
+  die "target_not_allowed: SUPABASE_URL ไม่ใช่โปรเจกต์ของ $TARGET"
 fi
+log "เป้าหมาย $TARGET"
 
 PSQL=(psql -X -q -A -t -v ON_ERROR_STOP=1)
 PG_DUMP=pg_dump
@@ -231,6 +265,10 @@ B2_KEY_ID=$("${RCLONE[@]}" config dump | jq -r '.b2ro.account // empty')
 B2_APP_KEY=$("${RCLONE[@]}" config dump | jq -r '.b2ro.key // empty')
 [ -n "$B2_KEY_ID" ] && [ -n "$B2_APP_KEY" ] || die 'rclone config ไม่มี remote b2ro (account/key)'
 [ "$("${RCLONE[@]}" config dump | jq -r '.gcrypt.type // empty')" = crypt ] || die 'rclone config ไม่มี remote gcrypt แบบ crypt'
+if [ "${BACKUP_ALLOW_LOCAL:-}" != 1 ]; then
+  crypt_remote_ok "$("${RCLONE[@]}" config dump | jq -r '.gcrypt.remote // empty')" "$TARGET" ||
+    die "target_not_allowed: remote gcrypt ไม่ได้ครอบ gdrive:$(target_value "$TARGET" drive) ของ $TARGET (rclone config ผิดชุด)"
+fi
 log "pg_dump $dump_major / server $server_major · $(rclone version | sed -n 1p)"
 
 # ---------------------------------------------------------------------------
@@ -269,6 +307,12 @@ MANIFEST_JSON=$(sa_query "select private.backup_record_manifest('$RUN_ID');") ||
 FILE_COUNT=$(jq -r '.file_count' <<<"$MANIFEST_JSON")
 TOTAL_BYTES=$(jq -r '.total_bytes' <<<"$MANIFEST_JSON")
 log "snapshot $SNAPSHOT · manifest $FILE_COUNT ไฟล์ $TOTAL_BYTES ไบต์"
+# จำนวนแถวทุกตารางที่อยู่ใน data.dump ณ snapshot เดียวกัน (P7-02a → P7-08) — ใช้เทียบตอนกู้คืนแบบตรงตัว
+# ไม่นับตารางที่ไม่สำรองข้อมูล (backup_manifests, backup_run_files) · ผลเป็น JSON บรรทัดเดียว ไม่มีข้อมูลนักเรียน
+TABLE_ROWS=$(sa_query "select coalesce(jsonb_object_agg(t.name, t.n order by t.name), '{}') from (select n.nspname || '.' || c.relname as name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', n.nspname, c.relname), false, true, '')))[1]::text::bigint as n from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid = c.relnamespace where n.nspname in ('public', 'private') and c.relkind in ('r', 'p') and n.nspname || '.' || c.relname not in ('private.backup_manifests', 'private.backup_run_files')) t;") ||
+  die 'นับแถวตารางไม่ได้'
+jq -e 'type == "object" and length > 0' <<<"$TABLE_ROWS" >/dev/null || die 'จำนวนแถวตารางไม่ถูกต้อง'
+log "นับแถว $(jq 'length' <<<"$TABLE_ROWS") ตาราง"
 
 STEP=pg_dump
 dump_args=(--snapshot="$SNAPSHOT" --schema=public --schema=private --format=custom --no-password)
@@ -344,9 +388,11 @@ log "ความครบ: ไฟล์ใน manifest $FILE_COUNT ไฟล์
 STEP=upload_run
 jq -n --arg run "$RUN_ID" --arg stamp "$STAMP" --arg snapshot "$SNAPSHOT" --argjson files "$FILE_COUNT" \
   --argjson bytes "$TOTAL_BYTES" --argjson new "$NEW_COUNT" --argjson server "$server_major" \
-  '{run_id: $run, stamp: $stamp, snapshot: $snapshot, file_count: $files, total_bytes: $bytes,
+  --arg target "$TARGET" --argjson rows "$TABLE_ROWS" \
+  '{run_id: $run, stamp: $stamp, target: $target, snapshot: $snapshot, file_count: $files, total_bytes: $bytes,
     new_file_count: $new, server_major: $server, schemas: ["public", "private"],
-    excluded_table_data: ["private.backup_manifests", "private.backup_run_files"]}' >"$WORK/run/meta.json"
+    excluded_table_data: ["private.backup_manifests", "private.backup_run_files"],
+    table_rows: $rows}' >"$WORK/run/meta.json"
 RUN_UPLOADED=1
 "${RCLONE[@]}" copy "$WORK/run" "gcrypt:runs/$STAMP"
 "${RCLONE[@]}" cryptcheck "$WORK/run" "gcrypt:runs/$STAMP" --one-way

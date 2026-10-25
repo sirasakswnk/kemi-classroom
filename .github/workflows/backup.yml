@@ -1,12 +1,15 @@
 # สำรองข้อมูลวันละ 2 รอบ — TECHNICAL_BUILD_PLAN ส่วน 8 (ขั้นตอน backup.yml), TECHNICAL_DESIGN ส่วน 12
-# P3-11: แบบพื้นฐานกับ kemi-dev เท่านั้น (ops/backup.sh กันไว้จนถึงระยะ 7) — ยังไม่มี job guard และ restore-test.yml (P7-01)
-# ตารางเวลาทำงานเฉพาะบน branch หลัก (main) — ก่อน merge ระยะ 3 รันได้ด้วยมือ (workflow_dispatch) เท่านั้น
+# P3-11: แบบพื้นฐาน · P7-08: เลือกเป้าหมาย dev/prod — ยังไม่มี job guard และ restore-test.yml (P7-01/P7-02 ภายในเดือนแรก)
+# ตารางเวลาทำงานเฉพาะบน branch หลัก (main)
 #
-# GitHub Secrets (ผู้ใช้ใส่เองทางหน้าเว็บ ดู ops/backup-setup.md):
-#   BACKUP_DB_PASSWORD   รหัสผ่านฐานข้อมูลของ kemi-dev (ต่อผ่าน Session pooler)
-#   RCLONE_CONFIG        เนื้อไฟล์ rclone.conf (remote gdrive, gcrypt, b2ro)
-#   HC_PING_URL          URL ping ของ check kemi-backup ใน Healthchecks.io
-#   SUPABASE_PING_KEY    secret key แยกของงานนี้ สำหรับเรียก public.ping() ผ่าน Data API (ไม่บังคับ)
+# เป้าหมาย: repository variable BACKUP_TARGET (Settings → Secrets and variables → Actions → Variables) = dev | prod
+#   ไม่ตั้ง = dev · สลับไป prod ครั้งเดียวที่ตัวแปรนี้ → รอบตามตารางสำรอง prod อย่างเดียว (หยุดสำรอง dev ไปในตัว)
+#   รันด้วยมือเลือก target ได้ (auto = ตามตัวแปร) — ops/backup.sh ตรวจซ้ำว่า ref + bucket + โฟลเดอร์ Drive เป็นชุดเดียวกัน
+#
+# GitHub Secrets (ผู้ใช้ใส่เองทางหน้าเว็บ — dev: ops/backup-setup.md · prod: ops/prod-setup.md ข้อ 8):
+#   dev:  BACKUP_DB_PASSWORD       RCLONE_CONFIG       HC_PING_URL       SUPABASE_PING_KEY (ไม่บังคับ)
+#   prod: PROD_BACKUP_DB_PASSWORD  PROD_RCLONE_CONFIG  PROD_HC_PING_URL  PROD_SUPABASE_PING_KEY (ไม่บังคับ)
+#   RCLONE_CONFIG = เนื้อไฟล์ rclone.conf (remote gdrive, gcrypt ครอบ gdrive:kemi-backup / gdrive:kemi-backup-prod, b2ro)
 name: backup
 
 on:
@@ -15,6 +18,11 @@ on:
     - cron: '30 7 * * *' # 14:30 น. เวลาไทย
   workflow_dispatch:
     inputs:
+      target:
+        description: 'เป้าหมาย (auto = ตาม repository variable BACKUP_TARGET, ไม่ตั้ง = dev)'
+        type: choice
+        options: [auto, dev, prod]
+        default: auto
       simulate_failure:
         description: 'ล้มโดยตั้งใจหลังเริ่มรอบ (ทดสอบอีเมลของ Healthchecks และการปลดล็อก)'
         type: boolean
@@ -29,16 +37,14 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # ค่าที่ไม่ใช่ความลับของ kemi-dev — สคริปต์ตรวจซ้ำว่าเป็น kemi-dev (project ref / bucket เขียนตายใน ops/backup.sh)
+  BACKUP_TARGET: ${{ (inputs.target && inputs.target != 'auto') && inputs.target || vars.BACKUP_TARGET || 'dev' }}
+  # ค่าที่ไม่ใช่ความลับที่เหมือนกันทั้งสองเป้าหมาย (ref/bucket ต่อเป้าหมายตั้งในขั้น “ค่าของเป้าหมาย”)
   PGHOST: aws-0-ap-southeast-1.pooler.supabase.com
   PGPORT: '5432'
-  PGUSER: postgres.igchlnmxbghsigyziomk
   PGDATABASE: postgres
   PGSSLMODE: require
-  B2_BUCKET: kemi-dev-files
   B2_S3_ENDPOINT: https://s3.eu-central-003.backblazeb2.com
   B2_REGION: eu-central-003
-  SUPABASE_URL: https://igchlnmxbghsigyziomk.supabase.co
   PG_MAJOR: '17'
   # ห้ามตั้งชื่อขึ้นต้น RCLONE_ ที่ตรงกับแฟล็ก (rclone อ่าน RCLONE_VERSION เป็น --version)
   RCLONE_PKG_VERSION: v1.75.1
@@ -50,23 +56,47 @@ jobs:
     # ต่ำกว่าอายุธง 2 ชม. มาก — รอบปกติไม่กี่นาที
     timeout-minutes: 45
     steps:
-      - name: ตรวจว่ามี secret ครบ
-        env:
-          BACKUP_DB_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
-          RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
-          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+      # ref/bucket ของเป้าหมาย (ค่าเดียวกับที่ ops/backup.sh เขียนตาย) — เป้าหมายอื่นหยุดทันที
+      - name: ค่าของเป้าหมาย
         run: |
+          case "$BACKUP_TARGET" in
+            dev) ref=igchlnmxbghsigyziomk bucket=kemi-dev-files ;;
+            prod) ref=fcwbomasayvlubijsssh bucket=kemi-files ;;
+            *) echo "::error::BACKUP_TARGET ต้องเป็น dev หรือ prod"; exit 1 ;;
+          esac
+          {
+            echo "PGUSER=postgres.$ref"
+            echo "B2_BUCKET=$bucket"
+            echo "SUPABASE_URL=https://$ref.supabase.co"
+          } >>"$GITHUB_ENV"
+          echo "เป้าหมาย $BACKUP_TARGET ($ref / $bucket)"
+
+      - name: ตรวจว่ามี secret ของเป้าหมายครบ
+        env:
+          DEV_DB: ${{ secrets.BACKUP_DB_PASSWORD }}
+          DEV_RCLONE: ${{ secrets.RCLONE_CONFIG }}
+          DEV_HC: ${{ secrets.HC_PING_URL }}
+          PROD_DB: ${{ secrets.PROD_BACKUP_DB_PASSWORD }}
+          PROD_RCLONE: ${{ secrets.PROD_RCLONE_CONFIG }}
+          PROD_HC: ${{ secrets.PROD_HC_PING_URL }}
+        run: |
+          if [ "$BACKUP_TARGET" = prod ]; then
+            set -- PROD_BACKUP_DB_PASSWORD "$PROD_DB" PROD_RCLONE_CONFIG "$PROD_RCLONE" PROD_HC_PING_URL "$PROD_HC"
+          else
+            set -- BACKUP_DB_PASSWORD "$DEV_DB" RCLONE_CONFIG "$DEV_RCLONE" HC_PING_URL "$DEV_HC"
+          fi
           missing=''
-          [ -n "$BACKUP_DB_PASSWORD" ] || missing="$missing BACKUP_DB_PASSWORD"
-          [ -n "$RCLONE_CONFIG" ] || missing="$missing RCLONE_CONFIG"
-          [ -n "$HC_PING_URL" ] || missing="$missing HC_PING_URL"
-          if [ -n "$missing" ]; then echo "::error::ยังไม่ได้ใส่ GitHub Secrets:$missing"; exit 1; fi
+          while [ $# -gt 0 ]; do [ -n "$2" ] || missing="$missing $1"; shift 2; done
+          if [ -n "$missing" ]; then echo "::error::ยังไม่ได้ใส่ GitHub Secrets ($BACKUP_TARGET):$missing"; exit 1; fi
 
       # ข้อ 1: ping /start ก่อนทำอะไร (Healthchecks วัดเวลารอบ และรู้ว่างานเริ่มแล้ว)
       - name: ping start
         env:
-          HC_PING_URL: ${{ secrets.HC_PING_URL }}
-        run: curl -fsS -m 10 --retry 3 -o /dev/null "$HC_PING_URL/start" || echo '::warning::ส่ง ping /start ไม่สำเร็จ'
+          DEV_HC: ${{ secrets.HC_PING_URL }}
+          PROD_HC: ${{ secrets.PROD_HC_PING_URL }}
+        run: |
+          if [ "$BACKUP_TARGET" = prod ]; then url=$PROD_HC; else url=$DEV_HC; fi
+          curl -fsS -m 10 --retry 3 -o /dev/null "$url/start" || echo '::warning::ส่ง ping /start ไม่สำเร็จ'
 
       - uses: actions/checkout@v7
 
@@ -84,23 +114,37 @@ jobs:
           rclone version | sed -n 1p
           aws --version
 
+      # secret ของเป้าหมายเดียวเข้า ops/backup.sh (ชุดอื่นถูก unset ก่อนเรียกสคริปต์)
       - name: สำรองข้อมูล (ops/backup.sh)
         env:
-          PGPASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
-          RCLONE_CONFIG_CONTENT: ${{ secrets.RCLONE_CONFIG }}
-          HC_PING_URL: ${{ secrets.HC_PING_URL }}
-          SUPABASE_PING_KEY: ${{ secrets.SUPABASE_PING_KEY }}
+          DEV_DB: ${{ secrets.BACKUP_DB_PASSWORD }}
+          DEV_RCLONE: ${{ secrets.RCLONE_CONFIG }}
+          DEV_HC: ${{ secrets.HC_PING_URL }}
+          DEV_PING: ${{ secrets.SUPABASE_PING_KEY }}
+          PROD_DB: ${{ secrets.PROD_BACKUP_DB_PASSWORD }}
+          PROD_RCLONE: ${{ secrets.PROD_RCLONE_CONFIG }}
+          PROD_HC: ${{ secrets.PROD_HC_PING_URL }}
+          PROD_PING: ${{ secrets.PROD_SUPABASE_PING_KEY }}
           HC_STATE_FILE: ${{ runner.temp }}/hc-state
           SIMULATE_FAILURE: ${{ inputs.simulate_failure }}
-        run: PG_BIN="/usr/lib/postgresql/$PG_MAJOR/bin" bash ops/backup.sh
+        run: |
+          if [ "$BACKUP_TARGET" = prod ]; then
+            export PGPASSWORD=$PROD_DB RCLONE_CONFIG_CONTENT=$PROD_RCLONE HC_PING_URL=$PROD_HC SUPABASE_PING_KEY=$PROD_PING
+          else
+            export PGPASSWORD=$DEV_DB RCLONE_CONFIG_CONTENT=$DEV_RCLONE HC_PING_URL=$DEV_HC SUPABASE_PING_KEY=$DEV_PING
+          fi
+          unset DEV_DB DEV_RCLONE DEV_HC DEV_PING PROD_DB PROD_RCLONE PROD_HC PROD_PING
+          PG_BIN="/usr/lib/postgresql/$PG_MAJOR/bin" bash ops/backup.sh
 
       # ล้มก่อนถึงสคริปต์ (ติดตั้งไม่ผ่าน) หรือถูกยกเลิก/หมดเวลา: ส่ง /fail ถ้าสคริปต์ยังไม่ได้ส่งผล
       - name: ping fail (สำรอง)
         if: ${{ failure() || cancelled() }}
         env:
-          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+          DEV_HC: ${{ secrets.HC_PING_URL }}
+          PROD_HC: ${{ secrets.PROD_HC_PING_URL }}
           HC_STATE_FILE: ${{ runner.temp }}/hc-state
         run: |
-          if [ -n "$HC_PING_URL" ] && [ ! -s "$HC_STATE_FILE" ]; then
-            curl -fsS -m 10 --retry 3 -o /dev/null --data-raw "kemi-backup ล้มนอกสคริปต์ (run ${{ github.run_id }})" "$HC_PING_URL/fail" || true
+          if [ "$BACKUP_TARGET" = prod ]; then url=$PROD_HC; else url=$DEV_HC; fi
+          if [ -n "$url" ] && [ ! -s "$HC_STATE_FILE" ]; then
+            curl -fsS -m 10 --retry 3 -o /dev/null --data-raw "kemi-backup ($BACKUP_TARGET) ล้มนอกสคริปต์ (run ${{ github.run_id }})" "$url/fail" || true
           fi

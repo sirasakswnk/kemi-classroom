@@ -116,6 +116,11 @@ ok 'ชื่อจุดกู้คืน = dump_name' eq "$(q "select dump_na
 mkdir -p /tmp/restore && rc copy "gcrypt:runs/$stamp1" /tmp/restore
 ok 'มี schema/data dump + manifest + meta' eq "$(find /tmp/restore -type f -printf '%f\n' | sort | tr '\n' ' ')" 'data.dump manifest.csv meta.json schema.dump '
 ok 'manifest.csv 3 ไฟล์ + หัว' eq "$(wc -l </tmp/restore/manifest.csv)" 4
+# P7-08: meta.json บอกเป้าหมายและจำนวนแถวต่อตาราง ณ snapshot (ไม่รวมตาราง manifest ที่ไม่สำรองข้อมูล)
+ok 'meta.json เป้าหมาย dev' eq "$(jq -r '.target' /tmp/restore/meta.json)" dev
+ok 'meta.json นับ assets ตรงฐานข้อมูล' eq "$(jq -r '.table_rows["public.assets"]' /tmp/restore/meta.json)" "$(q 'select count(*) from public.assets')"
+ok 'meta.json ไม่นับตาราง manifest' eq "$(jq -r '.table_rows | has("private.backup_manifests") or has("private.backup_run_files")' /tmp/restore/meta.json)" false
+ok 'meta.json มีตาราง private' eq "$(jq -r '.table_rows | has("private.jobs")' /tmp/restore/meta.json)" true
 ok 'data dump มีข้อมูล assets' bash -c "pg_restore -l /tmp/restore/data.dump | grep -q 'TABLE DATA public assets'"
 ok 'data dump ไม่มีข้อมูลตาราง manifest 2 ตาราง' bash -c "! pg_restore -l /tmp/restore/data.dump | grep -E 'TABLE DATA private (backup_manifests|backup_run_files)'"
 ok 'schema dump มีตาราง private.backup_manifests' bash -c "pg_restore -l /tmp/restore/schema.dump | grep -q 'TABLE private backup_manifests'"
@@ -162,6 +167,11 @@ q "select private.backup_finish((select id from public.backup_runs where status 
 PGHOST=aws-0-ap-southeast-1.pooler.supabase.com PGUSER=postgres.abcdefghijklmnopqrst run_backup 'รอบเจ็ด: project อื่น → ตัวกัน'
 ok 'ล้มเหลวก่อนต่อฐานข้อมูล' bash -c "grep -q target_not_allowed /tmp/run-รอบเจ็ด*.log"
 ok 'ไม่สร้างรอบใหม่' eq "$(q "select count(*) from public.backup_runs where status = 'running'")" 0
+
+# P7-08: ตั้งเป้าหมาย prod แต่ค่าเป็นชุด dev/ในเครื่อง → ตัวกันก่อนต่อฐานข้อมูล
+BACKUP_TARGET=prod run_backup 'รอบเจ็ดบี: prod กับค่าชุด dev → ตัวกัน'
+ok 'prod ผิดชุดล้มที่ตัวกัน' bash -c "grep -q target_not_allowed /tmp/run-รอบเจ็ดบี*.log"
+ok 'prod ผิดชุดไม่สร้างรอบ' eq "$(q "select count(*) from public.backup_runs where status = 'running'")" 0
 
 # ล้าง: a1 ออกจากระบบหลักแล้วมีรอบสำเร็จใหม่ → ย้อนเวลารอบเก่า 10 วัน → รอบถัดไปลบ a1 + จุดกู้คืนเก่าจาก Drive
 q "update public.assets set status = 'deleting', delete_requested_at = clock_timestamp() where final_key = 'files/e2e/a1.pdf'"

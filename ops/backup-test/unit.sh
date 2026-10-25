@@ -27,6 +27,20 @@ ok 'ในเครื่องไม่เปิดธงไม่ผ่าน'
 ok 'ในเครื่องเปิดธงผ่าน' target_allowed postgres host.docker.internal kemi-dev-files 1
 ok 'ชื่อ host คล้าย localhost ไม่ผ่าน' not target_allowed postgres localhost.evil.example kemi-dev-files 1
 
+# P7-08: ชุด prod ต้องตรงทั้ง ref + bucket · ห้ามผสมชุด · ในเครื่องได้เฉพาะ dev · เป้าหมายอื่นไม่ผ่าน
+POOL=aws-0-ap-southeast-1.pooler.supabase.com
+ok 'prod ครบชุดผ่าน' target_allowed postgres.fcwbomasayvlubijsssh "$POOL" kemi-files '' prod
+ok 'prod + bucket ของ dev ไม่ผ่าน' not target_allowed postgres.fcwbomasayvlubijsssh "$POOL" kemi-dev-files '' prod
+ok 'ref ของ dev + bucket prod ในโหมด prod ไม่ผ่าน' not target_allowed postgres.igchlnmxbghsigyziomk "$POOL" kemi-files '' prod
+ok 'ref ของ prod ในโหมด dev ไม่ผ่าน' not target_allowed postgres.fcwbomasayvlubijsssh "$POOL" kemi-dev-files '' dev
+ok 'prod ในเครื่องแม้เปิดธงไม่ผ่าน' not target_allowed postgres host.docker.internal kemi-files 1 prod
+ok 'เป้าหมายอื่นไม่ผ่าน' not target_allowed postgres.igchlnmxbghsigyziomk "$POOL" kemi-dev-files '' staging
+ok 'gcrypt ของ dev ครอบ kemi-backup' crypt_remote_ok gdrive:kemi-backup dev
+ok 'gcrypt ของ prod ครอบ kemi-backup-prod' crypt_remote_ok gdrive:kemi-backup-prod prod
+ok 'config dev ใช้กับ prod ไม่ได้' not crypt_remote_ok gdrive:kemi-backup prod
+ok 'config prod ใช้กับ dev ไม่ได้' not crypt_remote_ok gdrive:kemi-backup-prod dev
+ok 'โฟลเดอร์ย่อยอื่นไม่ผ่าน' not crypt_remote_ok gdrive:kemi-backup/old dev
+
 # key ที่ส่งให้ rclone/aws
 ok 'key ปกติ' key_ok files/0b8e2c1a-1f7e-4c4a-9a51-6e0f6b8f0d11.pdf
 ok 'key ซ้อนโฟลเดอร์' key_ok files/t11/a1.jpg
