@@ -321,7 +321,20 @@ export default function WorkStatusPage() {
               {view.rows.map((r) => (
                 <li key={r.student_id} className={styles.srow}>
                   <span className={styles.no}>{r.roll_number ?? '–'}</span>
-                  <span className={styles.nm}>{r.display_name}</span>
+                  <span className={styles.nm}>
+                    {r.submission_id ? (
+                      r.display_name
+                    ) : (
+                      // ยังไม่ส่ง: ชื่อเปิดหน้าของนักเรียนคนนั้นพร้อมช่องความคิดเห็น (UX 9)
+                      <Link
+                        to={`/t/w/${p.id}/u/${r.student_id}`}
+                        className={styles.nmLink}
+                        aria-label={th.review.viewer.threadAria(r.display_name)}
+                      >
+                        {r.display_name}
+                      </Link>
+                    )}
+                  </span>
                   <span className={styles.st}>
                     {rowBadges(r).map((b) => (
                       <Chip key={b.label} tone={b.tone}>

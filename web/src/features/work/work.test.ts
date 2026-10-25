@@ -126,10 +126,13 @@ describe('เรียงและกรองงาน (UX 5)', () => {
     expect(isPending(closed)).toBe(false)
     expect(dueSoon([done, a, closed, b], 1).map((r) => r.post_id)).toEqual(['b'])
   })
-  it('ใกล้กำหนดส่งว่าง: ห้องยังไม่มีงาน ≠ ส่งครบแล้ว', () => {
+  it('ใกล้กำหนดส่งว่าง: ห้องยังไม่มีงาน / ส่งครบจริง / ที่ยังไม่ส่งถูกปิดรับหมด', () => {
     expect(dueEmpty([])).toBe('noWork')
     expect(dueEmpty([done])).toBe('allSent')
+    expect(dueEmpty([done, closed])).toBe('noneOpen')
+    expect(dueEmpty([closed])).toBe('noneOpen')
     expect(th.work.noWorkTitle).toBe('ยังไม่มีงานในชั้นเรียนนี้')
+    expect(th.work.noneOpenTitle).toBe('ไม่มีงานที่ส่งได้ตอนนี้')
   })
   it('ป้ายเวลา: เลยกำหนด / เหลือไม่ถึง 24 ชม. / ไม่มี', () => {
     const due = '2026-11-10T13:00:00Z'

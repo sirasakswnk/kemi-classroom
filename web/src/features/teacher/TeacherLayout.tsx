@@ -23,6 +23,7 @@ import { TeacherContext, useTeacher, type TeacherContextValue } from './teacherC
 import { initialOf as initialOfTeacher } from '../../lib/initial'
 import styles from './TeacherLayout.module.css'
 import { TeacherStorageBar } from '../storage/Storage'
+import { BellButton } from '../notifications/BellButton'
 
 // โครงหน้าครู (แบบ v2 .desk): เมนูข้างตั้งแต่ 900 px ต่ำกว่านั้นเป็นแถบเลื่อนด้านบน (UX 13) + แถบเตือนโหมดผู้ดูแล (L6)
 // เข้าได้เฉพาะครู หรือผู้ดูแลที่กดเข้าโหมดผู้ดูแลแล้ว
@@ -159,7 +160,7 @@ export interface Crumb {
 
 // แถบบนของแต่ละหน้า (แบบ v2 tTop): ตำแหน่ง + ชื่อผู้ใช้ + ออกจากระบบ แล้วตามด้วยเนื้อหาหน้า
 export function TeacherPage({ crumbs, children }: { crumbs: Crumb[]; children: ReactNode }) {
-  const { displayName } = useTeacher()
+  const { displayName, adminMode } = useTeacher()
   return (
     <>
       <header className={styles.top}>
@@ -171,18 +172,22 @@ export function TeacherPage({ crumbs, children }: { crumbs: Crumb[]; children: R
             </Fragment>
           ))}
         </nav>
-        <Link
-          to="/t/me"
-          className={styles.who}
-          aria-label={`${th.teacherAccount.title} · ${displayName}`}
-        >
-          <span className={styles.avatar} aria-hidden="true">
-            {initialOfTeacher(displayName)}
-          </span>
-          <span className={styles.whoName} aria-hidden="true">
-            {displayName}
-          </span>
-        </Link>
+        <div className={styles.tools}>
+          {/* กระดิ่ง T11 เป็นของครู — โหมดผู้ดูแลไม่มีแจ้งเตือนของครูคนนั้น */}
+          {!adminMode && <BellButton to="/t/notifications" />}
+          <Link
+            to="/t/me"
+            className={styles.who}
+            aria-label={`${th.teacherAccount.title} · ${displayName}`}
+          >
+            <span className={styles.avatar} aria-hidden="true">
+              {initialOfTeacher(displayName)}
+            </span>
+            <span className={styles.whoName} aria-hidden="true">
+              {displayName}
+            </span>
+          </Link>
+        </div>
       </header>
       <main className={styles.body}>
         <TeacherStorageBar />

@@ -246,6 +246,7 @@ export type Database = {
       b2_daily_usage: {
         Row: {
           class_b_requests: number
+          class_c_requests: number
           copy_bytes: number
           day: string
           download_bytes: number
@@ -254,6 +255,7 @@ export type Database = {
         }
         Insert: {
           class_b_requests?: number
+          class_c_requests?: number
           copy_bytes?: number
           day: string
           download_bytes?: number
@@ -262,6 +264,7 @@ export type Database = {
         }
         Update: {
           class_b_requests?: number
+          class_c_requests?: number
           copy_bytes?: number
           day?: string
           download_bytes?: number
@@ -568,6 +571,87 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          level: number | null
+          post_id: string | null
+          read_at: string | null
+          recipient_student_id: string | null
+          recipient_teacher_id: string | null
+          subject_student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind: string
+          level?: number | null
+          post_id?: string | null
+          read_at?: string | null
+          recipient_student_id?: string | null
+          recipient_teacher_id?: string | null
+          subject_student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          level?: number | null
+          post_id?: string | null
+          read_at?: string | null
+          recipient_student_id?: string | null
+          recipient_teacher_id?: string | null
+          subject_student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: false
+            referencedRelation: 'comments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_post_id_fkey'
+            columns: ['post_id']
+            isOneToOne: false
+            referencedRelation: 'posts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_recipient_student_id_fkey'
+            columns: ['recipient_student_id']
+            isOneToOne: false
+            referencedRelation: 'students'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_recipient_teacher_id_fkey'
+            columns: ['recipient_teacher_id']
+            isOneToOne: false
+            referencedRelation: 'teachers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_subject_student_id_fkey'
+            columns: ['subject_student_id']
+            isOneToOne: false
+            referencedRelation: 'students'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       owned_charms: {
         Row: {
           charm_id: string
@@ -662,6 +746,76 @@ export type Database = {
           weight?: number
         }
         Relationships: []
+      }
+      retention_requests: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by_account_id: string | null
+          confirmed_early: boolean | null
+          created_at: string
+          deleted_at: string | null
+          downloaded_at: string
+          downloaded_by_account_id: string | null
+          downloaded_bytes: number
+          downloaded_count: number
+          downloaded_fingerprint: string
+          scope: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by_account_id?: string | null
+          confirmed_early?: boolean | null
+          created_at?: string
+          deleted_at?: string | null
+          downloaded_at: string
+          downloaded_by_account_id?: string | null
+          downloaded_bytes: number
+          downloaded_count: number
+          downloaded_fingerprint: string
+          scope: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by_account_id?: string | null
+          confirmed_early?: boolean | null
+          created_at?: string
+          deleted_at?: string | null
+          downloaded_at?: string
+          downloaded_by_account_id?: string | null
+          downloaded_bytes?: number
+          downloaded_count?: number
+          downloaded_fingerprint?: string
+          scope?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'retention_requests_confirmed_by_account_id_fkey'
+            columns: ['confirmed_by_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'retention_requests_downloaded_by_account_id_fkey'
+            columns: ['downloaded_by_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'retention_requests_term_id_fkey'
+            columns: ['term_id']
+            isOneToOne: false
+            referencedRelation: 'terms'
+            referencedColumns: ['id']
+          },
+        ]
       }
       revision_permissions: {
         Row: {
@@ -791,14 +945,75 @@ export type Database = {
           },
         ]
       }
+      storage_reconciliations: {
+        Row: {
+          b2_bytes: number
+          b2_versions: number
+          breakdown: Json
+          db_assets_bytes: number
+          db_reserved_bytes: number
+          diff_bytes: number
+          exceeds_threshold: boolean
+          finished_at: string
+          id: number
+          job_id: number | null
+          offset_after_bytes: number
+          offset_before_bytes: number
+          requests: number
+          runs: number
+          started_at: string
+        }
+        Insert: {
+          b2_bytes: number
+          b2_versions: number
+          breakdown: Json
+          db_assets_bytes: number
+          db_reserved_bytes: number
+          diff_bytes: number
+          exceeds_threshold: boolean
+          finished_at?: string
+          id?: never
+          job_id?: number | null
+          offset_after_bytes: number
+          offset_before_bytes: number
+          requests: number
+          runs: number
+          started_at: string
+        }
+        Update: {
+          b2_bytes?: number
+          b2_versions?: number
+          breakdown?: Json
+          db_assets_bytes?: number
+          db_reserved_bytes?: number
+          diff_bytes?: number
+          exceeds_threshold?: boolean
+          finished_at?: string
+          id?: never
+          job_id?: number | null
+          offset_after_bytes?: number
+          offset_before_bytes?: number
+          requests?: number
+          runs?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
       storage_settings: {
         Row: {
           admin_warn_pct: number
           daily_view_budget_bytes: number
           daily_view_budget_requests: number
           hard_stop_margin_bytes: number
+          notified_level: number
           quota_bytes: number
+          reconcile_daily_budget_requests: number
+          reconcile_run_max_requests: number
+          reconcile_warn_bytes: number
+          reconcile_warn_pct: number
+          reconciled_at: string | null
           singleton: boolean
+          storage_offset_bytes: number
           teacher_warn_pct: number
           updated_at: string
         }
@@ -807,8 +1022,15 @@ export type Database = {
           daily_view_budget_bytes?: number
           daily_view_budget_requests?: number
           hard_stop_margin_bytes: number
+          notified_level?: number
           quota_bytes: number
+          reconcile_daily_budget_requests?: number
+          reconcile_run_max_requests?: number
+          reconcile_warn_bytes?: number
+          reconcile_warn_pct?: number
+          reconciled_at?: string | null
           singleton?: boolean
+          storage_offset_bytes?: number
           teacher_warn_pct?: number
           updated_at?: string
         }
@@ -817,8 +1039,15 @@ export type Database = {
           daily_view_budget_bytes?: number
           daily_view_budget_requests?: number
           hard_stop_margin_bytes?: number
+          notified_level?: number
           quota_bytes?: number
+          reconcile_daily_budget_requests?: number
+          reconcile_run_max_requests?: number
+          reconcile_warn_bytes?: number
+          reconcile_warn_pct?: number
+          reconciled_at?: string | null
           singleton?: boolean
+          storage_offset_bytes?: number
           teacher_warn_pct?: number
           updated_at?: string
         }
@@ -1149,8 +1378,12 @@ export type Database = {
         Returns: Json
       }
       admin_b2_usage: { Args: never; Returns: Json }
+      admin_failed_jobs: { Args: never; Returns: Json }
       admin_remove_teacher: { Args: { p_allowlist_id: string }; Returns: Json }
+      admin_retry_job: { Args: { p_job_id: number }; Returns: Json }
+      admin_storage_reconcile: { Args: never; Returns: Json }
       admin_teachers: { Args: never; Returns: Json }
+      admin_term_alert: { Args: never; Returns: Json }
       authorize_files: { Args: { p_asset_ids: string[] }; Returns: string[] }
       change_due: {
         Args: {
@@ -1234,7 +1467,32 @@ export type Database = {
         Args: { p_rates_key: string; p_request_key: string }
         Returns: Json
       }
+      due_reminder_run: { Args: { p_job_id: number }; Returns: Json }
       ensure_account: { Args: never; Returns: Json }
+      export_files_page: {
+        Args: {
+          p_admin_mode?: boolean
+          p_after?: string
+          p_limit?: number
+          p_term_id: string
+        }
+        Returns: Json
+      }
+      export_mark_downloaded: {
+        Args: {
+          p_admin_mode?: boolean
+          p_bytes: number
+          p_count: number
+          p_fingerprint: string
+          p_scope: string
+          p_term_id: string
+        }
+        Returns: Json
+      }
+      export_term_data: {
+        Args: { p_admin_mode?: boolean; p_term_id: string }
+        Returns: Json
+      }
       files_sign_begin: { Args: { p_asset_ids: string[] }; Returns: Json }
       get_draw_options: { Args: never; Returns: Json }
       grade_submission: {
@@ -1263,12 +1521,17 @@ export type Database = {
       jobs_maintenance: { Args: never; Returns: Json }
       join_classroom: { Args: { p_code: string }; Returns: Json }
       lookup_classroom: { Args: { p_code: string }; Returns: Json }
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number }
       mark_reward_effect_seen: {
         Args: { p_submission_ids: string[] }
         Returns: Json
       }
       my_classrooms: { Args: never; Returns: Json }
       my_collection: { Args: never; Returns: Json }
+      my_notifications: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: Json
+      }
       my_work: { Args: { p_classroom_id?: string }; Returns: Json }
       open_revision_permission: {
         Args: {
@@ -1385,6 +1648,11 @@ export type Database = {
         }
         Returns: Json
       }
+      storage_reconcile_start: { Args: { p_job_id: number }; Returns: Json }
+      storage_reconcile_step: {
+        Args: { p_job_id: number; p_more: boolean; p_page: Json }
+        Returns: Json
+      }
       storage_status: { Args: never; Returns: Json }
       submission_status: { Args: { p_assignment_id: string }; Returns: Json }
       submit_assignment: {
@@ -1428,6 +1696,7 @@ export type Database = {
         Args: { p_admin_mode?: boolean; p_student_id: string }
         Returns: Json
       }
+      unread_notification_count: { Args: never; Returns: number }
       update_post: {
         Args: {
           p_admin_mode?: boolean

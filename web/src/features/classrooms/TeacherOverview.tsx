@@ -5,6 +5,7 @@ import { Card, Chip } from '../../ui'
 import { TeacherPage } from '../teacher/TeacherLayout'
 import { useTeacher } from '../teacher/teacherContext'
 import { ClassBanner } from './ClassBanner'
+import { RecentNotifications } from '../notifications/RecentNotifications'
 import styles from './classrooms.module.css'
 
 const today = () =>
@@ -81,6 +82,8 @@ export default function TeacherOverview() {
           ))}
         </ul>
       )}
+      {/* กระดิ่งเป็นของครู — โหมดผู้ดูแลไม่มีแจ้งเตือนของครูคนนั้น */}
+      {!adminMode && <RecentNotifications />}
     </TeacherPage>
   )
 }

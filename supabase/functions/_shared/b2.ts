@@ -279,3 +279,88 @@ export async function headObjectRequest(config: B2Config, key: string): Promise<
   if (!FINAL_KEY.test(key)) throw new Error('b2_key_invalid')
   return client(config).sign(objectUrl(config, key).toString(), { method: 'HEAD' })
 }
+
+// ---------------------------------------------------------------------------
+// เทียบยอดพื้นที่รายวัน (P6-04a) — ListObjectVersions นับทุกเวอร์ชัน รวมเวอร์ชันที่ถูกซ่อนและ staging/
+// ---------------------------------------------------------------------------
+/** หน้าละ 1000 รายการ (ค่าสูงสุดของ S3 API) = คำขอ Class C 1 ครั้งต่อหน้า */
+export const LIST_PAGE_SIZE = 1000
+
+/** ListObjectVersions ทั้ง bucket ต่อจาก cursor ของหน้าก่อน (key-marker + version-id-marker) */
+export async function listVersionsRequest(
+  config: B2Config,
+  cursor: { keyMarker?: string | null; versionIdMarker?: string | null } = {},
+): Promise<Request> {
+  const url = new URL(`${config.endpoint}/${config.bucket}`)
+  url.searchParams.set('versions', '')
+  url.searchParams.set('max-keys', String(LIST_PAGE_SIZE))
+  if (cursor.keyMarker) {
+    url.searchParams.set('key-marker', cursor.keyMarker)
+    if (cursor.versionIdMarker) url.searchParams.set('version-id-marker', cursor.versionIdMarker)
+  }
+  return client(config).sign(url.toString(), { method: 'GET' })
+}
+
+/** รายการเวอร์ชันแบบย่อที่ส่งต่อให้ storage_reconcile_step: key, version, ขนาด, เป็นเวอร์ชันล่าสุด */
+export interface ListedVersion {
+  k: string
+  v: string
+  s: number
+  l: boolean
+}
+
+export interface VersionsPage {
+  versions: ListedVersion[]
+  deleteMarkers: number
+  truncated: boolean
+  nextKeyMarker: string | null
+  nextVersionIdMarker: string | null
+}
+
+const decodeXml = (s: string) =>
+  s.replace(/&(lt|gt|quot|apos|amp|#\d+|#x[0-9a-f]+);/gi, (m, e: string) => {
+    const named: Record<string, string> = {
+      lt: '<',
+      gt: '>',
+      quot: '"',
+      apos: "'",
+      amp: '&',
+    }
+    const low = e.toLowerCase()
+    if (low in named) return named[low]
+    const code = low.startsWith('#x') ? parseInt(low.slice(2), 16) : parseInt(low.slice(1), 10)
+    return Number.isFinite(code) ? String.fromCodePoint(code) : m
+  })
+
+const tag = (xml: string, name: string): string | null => {
+  const match = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(xml)
+  return match ? decodeXml(match[1]) : null
+}
+
+/**
+ * อ่านผล ListObjectVersions (XML ของ S3) — ไม่ใช่ ListVersionsResult หรือรายการผิดรูป → null
+ * <Version> มีขนาด · <DeleteMarker> (ป้ายซ่อนของ B2) ไม่มีขนาด นับแค่จำนวน
+ */
+export function parseListVersions(xml: string): VersionsPage | null {
+  if (!/<ListVersionsResult[\s>]/.test(xml) || /<Error>/.test(xml)) return null
+  const versions: ListedVersion[] = []
+  for (const m of xml.matchAll(/<Version>([\s\S]*?)<\/Version>/g)) {
+    const k = tag(m[1], 'Key')
+    const v = tag(m[1], 'VersionId')
+    const s = Number(tag(m[1], 'Size'))
+    const l = tag(m[1], 'IsLatest')
+    if (!k || !v || !Number.isSafeInteger(s) || s < 0 || (l !== 'true' && l !== 'false'))
+      return null
+    versions.push({ k, v, s, l: l === 'true' })
+  }
+  const truncated = tag(xml, 'IsTruncated') === 'true'
+  const nextKeyMarker = tag(xml, 'NextKeyMarker') || null
+  if (truncated && !nextKeyMarker) return null
+  return {
+    versions,
+    deleteMarkers: [...xml.matchAll(/<DeleteMarker>/g)].length,
+    truncated,
+    nextKeyMarker,
+    nextVersionIdMarker: tag(xml, 'NextVersionIdMarker') || null,
+  }
+}

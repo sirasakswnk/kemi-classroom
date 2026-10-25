@@ -116,7 +116,23 @@ insert into expected_authenticated values
   ('public.terms_start(text,uuid,uuid,boolean)'),
   ('public.terms_end(uuid,uuid,boolean)'),
   -- 0042_term_overview (ครู/ผู้ดูแล: ข้อมูลหน้า T07)
-  ('public.term_overview(boolean)');
+  ('public.term_overview(boolean)'),
+  -- 0043_notifications (นักเรียน/ครู: กระดิ่งของตัวเอง)
+  ('public.my_notifications(timestamptz,integer)'),
+  ('public.unread_notification_count()'),
+  ('public.mark_notifications_read(uuid[])'),
+  -- 0050_storage_threshold (ผู้ดูแล: ผลเทียบยอดพื้นที่ล่าสุดใน D01)
+  ('public.admin_storage_reconcile()'),
+  -- 0051_admin_jobs (ผู้ดูแล: งานเบื้องหลังที่ล้มเหลว + ลองใหม่ใน D01)
+  ('public.admin_failed_jobs()'),
+  ('public.admin_retry_job(bigint)'),
+  -- 0053_admin_term_alert (ผู้ดูแล: ภาคเรียนเปิดค้างเกิน 6 เดือน)
+  ('public.admin_term_alert()'),
+  -- 0054_retention (ครู/ผู้ดูแล: รายการไฟล์ภาคเรียนเก่าสำหรับ ZIP + บันทึกว่าดาวน์โหลดครบ)
+  ('public.export_files_page(uuid,uuid,integer,boolean)'),
+  ('public.export_mark_downloaded(uuid,text,text,integer,bigint,boolean)'),
+  -- 0055_retention_data (ครู/ผู้ดูแล: คะแนน เวลาส่ง ความคิดเห็นของภาคเรียนเก่าสำหรับ CSV)
+  ('public.export_term_data(uuid,boolean)');
 
 -- RPC ที่เรียกได้เฉพาะ service_role (Edge Function) เพราะเขียนข้อมูลที่ระบบเชื่อ — ผู้ใช้เรียกผ่าน PostgREST ตรง ๆ ไม่ได้
 -- **RPC ใหม่แบบนี้ต้องเพิ่มในรายการนี้ใน commit เดียวกับ migration**
@@ -139,7 +155,12 @@ insert into expected_service_only values
   ('public.delete_asset_finish(bigint)'),
   ('public.copying_stale(integer)'),
   ('public.sweep_copying_finish(uuid,text)'),
-  ('public.jobs_maintenance()');
+  ('public.jobs_maintenance()'),
+  -- 0047_due_reminder_run (process-jobs: งานเตือน 24 ชม.)
+  ('public.due_reminder_run(bigint)'),
+  -- 0049_storage_reconcile (process-jobs: เทียบยอดพื้นที่ B2 รายวัน)
+  ('public.storage_reconcile_start(bigint)'),
+  ('public.storage_reconcile_step(bigint,jsonb,boolean)');
 
 -- ฟังก์ชันของงานสำรอง/กู้คืน: เรียกได้เฉพาะ postgres ผ่าน psql (ops/backup.sh, ops/restore-test.sh) — ไม่ใช่ RPC
 create temp table postgres_only (fn text primary key);

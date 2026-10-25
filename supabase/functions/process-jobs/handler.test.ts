@@ -207,6 +207,44 @@ test('งานชนิดที่ไม่รู้จัก → jobs_fail un
   })
 })
 
+test('due_reminder: due_reminder_run ปิดงานเอง · skip ไม่นับ · RPC ล้ม → jobs_fail', async () => {
+  const claim = claimOnce([
+    { id: 21, kind: 'due_reminder', payload: { assignment_id: A1 }, attempts: 1 },
+    { id: 22, kind: 'due_reminder', payload: { assignment_id: A2 }, attempts: 1 },
+    { id: 23, kind: 'due_reminder', payload: { assignment_id: A2 }, attempts: 1 },
+  ])
+  const { handler, calls } = setup({
+    rpc: (fn, body, n) =>
+      fn === 'copying_stale'
+        ? []
+        : fn === 'jobs_claim'
+          ? claim(n)
+          : fn === 'due_reminder_run'
+            ? body.p_job_id === 21
+              ? { action: 'done', sent: 3 }
+              : body.p_job_id === 22
+                ? { action: 'skip' }
+                : json({ code: 'XX000', message: 'boom' }, 500)
+            : 'pending',
+  })
+  const res = await handler(call())
+  const summary = (await res.json()) as { jobs: Record<string, number> }
+  assert.deepEqual(
+    calls.filter((c) => c.url.endsWith('/due_reminder_run')).map((c) => c.body),
+    [{ p_job_id: 21 }, { p_job_id: 22 }, { p_job_id: 23 }],
+  )
+  assert.equal(rpcNames(calls).includes('jobs_complete'), false, 'ฐานข้อมูลปิดงานเอง')
+  const fails = calls.filter((c) => c.url.endsWith('/jobs_fail'))
+  assert.equal(fails.length, 1)
+  assert.equal(fails[0].body.p_job_id, 23)
+  assert.match(String(fails[0].body.p_error), /^due_reminder_/)
+  assert.deepEqual(
+    { done: summary.jobs.done, reminded: summary.jobs.reminded, failed: summary.jobs.failed },
+    { done: 1, reminded: 3, failed: 1 },
+  )
+  assert.equal(b2Calls(calls).length, 0, 'งานเตือนไม่เรียก B2')
+})
+
 test('sweeper copying: HEAD มีไฟล์ → finish พร้อมเวอร์ชัน · 404 → finish null · นับ Class B ทุก HEAD', async () => {
   const { handler, calls } = setup({
     rpc: (fn, body) =>
@@ -262,4 +300,174 @@ test('sweeper copying: HEAD เกินเพดานรายวัน → �
   await handler(call())
   assert.equal(b2Calls(calls).length, 1)
   assert.equal(rpcNames(calls).includes('sweep_copying_finish'), false)
+})
+
+const listXml = (versions: string, truncated: boolean, next = '') =>
+  `<ListVersionsResult><IsTruncated>${truncated}</IsTruncated>${next}${versions}</ListVersionsResult>`
+const reconcileJob = {
+  id: 31,
+  kind: 'storage_reconcile',
+  payload: {},
+  attempts: 1,
+}
+
+test('storage_reconcile: หน้าละ 1000 ต่อจาก cursor → step ทุกหน้า → done · ไม่ลบไฟล์', async () => {
+  const claim = claimOnce([reconcileJob])
+  const { handler, calls } = setup({
+    rpc: (fn, body, n) =>
+      fn === 'copying_stale'
+        ? []
+        : fn === 'jobs_claim'
+          ? claim(n)
+          : fn === 'storage_reconcile_start'
+            ? {
+                action: 'list',
+                allow: 5,
+                key_marker: 'files/m.pdf',
+                version_id_marker: '4_zM',
+              }
+            : fn === 'storage_reconcile_step'
+              ? (body.p_page as { truncated: boolean }).truncated
+                ? {
+                    action: 'list',
+                    key_marker: 'files/n.pdf',
+                    version_id_marker: '4_zN',
+                  }
+                : { action: 'done', diff_bytes: 0 }
+              : 'pending',
+    b2: (_method, url) =>
+      url.searchParams.get('key-marker') === 'files/m.pdf'
+        ? new Response(
+            listXml(
+              '<Version><Key>files/n.pdf</Key><VersionId>4_zN</VersionId><IsLatest>false</IsLatest><Size>9</Size></Version>',
+              true,
+              '<NextKeyMarker>files/n.pdf</NextKeyMarker><NextVersionIdMarker>4_zN</NextVersionIdMarker>',
+            ),
+          )
+        : new Response(listXml('<DeleteMarker><Key>x</Key></DeleteMarker>', false)),
+  })
+  const res = await handler(call())
+  const summary = (await res.json()) as {
+    jobs: Record<string, number>
+    reconcile: { requests: number; result: string }
+  }
+  const lists = b2Calls(calls)
+  assert.deepEqual(
+    lists.map((c) => [c.method, new URL(c.url).searchParams.get('key-marker')]),
+    [
+      ['GET', 'files/m.pdf'],
+      ['GET', 'files/n.pdf'],
+    ],
+    'ทำต่อจาก cursor ที่ฐานข้อมูลเก็บไว้ แล้วตาม cursor หน้าถัดไป',
+  )
+  assert.equal(new URL(lists[0].url).searchParams.get('max-keys'), '1000')
+  const steps = calls.filter((c) => c.url.endsWith('/storage_reconcile_step')).map((c) => c.body)
+  assert.deepEqual(steps[0], {
+    p_job_id: 31,
+    p_page: {
+      ok: true,
+      versions: [{ k: 'files/n.pdf', v: '4_zN', s: 9, l: false }],
+      delete_markers: 0,
+      truncated: true,
+      next_key_marker: 'files/n.pdf',
+      next_version_id_marker: '4_zN',
+    },
+    p_more: true,
+  })
+  assert.equal((steps[1].p_page as { delete_markers: number }).delete_markers, 1)
+  assert.deepEqual(summary.reconcile, { requests: 2, result: 'done' })
+  assert.equal(summary.jobs.done, 1)
+  assert.equal(
+    lists.some((c) => c.method !== 'GET'),
+    false,
+    'ผลเทียบไม่ลบ/ไม่แก้ไฟล์ใน B2',
+  )
+})
+
+test('storage_reconcile: ครบ allow → หน้าสุดท้ายของรอบส่ง p_more false · ไม่ขอเกิน', async () => {
+  const claim = claimOnce([reconcileJob])
+  const { handler, calls } = setup({
+    rpc: (fn, body, n) =>
+      fn === 'copying_stale'
+        ? []
+        : fn === 'jobs_claim'
+          ? claim(n)
+          : fn === 'storage_reconcile_start'
+            ? {
+                action: 'list',
+                allow: 2,
+                key_marker: null,
+                version_id_marker: null,
+              }
+            : fn === 'storage_reconcile_step'
+              ? body.p_more
+                ? { action: 'list', key_marker: 'k', version_id_marker: 'v' }
+                : { action: 'later' }
+              : 'pending',
+    b2: () => new Response(listXml('', true, '<NextKeyMarker>k</NextKeyMarker>')),
+  })
+  const summary = (await (await handler(call())).json()) as {
+    reconcile: { requests: number; result: string }
+  }
+  assert.equal(b2Calls(calls).length, 2, 'เพดานต่อรอบ = allow จากฐานข้อมูล')
+  assert.equal(
+    new URL(b2Calls(calls)[0].url).searchParams.has('key-marker'),
+    false,
+    'หน้าแรกของการเทียบ',
+  )
+  assert.deepEqual(
+    calls.filter((c) => c.url.endsWith('/storage_reconcile_step')).map((c) => c.body.p_more),
+    [true, false],
+  )
+  assert.deepEqual(summary.reconcile, { requests: 2, result: 'later' })
+})
+
+test('storage_reconcile: B2 เกินเพดาน → ส่ง cap · งบวันหมด (paused) → ไม่เรียก B2 · start ล้ม → jobs_fail', async () => {
+  const run = async (start: unknown, b2?: () => Response) => {
+    const claim = claimOnce([reconcileJob])
+    return setup({
+      rpc: (fn, _body, n) =>
+        fn === 'copying_stale'
+          ? []
+          : fn === 'jobs_claim'
+            ? claim(n)
+            : fn === 'storage_reconcile_start'
+              ? start
+              : fn === 'storage_reconcile_step'
+                ? { action: 'paused', reason: 'b2_cap' }
+                : 'pending',
+      b2,
+    })
+  }
+  const capped = await run(
+    { action: 'list', allow: 5 },
+    () =>
+      new Response(
+        '<Error><Code>AccessDenied</Code><Message>Transaction cap exceeded</Message></Error>',
+        {
+          status: 403,
+        },
+      ),
+  )
+  await capped.handler(call())
+  const capStep = capped.calls.filter((c) => c.url.endsWith('/storage_reconcile_step'))
+  assert.equal(capStep.length, 1, 'หยุดหลังหน้าแรกที่ถูกปฏิเสธ')
+  assert.deepEqual(capStep[0].body.p_page, {
+    ok: false,
+    error: 'b2_403',
+    cap: true,
+  })
+
+  const paused = await run({ action: 'paused', reason: 'daily_budget' })
+  const summary = (await (await paused.handler(call())).json()) as {
+    reconcile: { requests: number; result: string }
+  }
+  assert.equal(b2Calls(paused.calls).length, 0)
+  assert.deepEqual(summary.reconcile, { requests: 0, result: 'paused' })
+
+  const broken = await run(json({ code: 'XX000', message: 'boom' }, 500))
+  await broken.handler(call())
+  const fails = broken.calls.filter((c) => c.url.endsWith('/jobs_fail'))
+  assert.equal(fails.length, 1)
+  assert.match(String(fails[0].body.p_error), /^reconcile_start_/)
 })

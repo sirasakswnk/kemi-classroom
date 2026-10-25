@@ -63,7 +63,7 @@ export default function StudentHome() {
               ? th.student.termEndedGreeting
               : due.length > 0
                 ? th.work.pendingGreeting(workRows.filter(isPending).length)
-                : myWork.data && workRows.length > 0
+                : myWork.data && dueEmpty(workRows) === 'allSent'
                   ? th.work.allSent
                   : th.student.withClasses}
         </p>

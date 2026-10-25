@@ -53,9 +53,12 @@ export function dueSoon(rows: WorkRow[], limit = 5): WorkRow[] {
   return sortWork(rows.filter(isPending)).slice(0, limit)
 }
 
-/** S01 กล่อง “ใกล้กำหนดส่ง” ว่าง: ห้องยังไม่มีงานเลย ≠ มีงานและส่งครบแล้ว */
-export function dueEmpty(rows: WorkRow[]): 'noWork' | 'allSent' {
-  return rows.length ? 'allSent' : 'noWork'
+export type DueEmpty = 'noWork' | 'allSent' | 'noneOpen'
+
+/** S01 กล่อง “ใกล้กำหนดส่ง” ว่าง: ห้องยังไม่มีงานเลย / ส่งครบจริง / ที่ยังไม่ส่งถูกปิดรับหมดแล้ว */
+export function dueEmpty(rows: WorkRow[]): DueEmpty {
+  if (!rows.length) return 'noWork'
+  return rows.every((r) => r.submitted) ? 'allSent' : 'noneOpen'
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000

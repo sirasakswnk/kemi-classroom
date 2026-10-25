@@ -68,6 +68,8 @@ export function MyWork({
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['submission-status', post.id] }),
       queryClient.invalidateQueries({ queryKey: ['my-work'] }),
+      // ส่งแล้ว → เตือนใกล้ส่งของงานนี้ไม่นับบนกระดิ่งแล้ว (0048)
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
     ])
 
   const blockReason = files.busy

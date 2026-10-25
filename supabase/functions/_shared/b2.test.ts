@@ -15,6 +15,9 @@ import {
   GET_CACHE_CONTROL,
   isCapExceeded,
   isStagingKeyOf,
+  LIST_PAGE_SIZE,
+  listVersionsRequest,
+  parseListVersions,
   presignGet,
   presignPut,
   presignUrl,
@@ -292,4 +295,82 @@ test('คำขอฝั่งเซิร์ฟเวอร์: key ต้อ�
   assert.match(del.headers.get('authorization') ?? '', /^AWS4-HMAC-SHA256 /)
   const req = await copyObjectRequest(config, { ...copy, sourceVersionId: '4_z+v/1' })
   assert.equal(req.headers.get('x-amz-copy-source'), `/kemi-dev-files/${KEY}?versionId=4_z%2Bv%2F1`)
+})
+
+test('ListObjectVersions: หน้าละ 1000 ต่อจาก cursor · ลงลายเซ็นใน header', async () => {
+  const first = await listVersionsRequest(config)
+  const u1 = new URL(first.url)
+  assert.equal(first.method, 'GET')
+  assert.equal(u1.pathname, '/kemi-dev-files')
+  assert.equal(u1.searchParams.has('versions'), true)
+  assert.equal(u1.searchParams.get('max-keys'), String(LIST_PAGE_SIZE))
+  assert.equal(LIST_PAGE_SIZE, 1000)
+  assert.equal(u1.searchParams.has('key-marker'), false)
+  assert.match(
+    first.headers.get('authorization') ?? '',
+    /^AWS4-HMAC-SHA256 Credential=003testkeyid/,
+  )
+  const next = new URL(
+    (
+      await listVersionsRequest(config, {
+        keyMarker: 'files/a b.pdf',
+        versionIdMarker: '4_z1',
+      })
+    ).url,
+  )
+  assert.equal(next.searchParams.get('key-marker'), 'files/a b.pdf')
+  assert.equal(next.searchParams.get('version-id-marker'), '4_z1')
+  // version-id-marker ใช้คู่กับ key-marker เท่านั้น
+  const only = new URL((await listVersionsRequest(config, { versionIdMarker: '4_z1' })).url)
+  assert.equal(only.searchParams.has('version-id-marker'), false)
+})
+
+test('parseListVersions: ทุกเวอร์ชันพร้อมขนาด · ป้ายซ่อนนับจำนวน · cursor หน้าถัดไป', () => {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<ListVersionsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Name>kemi-dev-files</Name><IsTruncated>true</IsTruncated><MaxKeys>1000</MaxKeys>
+  <NextKeyMarker>staging/x/y</NextKeyMarker><NextVersionIdMarker>4_zB</NextVersionIdMarker>
+  <Version><Key>files/a.pdf</Key><VersionId>4_zA</VersionId><IsLatest>true</IsLatest><Size>120</Size></Version>
+  <DeleteMarker><Key>files/b.jpg</Key><VersionId>4_zH</VersionId><IsLatest>true</IsLatest></DeleteMarker>
+  <Version><Key>files/b.jpg</Key><VersionId>4_zO</VersionId><IsLatest>false</IsLatest><Size>30</Size></Version>
+  <Version><Key>a&amp;b</Key><VersionId>4_zC</VersionId><IsLatest>true</IsLatest><Size>0</Size></Version>
+</ListVersionsResult>`
+  assert.deepEqual(parseListVersions(xml), {
+    versions: [
+      { k: 'files/a.pdf', v: '4_zA', s: 120, l: true },
+      { k: 'files/b.jpg', v: '4_zO', s: 30, l: false },
+      { k: 'a&b', v: '4_zC', s: 0, l: true },
+    ],
+    deleteMarkers: 1,
+    truncated: true,
+    nextKeyMarker: 'staging/x/y',
+    nextVersionIdMarker: '4_zB',
+  })
+  const last = parseListVersions(
+    '<ListVersionsResult><IsTruncated>false</IsTruncated></ListVersionsResult>',
+  )
+  assert.deepEqual(last, {
+    versions: [],
+    deleteMarkers: 0,
+    truncated: false,
+    nextKeyMarker: null,
+    nextVersionIdMarker: null,
+  })
+})
+
+test('parseListVersions: ผิดรูป/ข้อผิดพลาด → null', () => {
+  assert.equal(parseListVersions('<Error><Code>AccessDenied</Code></Error>'), null)
+  assert.equal(parseListVersions('not xml'), null)
+  // หน้าไม่หมดแต่ไม่มี cursor
+  assert.equal(
+    parseListVersions('<ListVersionsResult><IsTruncated>true</IsTruncated></ListVersionsResult>'),
+    null,
+  )
+  // ขนาดไม่ใช่ตัวเลข
+  assert.equal(
+    parseListVersions(
+      '<ListVersionsResult><Version><Key>k</Key><VersionId>v</VersionId><IsLatest>true</IsLatest><Size>x</Size></Version></ListVersionsResult>',
+    ),
+    null,
+  )
 })

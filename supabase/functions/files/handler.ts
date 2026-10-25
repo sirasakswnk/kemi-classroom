@@ -1,10 +1,11 @@
 // Edge Function `files` (TECHNICAL_DESIGN 9.2, 9.3, 10; TECHNICAL_BUILD_PLAN 5)
 //   POST /files/sign     ลิงก์เปิดดู/ดาวน์โหลดไฟล์ (sign.ts, P3-05)
-//   (GET /submissions/:id/files และ POST /exports มากับระยะ 4)
+//   POST /files/exports  ลิงก์ดาวน์โหลดไฟล์ภาคเรียนเก่าทีละหน้า (exports.ts, P6-05a3)
 // แยกจาก index.ts เพื่อให้ทดสอบด้วย Node ได้ (ไม่มี Deno ในไฟล์นี้)
 import { b2ConfigFrom, type B2Config } from '../_shared/b2.ts'
 import type { Ctx, Deps } from '../_shared/context.ts'
 import { corsHeaders, errorResponse, webOrigins } from '../_shared/http.ts'
+import { exportFiles } from './exports.ts'
 import { signFiles } from './sign.ts'
 
 export type { Deps } from '../_shared/context.ts'
@@ -13,9 +14,8 @@ export function createHandler(deps: Deps): (req: Request) => Promise<Response> {
   return async (req) => {
     const cors = corsHeaders(req, webOrigins(deps.env('WEB_ORIGINS')))
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
-    if (req.method !== 'POST' || !/\/files\/sign\/?$/.test(new URL(req.url).pathname)) {
-      return errorResponse('not_found', cors)
-    }
+    const route = /\/files\/(sign|exports)\/?$/.exec(new URL(req.url).pathname)?.[1]
+    if (req.method !== 'POST' || !route) return errorResponse('not_found', cors)
 
     const authorization = req.headers.get('authorization') ?? ''
     if (!/^Bearer \S+$/.test(authorization)) return errorResponse('not_authenticated', cors)
@@ -41,6 +41,6 @@ export function createHandler(deps: Deps): (req: Request) => Promise<Response> {
       authorization,
       serviceKey,
     }
-    return signFiles(ctx, req)
+    return route === 'exports' ? exportFiles(ctx, req) : signFiles(ctx, req)
   }
 }

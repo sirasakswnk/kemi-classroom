@@ -158,6 +158,16 @@ const TABLE: Record<ErrorCode, { message: string; action: ErrorAction }> = {
   rates_must_total_100: { message: 'อัตรารวมของทุกระดับต้องเท่ากับ 100%', action: 'field' },
   // T07 (UX 7.1, P5-08)
   term_name_taken: { message: 'มีภาคเรียนชื่อนี้แล้ว ตั้งชื่ออื่น', action: 'focus_field' },
+  // T07 ข้อมูลภาคเรียนเก่า (UX 7.1, P6-05)
+  export_mismatch: {
+    message: 'ข้อมูลเปลี่ยนระหว่างดาวน์โหลด ดาวน์โหลดใหม่อีกครั้งก่อนยืนยันลบ',
+    action: 'field',
+  },
+  export_budget_reached: {
+    message:
+      'วันนี้ดาวน์โหลดครบโควตาของระบบแล้ว ดาวน์โหลดต่อได้หลัง 07:00 น. โดยต่อจากไฟล์ที่ค้างอยู่ ไม่ต้องเริ่มใหม่',
+    action: 'retry_later',
+  },
 }
 
 const FALLBACK = 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง ถ้ายังไม่ได้ให้แจ้งคุณครู'
