@@ -35,9 +35,10 @@ async function crossPersonCheck(cfg) {
     const r = await fetch(`${SB}/functions/v1/${path}`, { method: 'POST', headers: h, body: JSON.stringify(body) })
     return [r.status, await json(r)]
   }
+  // ได้ว่าง (RLS กรอง) หรือถูกปฏิเสธทั้งตาราง (ไม่มี GRANT เช่น notifications — อ่านผ่าน RPC เท่านั้น) = ปลอดภัย
   const expectEmpty = async (name, path) => {
     const [s, b] = await rest(path)
-    rec(name, s === 200 && Array.isArray(b) && b.length === 0, `${s} ${shape(b)}`)
+    rec(name, (s === 200 && Array.isArray(b) && b.length === 0) || s === 401 || s === 403, `${s} ${shape(b)}`)
   }
   const expectError = async (name, call, codes) => {
     const [s, b] = await call
@@ -61,7 +62,9 @@ async function crossPersonCheck(cfg) {
     await expectError('RPC comment_thread ช่องของ B', rpc('comment_thread', { p_assignment_id: B.assignment, p_student_id: B.student }))
     const [as, ab] = await rpc('authorize_files', { p_asset_ids: B.assets })
     rec('RPC authorize_files ไฟล์ของ B → ไม่ได้สักไฟล์', as === 200 && Array.isArray(ab) && ab.length === 0, `${as} ${shape(ab)}`)
-    await expectError('RPC post_comment ลงช่องของ B', rpc('post_comment', { p_assignment_id: B.assignment, p_student_id: B.student, p_body: 'ทดสอบสิทธิ์ P7-04', p_request_key: key4(), p_admin_mode: false }))
+    // ต้องใช้งานที่ยังเปิด (B.liveAssignment ในห้องของ A) — งานในภาคเรียนที่จบแล้วถูกปฏิเสธด้วย term_ended ก่อนตรวจเจ้าของช่อง
+    await expectError('RPC post_comment ลงช่องของ B', rpc('post_comment', { p_assignment_id: B.liveAssignment ?? B.assignment, p_student_id: B.student, p_body: 'ทดสอบสิทธิ์ P7-04', p_request_key: key4(), p_admin_mode: false }), ['forbidden', 'not_member'])
+    await expectError('RPC comment_thread งานที่เปิด ช่องของ B', rpc('comment_thread', { p_assignment_id: B.liveAssignment ?? B.assignment, p_student_id: B.student }), ['forbidden', 'not_member'])
     // คำสั่งครู/ผู้ดูแล (บัญชีนี้ไม่อยู่ใน allowlist ครู)
     await expectError('RPC teacher_grade_table', rpc('teacher_grade_table', { p_classroom_id: B.classroom }))
     await expectError('RPC teacher_submission_list', rpc('teacher_submission_list', { p_assignment_id: B.assignment }))
@@ -75,7 +78,7 @@ async function crossPersonCheck(cfg) {
     await expectError('RPC export_term_data', rpc('export_term_data', { p_term_id: FAKE, p_admin_mode: false }), ['teacher_required', 'forbidden'])
     // Edge Functions
     await expectError('EDGE files/sign ไฟล์งานของ B', edge('files/sign', { asset_ids: B.assets.slice(0, 3), mode: 'view' }), ['forbidden'])
-    await expectError('EDGE uploads complete ชุดของ B', edge(`uploads/${B.batches[0]}/complete`, { item: 0 }))
+    await expectError('EDGE uploads complete ชุดของ B', edge(`uploads/${B.batches[0]}/complete`, { item: 1 }), ['forbidden'])
     await expectError('EDGE files/exports', edge('files/exports', { term_id: FAKE }), ['teacher_required', 'forbidden'])
   }
 
