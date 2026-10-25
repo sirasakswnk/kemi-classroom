@@ -49,13 +49,14 @@
    - Bucket Unique Name `kemi-files` · Files in Bucket are: **Private** · Default Encryption: **Disable** (เหมือน `kemi-dev-files`) · Object Lock: **Disable**
    - Create
 3. **ยังไม่สร้าง Application Key จากหน้าเว็บ** — หน้าเว็บสร้างได้แค่ Read and Write ที่มีสิทธิ์จัดการ bucket ติดมาด้วย (รั่วแล้วเปลี่ยน bucket เป็นสาธารณะหรือแก้ CORS ได้ — BUILD_PLAN ส่วน 7 ข้อ 5) จึงทำข้อ 4 ด้วยสคริปต์
-4. **CORS + lifecycle + กุญแจสิทธิ์แคบ (สคริปต์ที่ Claude เตรียมในงาน P7-06 แบบเดียวกับ `ops/b2/apply-settings.mjs`):**
-   - รันใน terminal ของตัวเอง ใส่ **Master Application Key** แบบซ่อนตัวอักษร (หน้า Application Keys → Master Application Key → Generate New Master Application Key ถ้าไม่มีค่าเดิม — การสร้างใหม่ทำให้ค่าเดิมใช้ไม่ได้ แต่ไม่กระทบกุญแจอื่น) — สคริปต์ใช้แค่ตั้งค่าและสร้างกุญแจ ไม่เก็บ ไม่พิมพ์กุญแจหลัก
-   - สคริปต์ตั้ง CORS เฉพาะ `https://kemi-classroom.pages.dev` (ไม่มี preview/localhost) + lifecycle ของ `files/` และ `staging/` ตาม `ops/b2/lifecycle.json`
-   - สร้างกุญแจ 2 ตัว เฉพาะ bucket `kemi-files`:
-     - `kemi-edge` — `readFiles`, `writeFiles`, `deleteFiles` (+ `listFiles` สำหรับงานเทียบยอดพื้นที่) → ใช้ในข้อ 4
-     - `kemi-backup-ro` — `readFiles` เฉพาะ prefix `files/` → ใช้ในข้อ 7
-   - keyID/applicationKey แสดง **ใน terminal ของผู้ใช้ครั้งเดียว** — คัดลอกไปใส่ข้อ 4 และ 7 ทันที ไม่บันทึกลงไฟล์
+4. **CORS + lifecycle + กุญแจสิทธิ์แคบ — `node ops/b2/prod-keys.mjs`** (รันใน PowerShell ที่โฟลเดอร์ repo):
+   - สคริปต์ถาม **Master Application Key** (keyID + applicationKey) แบบซ่อนตัวอักษรเท่านั้น — ไม่รับทาง argument/env/ไฟล์ ไม่เก็บ ไม่พิมพ์ (หน้า Application Keys → Master Application Key → Generate New Master Application Key ถ้าไม่มีค่าเดิม — การสร้างใหม่ทำให้กุญแจหลักเดิมใช้ไม่ได้ แต่ไม่กระทบกุญแจอื่น)
+   - ตรวจว่า `kemi-files` เป็น Private และยังไม่มีกุญแจชื่อซ้ำ → ตั้ง CORS เฉพาะ `https://kemi-classroom.pages.dev` (ไม่มี preview/localhost, `ops/b2/cors-prod.json`) + lifecycle ของ `files/` และ `staging/` (`ops/b2/lifecycle.json`) แล้วอ่านกลับมาเทียบ
+   - สร้างกุญแจ 2 ตัว เฉพาะ bucket `kemi-files` ไม่มีสิทธิ์จัดการ bucket:
+     - `kemi-edge` — `listFiles`, `readFiles`, `writeFiles`, `deleteFiles` → ใช้ในข้อ 4
+     - `kemi-backup-ro` — `readFiles` เฉพาะ prefix `files/` → ใช้ในข้อ 7.4
+   - applicationKey แสดง**ทีละกุญแจเมื่อกด Enter** → คัดลอกไปใส่ทันที → กด Enter สคริปต์ล้างจอ · ท้ายสคริปต์พิมพ์สรุป (ชื่อ keyID สิทธิ์ — ส่งให้ Claude ได้)
+   - **แนะนำก่อนรันจริง (ไม่บังคับ):** `node ops/b2/prod-keys.mjs --test-on-dev` สร้างกุญแจสิทธิ์ชุดเดียวกันบน `kemi-dev-files` ชื่อ `kemi-edge-test`/`kemi-backup-ro-test` อายุ 1 วัน (ไม่แตะ CORS/lifecycle) แล้วรัน `node ops/b2/proof.mjs` และ `node ops/b2/proof-complete.mjs` ด้วยกุญแจ `kemi-edge-test` ส่งผลให้ Claude — พิสูจน์ว่าสิทธิ์แคบพอสำหรับอัปโหลด/คัดลอก/เปิดไฟล์ก่อนใช้กับ prod · กุญแจทดสอบหมดอายุเองใน 1 วัน
 5. พื้นที่ 10 GB และงบดาวน์โหลด 1 GB/วันใช้ร่วมกับ `kemi-dev-files` — อย่าใช้ `kemi-files` ลองไฟล์สมมติ
 
 ## 4. Supabase secrets ของ Edge Functions (`kemi-prod`)
