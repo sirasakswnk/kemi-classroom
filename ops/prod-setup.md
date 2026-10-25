@@ -134,9 +134,9 @@ Dashboard `kemi-prod` → **Edge Functions → Secrets** → Add new secret (ห
 
 1. https://healthchecks.io → **Add Check** `kemi-backup-prod` · Simple · Period **12 hours** · Grace **6 hours** · เปิด Email ถึงผู้พัฒนา → คัดลอก **Ping URL**
 2. Supabase `kemi-prod` → Project Settings → **API Keys → Secret keys → New secret key** ชื่อ `github_backup` → คัดลอก (`sb_secret_…`) — ใช้เรียก `ping()` กันโปรเจกต์หลับช่วงปิดเทอม
-3. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret** — ชื่อชุด prod แยกจากชุด dev (Claude ยืนยันชื่อสุดท้ายในงาน P7-08 ก่อนผู้ใช้ใส่ ชื่อด้านล่างเป็นข้อเสนอ):
+3. GitHub repo → **Settings → Secrets and variables → Actions → New repository secret** — ชื่อชุด prod แยกจากชุด dev (**ชื่อยืนยันแล้วใน P7-08** — `backup.yml` อ่านชื่อเหล่านี้):
 
-| ชื่อ (ข้อเสนอ) | ค่า |
+| ชื่อ | ค่า |
 | --- | --- |
 | `PROD_BACKUP_DB_PASSWORD` | รหัสผ่านฐานข้อมูล `kemi-prod` (ข้อ 1.1) |
 | `PROD_RCLONE_CONFIG` | เนื้อไฟล์ `rclone.conf` ชุด prod ทั้งไฟล์ (`rclone config file` → เปิดด้วย Notepad คัดลอกทั้งหมด) |
@@ -144,7 +144,9 @@ Dashboard `kemi-prod` → **Edge Functions → Secrets** → Add new secret (ห
 | `PROD_SUPABASE_PING_KEY` | secret key `github_backup` ของ `kemi-prod` |
 
 4. หลังใส่ `PROD_RCLONE_CONFIG` แล้ว **ลบ `rclone.conf` ชุด prod ในเครื่อง** หรือย้ายไปเก็บในที่ปลอดภัย (มี token ของ Drive, กุญแจ B2 และรหัส crypt แบบถอดกลับได้)
-5. แจ้ง Claude → Claude แก้ `backup.yml` / `ops/backup.sh` ให้ชี้ prod (ตัวกัน project ref และ bucket ของ prod), รันรอบแรกด้วยมือ → ผู้ใช้ดู `kemi-backup-prod` ใน Healthchecks เป็นสีเขียว → **หยุดสำรอง dev** และกด Pause ที่ check `kemi-backup` (เพราะใช้เพดานรายวันของ B2 ก้อนเดียวกับ prod)
+5. แจ้ง Claude → Claude รันรอบแรกของ prod ด้วยมือ (Actions → backup → Run workflow → target `prod`) — `ops/backup.sh` ตรวจว่า ref + bucket + โฟลเดอร์ Drive (`gdrive:kemi-backup-prod`) เป็นชุด prod ทั้งหมด ไม่งั้นหยุด → ผู้ใช้ดู `kemi-backup-prod` ใน Healthchecks เป็นสีเขียว
+6. **สลับรอบตามตารางไป prod (ครั้งเดียว ไม่ต้องแก้โค้ด):** GitHub repo → **Settings → Secrets and variables → Actions → แท็บ Variables → New repository variable** ชื่อ `BACKUP_TARGET` ค่า `prod` → รอบ 02:30/14:30 น. สำรอง prod อย่างเดียว = **หยุดสำรอง dev ไปในตัว** → กด **Pause** ที่ check `kemi-backup` (dev) ใน Healthchecks ไม่ให้เตือนว่าไม่มีสัญญาณ (เพดานรายวันของ B2 ใช้ก้อนเดียวกับ prod จึงไม่สำรอง dev ต่อ)
+   - ย้อนกลับ: ลบตัวแปรหรือตั้ง `dev` · ทดสอบ dev ด้วยมือภายหลังได้ด้วย Run workflow → target `dev`
 
 ## 9. หลังตั้งครบ
 
