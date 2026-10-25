@@ -6,11 +6,9 @@
 # Drive: อ่านรายชื่อโฟลเดอร์บนสุดของ gcrypt: อย่างเดียว (ยืนยันว่า hash มาจากกุญแจที่ถอดชื่อได้จริง) — ไม่เขียนอะไร
 name: crypt-check
 
+# ผล 25 ต.ค. 2026 (run 40173463160): password/password2 ค่าจริงยาว 43 · สำเนาออฟไลน์ของ dev ตรงกับค่า obscured (ยาว 79)
 on:
   workflow_dispatch:
-  push:
-    branches: [phase-7]
-    paths: [.github/workflows/crypt-check.yml]
 
 permissions:
   contents: read

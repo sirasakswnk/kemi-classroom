@@ -103,9 +103,15 @@ Dashboard `kemi-prod` → **Edge Functions → Secrets** → Add new secret (ห
    - filename_encryption `standard` · directory_name_encryption `true`
    - password: `g` → `256` → `y` · password2 (salt): `g` → `256` → `y` — **รหัสชุดใหม่ ไม่ใช้ของ dev**
    - ⚠️ จดรหัส crypt + salt ของ prod ไว้สองที่แยกกัน (password manager + สำเนาออฟไลน์) และ**ติดป้ายว่า “prod”** — ทำหาย = สำรองของข้อมูลนักเรียนจริงเปิดไม่ได้ และ Claude ช่วยกู้ไม่ได้
+   - จด**ค่าจริงที่ rclone แสดงตอนสุ่ม (ยาว 43 ตัว)** ไม่ใช่ค่าใน `rclone.conf` / `rclone config show` (ค่า obscured ยาว ~79 ตัว ใช้ได้เฉพาะกับ rclone ผ่านตัวแปรสภาพแวดล้อม — พบตอน P7-02a 25 ต.ค.) — ถ้าจดค่า obscured ไว้แล้ว ให้รัน `rclone reveal` ในเทอร์มินัลตัวเองแล้วจดค่าจริงเพิ่ม พร้อมป้ายบอกว่าแบบไหน
 4. `n` — **remote `b2ro`**: Storage `b2` → account = keyID ของ `kemi-backup-ro` (ข้อ 3.4) → key = applicationKey → hard_delete `false` → advanced `n` → Keep `y` → `q`
    - ชื่อ remote ต้องเป็น `gdrive` / `gcrypt` / `b2ro` เหมือนของ dev — สคริปต์สำรองเรียกด้วยชื่อนี้
 5. ตรวจ: `rclone mkdir gcrypt:` แล้ว `rclone lsd gdrive:` ต้องเห็น `kemi-backup-prod` (และ `kemi-backup` ของ dev ถ้ายังไม่ลบ)
+6. **ทดสอบถอดรหัสจากสำเนาออฟไลน์ทันที ก่อนใส่ secret ข้อ 8** (กันกรณีสำเนาจดผิด — สำรองจะเปิดไม่ได้โดยไม่มีใครรู้จนวันที่ต้องกู้):
+   - `rclone copyto <ไฟล์เล็กในเครื่อง เช่น test.txt> gcrypt:probe/test.txt` (เขียนไฟล์ทดสอบ 1 ไฟล์ลงโฟลเดอร์ prod ใหม่ซึ่งยังว่าง)
+   - เปิด PowerShell **หน้าต่างใหม่** → ทำตาม `ops/restore-manual.md` ข้อ 1–3 แต่ให้ `RCLONE_CONFIG_GCRYPT_REMOTE` = `gdrive:kemi-backup-prod` และวางรหัส/salt **จากสำเนาออฟไลน์** (ถ้าจดค่าจริง 43 ตัว ให้แปลงก่อนด้วย `rclone obscure` ในหน้าต่างนั้น หรือใช้ `rclone config` แบบ “type in my own password”)
+   - `rclone cat gcrypt:probe/test.txt` ต้องได้เนื้อไฟล์เดิม → ลบ config/ตัวแปรของหน้าต่างทดสอบ (restore-manual ข้อ 5) แล้วกลับหน้าต่างแรก `rclone purge gcrypt:probe`
+   - ไม่ผ่าน = สำเนาไม่ตรง → แก้สำเนาจากค่าใน config ของหน้าต่างแรก (`rclone reveal`) แล้วทดสอบซ้ำ **ห้ามข้ามไปข้อ 8 จนกว่าจะผ่าน**
 
 ## 8. Healthchecks.io + GitHub Secrets ชุด prod
 
