@@ -11,10 +11,6 @@
 name: restore-test
 
 on:
-  # ชั่วคราว P7-02c: workflow_dispatch ต้องมีไฟล์บน main จึงรันรอบ dev จาก branch นี้ด้วย push — ลบก่อน merge
-  push:
-    branches: [phase-7-month1]
-    paths: [.github/workflows/restore-test.yml]
   workflow_dispatch:
     inputs:
       target:
@@ -41,10 +37,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # ชั่วคราว P7-02c: รอบ push = dev + all เสมอ (ไม่มี input) — ลบพร้อม trigger push
-  RESTORE_TARGET: ${{ github.event_name == 'push' && 'dev' || inputs.target }}
-  RESTORE_POINT: ${{ github.event_name == 'push' && 'latest' || inputs.restore_point }}
-  RESTORE_FILES: ${{ github.event_name == 'push' && 'all' || inputs.files }}
+  RESTORE_TARGET: ${{ inputs.target }}
+  RESTORE_POINT: ${{ inputs.restore_point }}
+  RESTORE_FILES: ${{ inputs.files }}
   RESTORE_RUN_TAG: ${{ github.run_id }}
   # Supabase ชั่วคราวใน runner (ค่าเริ่มต้นของ CLI ไม่ใช่ความลับ) — ops/restore-test.sh ไม่ยอม host/ผู้ใช้อื่น
   PGHOST: 127.0.0.1
