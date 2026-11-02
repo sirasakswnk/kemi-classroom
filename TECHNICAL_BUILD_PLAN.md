@@ -69,7 +69,7 @@ Classroom/                     # root ของ repo
 | สภาพแวดล้อม | Supabase (สิงคโปร์) | B2 bucket | หน้าเว็บ | ใช้ทำ |
 | --- | --- | --- | --- | --- |
 | ทดสอบ (dev) | โปรเจกต์ `kemi-dev` | `kemi-dev-files` | preview ของ Pages จาก branch | พัฒนาและทดสอบอัตโนมัติ ด้วยข้อมูลทดสอบเท่านั้น |
-| ทดสอบกู้คืน | Supabase ชั่วคราวใน runner ของ GitHub Actions (`supabase start`) | `kemi-dev-files` ใต้ key เดิม แล้วลบในรอบเดียวกัน | — | `restore-test` เท่านั้น ทิ้งทั้งหมดเมื่อจบงาน |
+| ทดสอบกู้คืน | Supabase ชั่วคราวใน runner ของ GitHub Actions (`supabase start`) | `kemi-dev-files` ใต้ prefix `restore-test/<run id>/` (กุญแจแยกจำกัด prefix นี้ + lifecycle ลบอัตโนมัติ) แล้วลบด้วย `version_id` ในรอบเดียวกัน — ไฟล์จริงของ prod อยู่ใน bucket ทดสอบชั่วคราวเฉพาะระหว่างงานนี้ (ข้อยกเว้นที่ตั้งใจ) | — | `restore-test` เท่านั้น ทิ้งทั้งหมดเมื่อจบงาน |
 | ใช้จริง (prod) | โปรเจกต์ `kemi-prod` | `kemi-files` | `https://<ชื่อ>.pages.dev` จาก branch `main` | ข้อมูลนักเรียนจริงเท่านั้น |
 
 - **ระยะ 1–6 ยังไม่มี `kemi-prod`:** ตัวแปร Production ของ Pages ชี้ `kemi-dev` ชั่วคราว (ตัดสินใจ 2 ต.ค. 2026) เพื่อให้ `https://<ชื่อ>.pages.dev` ใช้สาธิตได้; หน้าเว็บแสดงแถบ “ระบบทดสอบ · ใช้ข้อมูลสมมติเท่านั้น” ทุกหน้า เว้นแต่ build ตั้ง `VITE_DEPLOY_ENV=prod` (ลืมตั้งแล้วแถบยังขึ้น ไม่ใช่หายไปเงียบ ๆ) และห้ามนำเข้ารายชื่อหรือข้อมูลนักเรียนจริงจนกว่าจะสลับไป prod ในระยะ 7 ซึ่งเป็นช่วงเดียวกับที่เผยแพร่ OAuth (P7-05b) ก่อนหน้านั้นมีแค่บัญชีใน Test users ที่ล็อกอินได้
@@ -289,10 +289,10 @@ grant execute on function public.grade_submission to authenticated;
 
 1. ติดตั้ง Supabase CLI แล้ว `supabase start` ใน runner (Postgres รุ่นหลักเดียวกับ prod) — ฐานข้อมูลนี้อยู่แค่ในงานนี้และถูกทิ้งเมื่อจบ
 2. ดึง dump + manifest ของจุดที่เลือกจาก `gcrypt:` → restore schema แล้ว data → ตั้ง `accounts.auth_user_id` เป็น NULL
-3. อัปโหลดไฟล์จาก manifest (`sample` = สุ่มประมาณ 50 ไฟล์สำหรับรอบรายเดือน, `all` = ทุกไฟล์ ใช้ก่อนเปิดใช้จริงเมื่อข้อมูลยังเล็ก) เข้า `final_key` เดิมใน `kemi-dev-files` เก็บ `version_id` ใหม่ → อัปเดตในฐานข้อมูลชั่วคราวตาม TECHNICAL_DESIGN ส่วน 12 ตรวจขนาด/checksum
-4. ตรวจยอดแถวหลัก ยอดโทเคน owned_charms และสร้าง presigned GET ของไฟล์ที่กู้แล้วดาวน์โหลดเทียบ checksum
+3. อัปโหลดไฟล์จาก manifest (`sample` = ไม่เกิน 50 ไฟล์หรือ 100 MB สำหรับรอบรายเดือน, `all` = ทุกไฟล์ไม่เกิน 500 ไฟล์หรือ 300 MB — เกินแล้วไม่เริ่ม [ข้อเสนอ P7-02b]) เข้า `restore-test/<run id>/<final_key>` ใน `kemi-dev-files` (ทำแล้ว P7-02b — เดิมเขียนว่า `final_key` เดิม) เก็บ `version_id` ใหม่ → อัปเดตในฐานข้อมูลชั่วคราวตาม TECHNICAL_DESIGN ส่วน 12 ตรวจขนาด/checksum
+4. เทียบ `table_rows` ใน `meta.json` กับฐานที่กู้แบบตรงตัว, `assets` ที่ ready กับ manifest, และอ่านไฟล์ที่กู้กลับด้วย GET ระบุ `version_id` (ใช้กุญแจ — `aws s3 presign` ระบุเวอร์ชันไม่ได้ จึงไม่ได้ทดสอบผ่าน presigned URL) เทียบ MD5 ทั้งจาก Drive และตอนอ่านกลับ; ยอดโทเคนรายงานเป็นยอดรวม จนกว่า P7-01 จะเพิ่มค่าเทียบใน `meta.json`
 5. ลบไฟล์ที่อัปโหลดในข้อ 3 จาก `kemi-dev-files` โดยระบุ `version_id` (ทำแม้ขั้นก่อนหน้าล้มเหลว) และหยุด `supabase stop`
-6. บันทึกผล (ผ่าน/ไม่ผ่าน จุดกู้คืน จำนวนไฟล์ที่ตรวจ) ลง `backup_runs` ของ prod เป็นชนิด `restore_test` ด้วย psql เรียก `private.backup_record_restore_test` (บันทึกครั้งเดียวตอนจบ) เพื่อแสดง “ทดสอบกู้คืนล่าสุด” ใน D01 แล้ว ping `kemi-restore-test`
+6. บันทึกผล (ผ่าน/ไม่ผ่าน จุดกู้คืน จำนวนไฟล์ที่ตรวจ) ลง `backup_runs` ของ prod เป็นชนิด `restore_test` ด้วย psql เรียก `private.backup_record_restore_test` (บันทึกครั้งเดียวตอนจบ เฉพาะรอบเป้าหมาย prod; ขั้นนี้ขั้นเดียวได้รหัสผ่านฐานข้อมูล prod และเขียนแค่แถวผล ไม่กู้ข้อมูลใดเข้า prod — ตัดสินทาง A 2 พ.ย. 2026) เพื่อแสดง “ทดสอบกู้คืนล่าสุด” ใน D01 แล้ว ping `kemi-restore-test` (เฉพาะรอบ prod; รอบ dev ไม่นับเป็นรอบรายเดือน); log พิมพ์แค่จำนวน ชื่อตาราง และชื่อขั้น
 
 **งาน `guard`** (อยู่ใน `backup.yml` แยก job): ตรวจว่า `private.settings` ของ prod ไม่มี `allow_test_logins = on` ถ้ามีให้ job นี้ล้มเหลวเพื่อให้ GitHub ส่งอีเมล โดยงานสำรองยังทำต่อตามปกติ
 
