@@ -80,6 +80,11 @@
   font-style: italic;
 }
 
+/* ลิงก์บนพื้นม่วงของฟองตัวเอง ใช้สีตัวอักษรของฟอง */
+.bubble[data-side='me'] a {
+  color: inherit;
+}
+
 .body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

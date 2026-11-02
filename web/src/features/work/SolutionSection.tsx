@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Pencil, TriangleAlert } from 'lucide-react'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
-import { Chip } from '../../ui'
+import { Chip, LinkifiedText } from '../../ui'
 import { solutionQuery } from '../review/assignmentApi'
 import { AttachmentList } from '../uploads/AttachmentList'
 import { when } from './workState'
@@ -39,7 +39,9 @@ export function SolutionSection({ postId }: { postId: string }) {
       </div>
       <div className={styles.card}>
         {solution.body ? (
-          <p className={styles.prose}>{solution.body}</p>
+          <p className={styles.prose}>
+            <LinkifiedText text={solution.body} />
+          </p>
         ) : (
           <p className={styles.muted}>{copy.filesOnly}</p>
         )}

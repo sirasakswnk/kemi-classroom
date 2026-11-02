@@ -1,0 +1,6 @@
+.link {
+  color: var(--purple);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}

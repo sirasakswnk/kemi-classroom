@@ -1,7 +1,18 @@
 import { Plus } from 'lucide-react'
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { Button, Chip, Field, Input, Modal, Sheet, Stepper, Steps, Textarea } from '.'
+import {
+  Button,
+  Chip,
+  Field,
+  Input,
+  LinkifiedText,
+  Modal,
+  Sheet,
+  Stepper,
+  Steps,
+  Textarea,
+} from '.'
 
 // ค่า attribute แรกของแท็กที่ระบุ
 const attr = (html: string, tag: string, name: string) =>
@@ -34,6 +45,22 @@ describe('Chip', () => {
     )
     expect(html).toContain('ส่งแล้ว')
     expect(html).toMatch(/<span[^>]*aria-hidden="true"[^>]*><svg/)
+  })
+})
+
+describe('LinkifiedText', () => {
+  it('ลิงก์เปิดแท็บใหม่พร้อม rel และแสดงตามที่พิมพ์', () => {
+    const html = renderToString(<LinkifiedText text="ดูที่https://example.com/a?b=1." />)
+    expect(attr(html, 'a', 'href')).toBe('https://example.com/a?b=1')
+    expect(attr(html, 'a', 'target')).toBe('_blank')
+    expect(attr(html, 'a', 'rel')).toBe('noopener noreferrer nofollow')
+    expect(html).toMatch(/^ดูที่<a [^>]*>https:\/\/example\.com\/a\?b=1<\/a>\.$/)
+  })
+
+  it('ข้อความที่มีแท็กถูก escape ไม่กลายเป็น element', () => {
+    const html = renderToString(<LinkifiedText text="<img src=x onerror=alert(1)> javascript:a" />)
+    expect(html).not.toContain('<img')
+    expect(html).not.toContain('<a')
   })
 })
 
