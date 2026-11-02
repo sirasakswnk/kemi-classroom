@@ -51,7 +51,8 @@ case "$op" in
   echo '{"ETag": "\"fake\""}'
   ;;
 's3api put-object')
-  version="v-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')"
+  # rv- ต่างจากเวอร์ชันสมมติ v-<ชื่อ> ที่ e2e ใส่ไว้ในฐานข้อมูล
+  version="rv-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')"
   echo "PUT $bucket/$key?versionId=$version" >>"$FAKE_B2_LOG"
   mkdir -p "$(dirname "$root/$key")"
   cp "$body" "$root/$key@$version"

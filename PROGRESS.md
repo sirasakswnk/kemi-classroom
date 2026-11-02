@@ -11,7 +11,7 @@
 - **ระบบจริงพร้อมใช้งานแล้ว:** เว็บ production ชี้ `kemi-prod` · ล็อกอิน Google เผยแพร่เป็น In production (นักเรียนทุกคนล็อกอินได้) · ผู้ดูแลแรก + ครูตั้งแล้ว · สำรองตามตารางสำรอง prod · จุดสาธิต 3 กับครูผ่าน = **go**
 - **งานถัดไป: P8-01 นำร่อง 1 ห้อง** (แนะนำ 5/4 — 28 คน คำเตือนชื่อ 1 รายการ) — ครูทำบนเว็บจริง: ล็อกอิน → สร้างชั้นเรียน → นำเข้า Excel (เลือกใช้ค่าเสนอ/คงค่าเดิมทีละช่อง) → แจกรหัสห้อง → โพสต์การบ้าน 1 ชิ้น · **เมื่อเริ่มมีการส่งงาน ผู้ใช้บอก Claude** เพื่อตรวจ: รอบสำรองแรกที่มีไฟล์ (พิสูจน์ `kemi-backup-ro` อ่าน `kemi-files`), งานเบื้องหลัง failed, พื้นที่/งบ B2, ขนาดรูปเฉลี่ย/ความเร็วอัปโหลด
 - **P8-02a ลิงก์กดได้ ขึ้น production แล้ว (2 พ.ย.):** ตรวจแล้วว่าเว็บชี้ `kemi-prod` ไม่มีแถบระบบทดสอบ และ bundle มีโค้ดลิงก์ · ยังไม่ได้กดลิงก์จริงบน production เพราะยังไม่มีชั้นเรียน (ไม่โพสต์ทดสอบลงข้อมูลจริง) — ดูจากโพสต์แรกของครูตอนนำร่อง
-- **งานกลุ่มภายในเดือนแรก (ลำดับ P7-02 → P7-01 → P7-03):** P7-02b เสร็จ รอผู้ใช้ใส่ secret + ตัดสินเรื่องบันทึกผลลง prod → P7-02c · merge เข้า `main` = deploy production ต้องขออนุญาตทุกครั้ง
+- **งานกลุ่มภายในเดือนแรก (ลำดับ P7-02 → P7-01 → P7-03):** P7-02b เสร็จ (รวมขั้นบันทึกผลทาง A) รอผู้ใช้ใส่ secret + apply lifecycle แล้วแจ้ง → P7-02c (dev) · P7-02d (prod) ขออนุญาตแยก รันหลังห้องนำร่องส่งงาน · merge เข้า `main` = deploy production ต้องขออนุญาตทุกครั้ง
 - **Branch:** ทำงานต่อบน `phase-7-month1` (แยกจาก `main` `8d31ec7` + commit เอกสารจาก `phase-7`) · `main` ล่าสุด `8d31ec7` (merge P8-02a + เอกสาร) ก่อนหน้า `59fe239` (`/privacy` + คู่มือ prod) · CI main `8d31ec7` และ Cloudflare Pages ผ่าน (job `db` ข้ามเพราะไม่มี migration) · `phase-7` มี commit PROGRESS หลัง merge
 
 ### ระบบจริง (prod)
@@ -57,7 +57,7 @@
 
 ### รอผู้ใช้ (เอกสารที่ Claude แก้เองไม่ได้)
 
-- TECHNICAL_BUILD_PLAN ส่วน 3 + 8 และ TECHNICAL_DESIGN ส่วน 12: ขั้นตอน restore-test ต่างจากที่ทำจริง (ดูโน้ต P7-02b)
+- ไม่มีเอกสารค้าง (ผู้ใช้แก้ BUILD_PLAN 3 + 8 และ TECHNICAL_DESIGN 12 ตาม P7-02b + ทาง A แล้ว 2 พ.ย.)
 
 ### ข้อควรรู้จากงานรอบนี้ (25 ต.ค.)
 
@@ -108,11 +108,12 @@
 - [ ] P7-01 **[effort สูง]** `backup.yml` ฉบับเต็ม + job `guard`
 - [ ] P7-02 **[effort สูง]** `restore-test.yml` (Supabase ชั่วคราวใน runner) + check `kemi-restore-test`
     - [x] P7-02b (2 พ.ย.) สคริปต์ + workflow + ชุดทดสอบ ยังไม่รันกับบริการจริง: `ops/restore-test.sh`, `.github/workflows/restore-test.yml`, `ops/backup-test/restore-{unit,e2e}.sh`, คู่มือ `ops/backup-setup.md` ข้อ 8, กฎ lifecycle `restore-test/` ใน `ops/b2/lifecycle.json` (ยังไม่ apply)
-      - ทดสอบ: `ops/backup-test/run.sh` unit 36 + restore-unit 41 + e2e 64 + restore-e2e 138 ผ่าน, shellcheck, actionlint · ตัวควบคุมบวกจับได้: แถวไม่ตรง, manifest ไม่ตรง, ไฟล์จาก Drive ไม่ตรง, อ่านกลับไม่ตรง, ลบไม่สำเร็จ, จุดกู้คืนคนละเป้าหมาย, ฐานข้อมูลจริง, config ผิดชุด · log ไม่มี final_key/ชื่อไฟล์/อีเมล/กุญแจ
-      - ต่างจาก BUILD_PLAN ส่วน 3/8 (รอผู้ใช้แก้เอกสาร): วางไฟล์ใต้ `restore-test/<run id>/<final_key>` ไม่ใช่ key เดิม (ผู้ใช้สั่ง) · อ่านกลับด้วย GET ระบุเวอร์ชันแทน presigned · ยังไม่บันทึกผลลง `backup_runs` ของ prod (รอผู้ใช้ตัดสิน) · ยอดโทเคนรายงานยอดรวมอย่างเดียว เพราะ `meta.json` ไม่มีค่าไว้เทียบ
+      - ทาง A (ผู้ใช้ตัดสิน 2 พ.ย.): `ops/restore-record.sh` ขั้นแยกเฉพาะรอบ prod — ได้ `PROD_BACKUP_DB_PASSWORD` ขั้นเดียว ต่อได้แค่ pooler + `postgres.<ref prod>` เรียก `private.backup_record_restore_test` แถวเดียว (ผ่าน/ไม่ผ่าน) จากไฟล์ผลที่ `restore-test.sh` เขียน (จำนวน/ชื่อขั้นเท่านั้น)
+      - ทดสอบ: `ops/backup-test/run.sh` unit 36 + restore-unit 41 + record-unit 16 + e2e 64 + restore-e2e 162 ผ่าน, shellcheck, actionlint · ตัวควบคุมบวกจับได้: แถวไม่ตรง, manifest ไม่ตรง, ไฟล์จาก Drive ไม่ตรง, อ่านกลับไม่ตรง, ลบไม่สำเร็จ, จุดกู้คืนคนละเป้าหมาย, ฐานข้อมูลจริง, config ผิดชุด, บันทึกลง dev, ไฟล์ผลผิดรูป · log/ไฟล์ผลไม่มี final_key/ชื่อไฟล์/อีเมล/กุญแจ
+      - เอกสารผู้ใช้แก้แล้ว (`ec46eee`): prefix ทดสอบ · GET ระบุเวอร์ชันแทน presigned · ทาง A · ยอดโทเคนรายงานยอดรวมจนกว่า P7-01 เพิ่มค่าเทียบใน `meta.json`
       - เพดาน `sample` 50 ไฟล์/100 MB, `all` 500 ไฟล์/300 MB (เกินไม่เริ่ม) **[ข้อเสนอ]**
     - [ ] P7-02c รันกับ dev หลังผู้ใช้ใส่ `RESTORE_TEST_B2_KEY_ID` + `RESTORE_TEST_B2_APP_KEY` และ apply lifecycle (`ops/backup-setup.md` ข้อ 8) — ตรวจ log ก่อนรายงาน · `workflow_dispatch` ต้องมีไฟล์บน `main` จึงต้องใช้ trigger `push` ชั่วคราวเฉพาะ branch นี้ แล้วเอาออกก่อน merge
-    - [ ] P7-02d รันกับ prod: **ขออนุญาตผู้ใช้ก่อน** (อ่านข้อมูลจริง) + `RESTORE_TEST_HC_PING_URL` · ต้อง merge เข้า `main` ก่อน (ขออนุญาตแยก) · ปิดข้อ 16 ใน BUILD_PLAN ส่วน 13
+    - [ ] P7-02d รันกับ prod: **ขออนุญาตผู้ใช้ก่อน** (อ่านข้อมูลจริง + เขียนแถวผล) หลังห้องนำร่องส่งงานแล้ว + `RESTORE_TEST_HC_PING_URL` · ต้อง merge เข้า `main` ก่อน (ขออนุญาตแยก) · ตรวจแถวผลใน D01/`backup_runs` (ถามก่อนอ่าน prod) · ปิดข้อ 16 ใน BUILD_PLAN ส่วน 13
 - [ ] P7-03 แผงสำรองและผลทดสอบกู้คืนใน D01
 
 ### ติดตามระหว่างนำร่อง

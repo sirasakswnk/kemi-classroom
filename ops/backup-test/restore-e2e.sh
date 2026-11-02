@@ -99,11 +99,12 @@ ok 'มีจุดกู้คืน' eq "$(rc lsf --dirs-only gcrypt:runs | wc
 export PGUSER=supabase_admin RESTORE_ALLOW_LOCAL_REMOTE=1 RESTORE_TARGET=dev
 export RESTORE_B2_KEY_ID=FAKE_RESTORE_KEY RESTORE_B2_APP_KEY=FAKE-RESTORE-APP-KEY-SECRET
 export RESTORE_RUN_TAG=e2e HC_PING_URL=http://127.0.0.1:8787/hc HC_STATE_FILE=/tmp/hc-state GITHUB_STEP_SUMMARY=/tmp/summary.md
+export RESTORE_RESULT_FILE=/tmp/restore-result
 
 run_restore() { # $1 ชื่อรอบ → ตั้ง RC และ LOG (ตัวแปรอื่นส่งผ่าน env ของผู้เรียก)
   echo "== $1"
   LOG="/tmp/restore-$1.log"
-  rm -f "$HC_STATE_FILE"
+  rm -f "$HC_STATE_FILE" "$RESTORE_RESULT_FILE"
   bash /repo/ops/restore-test.sh >"$LOG" 2>&1
   RC=$?
   sed 's/^/    /' "$LOG" | tail -n 3
@@ -132,14 +133,37 @@ ok 'มีผลในสรุป' grep -q 'ผ่าน' "$GITHUB_STEP_SUMMARY
 ok 'ping สำเร็จ' eq "$(cat "$HC_STATE_FILE")" success
 ok 'ping ไม่มีชื่อไฟล์' not_in_log 'a1.pdf' "$HC_LOG"
 ok 'ตัดการเชื่อม auth_user_id' eq "$(q 'select count(*) from public.accounts where auth_user_id is not null')" 0
-ok 'version_id ในฐานข้อมูลเป็นค่าใหม่ทุกไฟล์' eq "$(q "select count(*) from public.assets where status = 'ready' and version_id like 'v-a%'")" 0
+ok 'version_id ในฐานข้อมูลเป็นค่าใหม่ทุกไฟล์' eq "$(q "select count(*) from public.assets where status = 'ready' and version_id like 'rv-%'")" 6
 ok 'อัปโหลดอยู่ใต้ prefix ทดสอบ' eq "$(grep '^PUT' "$FAKE_B2_LOG" | grep -vc '^PUT kemi-dev-files/restore-test/e2e/files/e2e/')" 0
 ok 'อัปโหลด 6 ไฟล์' eq "$(grep -c '^PUT' "$FAKE_B2_LOG")" 6
 ok 'อ่านกลับ 6 ไฟล์ ไฟล์ละครั้ง' eq "$(grep -c '^GET' "$FAKE_B2_LOG")" 6
-ok 'ลบ 6 เวอร์ชัน ระบุ version_id' eq "$(grep -c '^DELETE .*versionId=v-' "$FAKE_B2_LOG")" 6
+ok 'ลบ 6 เวอร์ชัน ระบุ version_id' eq "$(grep -c '^DELETE .*versionId=rv-' "$FAKE_B2_LOG")" 6
 ok 'ตาราง manifest ไม่มีข้อมูล (ไม่ได้สำรอง)' eq "$(q 'select count(*) from private.backup_run_files')" 0
 assert_private_log "$LOG"
+assert_private_log "$RESTORE_RESULT_FILE"
 assert_clean
+
+# ทาง A: บันทึกแถวผลด้วย ops/restore-record.sh (ในเครื่องแทน pooler ของ prod) — ฐานข้อมูลตอนนี้คือที่กู้แล้ว
+record() { # → ตั้ง RC และ LOG
+  LOG=/tmp/record.log
+  PGUSER=postgres RESTORE_RECORD_ALLOW_LOCAL=1 bash /repo/ops/restore-record.sh >"$LOG" 2>&1
+  RC=$?
+}
+last_restore_test() { q "select status || '|' || coalesce(dump_name, '-') || '|' || file_count || '|' || coalesce(detail, '') from public.backup_runs where kind = 'restore_test' order by started_at desc limit 1"; }
+ok 'ไฟล์ผล: ผ่าน' eq "$(sed -n 's/^succeeded=//p' "$RESTORE_RESULT_FILE")" true
+record
+ok 'บันทึกผลสำเร็จ' eq "$RC" 0
+ok 'แถวผล succeeded + จุดกู้คืน + 6 ไฟล์' eq "$(last_restore_test | cut -d'|' -f1-3)" "succeeded|$STAMP|6"
+ok 'detail เป็นจำนวนเท่านั้น' bash -c "[[ '$(last_restore_test | cut -d'|' -f4)' == target=dev* ]]"
+assert_private_log "$LOG"
+PGHOST=aws-0-ap-southeast-1.pooler.supabase.com PGUSER=postgres.igchlnmxbghsigyziomk RESTORE_RECORD_ALLOW_LOCAL=1 \
+  bash /repo/ops/restore-record.sh >/tmp/record-guard.log 2>&1
+ok 'บันทึกลง dev ไม่ได้' grep -q db_not_allowed /tmp/record-guard.log
+PGUSER=postgres bash /repo/ops/restore-record.sh >/tmp/record-guard.log 2>&1
+ok 'ในเครื่องไม่เปิดธงไม่ได้' grep -q db_not_allowed /tmp/record-guard.log
+printf 'succeeded=true\npoint=x\nfiles=1\ndetail=\n' >"$RESTORE_RESULT_FILE"
+record
+ok 'ไฟล์ผลรูปแบบผิด = ไม่บันทึก' grep -q invalid_result "$LOG"
 
 : >"$FAKE_B2_LOG"
 RESTORE_FILES=all RESTORE_POINT="$STAMP" run_restore pass-all-stamp
@@ -169,8 +193,12 @@ ok 'จำนวนแถวไม่ตรง = ล้ม' not eq "$RC" 0
 ok 'บอก table_rows_mismatch' failed_with table_rows_mismatch
 ok 'บอกชื่อตารางที่ไม่ตรง' failed_with 'public.assets meta='
 ok 'ping fail' eq "$(cat "$HC_STATE_FILE")" fail
+ok 'ไฟล์ผล: ไม่ผ่าน ที่ขั้น table_rows' eq "$(sed -n 's/^detail=//p' "$RESTORE_RESULT_FILE")" 'ล้มที่ขั้น table_rows (exit 1)'
 assert_private_log "$LOG"
 assert_clean
+record
+ok 'บันทึกผลไม่ผ่านสำเร็จ' eq "$RC" 0
+ok 'แถวผล failed + จุดกู้คืน' eq "$(last_restore_test | cut -d'|' -f1-2)" "failed|$STAMP"
 restore_meta
 
 tamper_meta 'del(.table_rows)'

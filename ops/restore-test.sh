@@ -20,6 +20,7 @@
 #   RESTORE_SWEEP_ONLY=1         ลบของค้างใต้ prefix ทดสอบแล้วจบ (ขั้นสำรองของ workflow เมื่อรอบถูกยกเลิก)
 #   RESTORE_ALLOW_LOCAL_REMOTE=1 ยอม gcrypt ที่ครอบโฟลเดอร์ในเครื่อง เฉพาะเป้าหมาย dev — สำหรับ ops/backup-test เท่านั้น
 #   HC_PING_URL HC_STATE_FILE    Healthchecks kemi-restore-test (workflow ส่งเฉพาะเป้าหมาย prod)
+#   RESTORE_RESULT_FILE          เขียนผล (succeeded/point/files/detail) ให้ ops/restore-record.sh บันทึกลง prod
 #
 # log ต้องไม่มีชื่อนักเรียน ชื่อไฟล์ final_key เนื้อความคิดเห็น หรือความลับ (prod เป็นข้อมูลจริง):
 #   ผลของ psql/pg_restore/rclone/aws เก็บลงไฟล์ใน $WORK ซึ่งลบตอนจบ · พิมพ์เฉพาะจำนวน ชื่อตาราง และชื่อขั้น · ไม่ใช้ set -x
@@ -103,6 +104,14 @@ STEP=init
 WORK=$(mktemp -d)
 SWEPT=0
 SUCCESS_PINGED=0
+STAMP=''
+READ_BACK=0
+
+# ผลของรอบสำหรับขั้นบันทึกผล (ทาง A) — จำนวนและชื่อขั้นเท่านั้น
+write_result() { # $1 true|false $2 detail
+  [ -n "${RESTORE_RESULT_FILE:-}" ] || return 0
+  printf 'succeeded=%s\npoint=%s\nfiles=%s\ndetail=%s\n' "$1" "$STAMP" "$READ_BACK" "$2" >"$RESTORE_RESULT_FILE"
+}
 
 s3() { # $1 คำสั่ง s3api ที่เหลือคืออาร์กิวเมนต์ — stderr มี key จึงเก็บลงไฟล์
   local op=$1
@@ -151,6 +160,7 @@ on_exit() {
     [ "$rc" != 0 ] || rc=1
   fi
   if [ "$rc" != 0 ] && [ "$SUCCESS_PINGED" != 1 ] && [ "${RESTORE_SWEEP_ONLY:-}" != 1 ]; then
+    write_result false "ล้มที่ขั้น $at (exit $rc)"
     hc_ping fail "kemi-restore-test ล้มที่ขั้น $at (exit $rc)"
   fi
   rm -rf "$WORK"
@@ -300,7 +310,6 @@ PICKED_BYTES=$(awk -F, '{ t += $3 } END { printf "%.0f", t }' "$WORK/picked.csv"
 log "เลือก $PICKED จาก $MANIFEST_COUNT ไฟล์ · $PICKED_BYTES ไบต์"
 
 UPLOADED=0
-READ_BACK=0
 if [ "$PICKED" -gt 0 ]; then
   # -------------------------------------------------------------------------
   # 6. ดึงจาก Drive → ตรวจกับ manifest (ไม่อ่าน kemi-files)
@@ -385,5 +394,6 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     echo "| $TARGET | $STAMP | $MODE | $TABLE_COUNT / $TOTAL_ROWS | $MANIFEST_COUNT | $READ_BACK | $PICKED_BYTES |"
   } >>"$GITHUB_STEP_SUMMARY"
 fi
+write_result true "$summary"
 hc_ping '' "kemi-restore-test ผ่าน $summary"
 SUCCESS_PINGED=1

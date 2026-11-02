@@ -90,7 +90,7 @@ Claude จะรัน workflow `backup` ด้วยมือกับ kemi-dev
 
 ## 8. ทดสอบกู้คืน (`restore-test.yml`, P7-02)
 
-ใช้ของเดิม `RCLONE_CONFIG` (dev) และ `PROD_RCLONE_CONFIG` (prod) — เพิ่มอีก 3 ตัว ไม่ต้องใช้รหัสผ่านฐานข้อมูลจริง เพราะ workflow นี้ไม่ต่อฐานข้อมูลของ `kemi-dev`/`kemi-prod`
+ใช้ของเดิม `RCLONE_CONFIG` (dev), `PROD_RCLONE_CONFIG` และ `PROD_BACKUP_DB_PASSWORD` (prod) — เพิ่มอีก 3 ตัว · ขั้นกู้คืนไม่ต่อฐานข้อมูลของ `kemi-dev`/`kemi-prod`; รอบ prod ที่จบแล้วใช้ `PROD_BACKUP_DB_PASSWORD` ในขั้นแยกเพื่อบันทึกแถวผลแถวเดียวลง `backup_runs` (แสดงใน D01) ไม่กู้ข้อมูลใดเข้า prod
 
 1. **กุญแจ B2 ใหม่:** เว็บ Backblaze → **Application Keys → Add a New Application Key**
    - Name `kemi-restore-test` · Allow access to Bucket(s): **`kemi-dev-files`** เท่านั้น · Type of Access: **Read and Write** · File name prefix: `restore-test/` · ไม่ติ๊ก List All Bucket Names · Duration: เว้นว่าง

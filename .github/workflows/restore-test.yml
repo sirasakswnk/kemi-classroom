@@ -1,12 +1,13 @@
 # ทดสอบกู้คืน (กดรันเอง) — TECHNICAL_BUILD_PLAN ส่วน 8 และ 13 ข้อ 16, TECHNICAL_DESIGN ส่วน 12
 # กู้ลง Supabase ชั่วคราวใน runner เท่านั้น · ไฟล์วางใต้ restore-test/ ใน kemi-dev-files แล้วลบในรอบเดียวกัน
-# ไม่ต่อฐานข้อมูลของ kemi-dev/kemi-prod และไม่แตะ kemi-files (workflow นี้ไม่มีรหัสผ่านฐานข้อมูลจริง)
+# ขั้นกู้คืนไม่ต่อฐานข้อมูลของ kemi-dev/kemi-prod และไม่แตะ kemi-files · รอบ prod ที่จบแล้วบันทึกแถวผลแถวเดียวลง
+# backup_runs ของ prod ในขั้นแยก (ops/restore-record.sh — ขั้นเดียวที่ได้รหัสผ่านฐานข้อมูล prod, ทาง A 2 พ.ย. 2026)
 # การรันเป้าหมาย prod = อ่านข้อมูลจริง: ต้องได้รับอนุญาตจากผู้ใช้ทุกครั้ง (CLAUDE.md ส่วน 4)
 #
 # GitHub Secrets (ผู้ใช้ใส่เองทางหน้าเว็บ — ops/backup-setup.md ส่วนทดสอบกู้คืน):
 #   RESTORE_TEST_B2_KEY_ID  RESTORE_TEST_B2_APP_KEY  กุญแจ B2 จำกัด bucket kemi-dev-files + prefix restore-test/
 #   RESTORE_TEST_HC_PING_URL                         Healthchecks kemi-restore-test รอบ 35 วัน (ping เฉพาะเป้าหมาย prod)
-#   ใช้ของเดิม: RCLONE_CONFIG (dev), PROD_RCLONE_CONFIG (prod)
+#   ใช้ของเดิม: RCLONE_CONFIG (dev), PROD_RCLONE_CONFIG + PROD_BACKUP_DB_PASSWORD (prod)
 name: restore-test
 
 on:
@@ -65,10 +66,11 @@ jobs:
           KEY_ID: ${{ secrets.RESTORE_TEST_B2_KEY_ID }}
           APP_KEY: ${{ secrets.RESTORE_TEST_B2_APP_KEY }}
           HC: ${{ secrets.RESTORE_TEST_HC_PING_URL }}
+          PROD_DB: ${{ secrets.PROD_BACKUP_DB_PASSWORD }}
         run: |
           set -- RESTORE_TEST_B2_KEY_ID "$KEY_ID" RESTORE_TEST_B2_APP_KEY "$APP_KEY"
           case "$RESTORE_TARGET" in
-            prod) set -- "$@" PROD_RCLONE_CONFIG "$PROD_RCLONE" RESTORE_TEST_HC_PING_URL "$HC" ;;
+            prod) set -- "$@" PROD_RCLONE_CONFIG "$PROD_RCLONE" RESTORE_TEST_HC_PING_URL "$HC" PROD_BACKUP_DB_PASSWORD "$PROD_DB" ;;
             dev) set -- "$@" RCLONE_CONFIG "$DEV_RCLONE" ;;
             *) echo '::error::target ต้องเป็น dev หรือ prod'; exit 1 ;;
           esac
@@ -115,6 +117,7 @@ jobs:
           RESTORE_B2_KEY_ID: ${{ secrets.RESTORE_TEST_B2_KEY_ID }}
           RESTORE_B2_APP_KEY: ${{ secrets.RESTORE_TEST_B2_APP_KEY }}
           HC_STATE_FILE: ${{ runner.temp }}/hc-state
+          RESTORE_RESULT_FILE: ${{ runner.temp }}/restore-result
         run: |
           if [ "$RESTORE_TARGET" = prod ]; then
             export RCLONE_CONFIG_CONTENT=$PROD_RCLONE HC_PING_URL=$HC
@@ -135,6 +138,20 @@ jobs:
           if [ -z "$RESTORE_B2_KEY_ID" ]; then echo 'ยังไม่มีกุญแจ ไม่มีอะไรให้ลบ'; exit 0; fi
           if [ ! -f ops/restore-test.sh ]; then echo 'ล้มก่อน checkout ยังไม่มีการอัปโหลด'; exit 0; fi
           bash ops/restore-test.sh
+
+      # ทาง A: แถวผลแถวเดียวลง backup_runs ของ prod — ขั้นเดียวที่ได้รหัสผ่านฐานข้อมูล prod (ต่อได้แค่ pooler ของ kemi-prod)
+      - name: บันทึกผลลง kemi-prod
+        if: ${{ always() && inputs.target == 'prod' }}
+        env:
+          PGHOST: aws-0-ap-southeast-1.pooler.supabase.com
+          PGPORT: '5432'
+          PGUSER: postgres.fcwbomasayvlubijsssh
+          PGPASSWORD: ${{ secrets.PROD_BACKUP_DB_PASSWORD }}
+          PGSSLMODE: require
+          RESTORE_RESULT_FILE: ${{ runner.temp }}/restore-result
+        run: |
+          if [ ! -s "$RESTORE_RESULT_FILE" ]; then echo '::warning::ไม่มีผลจากสคริปต์ (ล้มก่อนเริ่มหรือถูกยกเลิก) จึงไม่บันทึก'; exit 0; fi
+          bash ops/restore-record.sh
 
       - name: ทิ้ง Supabase ชั่วคราว
         if: ${{ always() }}
