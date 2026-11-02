@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Pencil } from 'lucide-react'
 import { useId, useState } from 'react'
 import { Link } from 'react-router'
 import { th } from '../../copy/th'
+import { LinkifiedText } from '../../ui'
 import type { Post } from '../posts/api'
 import { AttachmentList } from '../uploads/AttachmentList'
 import { when } from '../work/workState'
@@ -36,7 +37,9 @@ export function ProblemCard({ post }: { post: Post }) {
       </div>
       <div id={bodyId} hidden={!open} className={styles.page}>
         {post.body ? (
-          <p className={styles.prose}>{post.body}</p>
+          <p className={styles.prose}>
+            <LinkifiedText text={post.body} />
+          </p>
         ) : (
           <p className={styles.muted}>{copy.noBody}</p>
         )}

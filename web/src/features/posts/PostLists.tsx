@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { th } from '../../copy/th'
 import { initialOf } from '../../lib/initial'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
+import { LinkifiedText } from '../../ui'
 import { useTeacher } from '../teacher/teacherContext'
 import { AttachmentList } from '../uploads/AttachmentList'
 import type { Post } from './api'
@@ -87,7 +88,11 @@ export function AnnouncementList({
               {editable && <DeleteAnnouncement post={post} />}
             </div>
             <Title className={styles.postTitle}>{post.title}</Title>
-            {post.body && <p className={styles.postBody}>{post.body}</p>}
+            {post.body && (
+              <p className={styles.postBody}>
+                <LinkifiedText text={post.body} />
+              </p>
+            )}
             {post.files.length > 0 && <AttachmentList files={post.files} />}
           </article>
         </li>

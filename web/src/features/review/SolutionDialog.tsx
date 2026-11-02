@@ -14,7 +14,7 @@ import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import type { AppError } from '../../lib/supabase'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
-import { Button, Chip, Field, Modal, Textarea, useToast } from '../../ui'
+import { Button, Chip, Field, LinkifiedText, Modal, Textarea, useToast } from '../../ui'
 import { applyScript, type ScriptKind } from '../posts/script'
 import { AttachmentList } from '../uploads/AttachmentList'
 import { FileField } from '../uploads/FileField'
@@ -139,7 +139,11 @@ function PublishedView({
         <Chip tone="green" icon={<Check />} className={styles.start}>
           {copy.published}
         </Chip>
-        {solution.body && <p className={styles.prose}>{solution.body}</p>}
+        {solution.body && (
+          <p className={styles.prose}>
+            <LinkifiedText text={solution.body} />
+          </p>
+        )}
         {solution.files.length > 0 && <AttachmentList files={solution.files} />}
         <PublishedLine solution={solution} />
       </div>

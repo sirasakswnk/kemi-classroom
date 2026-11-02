@@ -24,6 +24,7 @@ import {
   DatePicker,
   Field,
   Input,
+  LinkifiedText,
   Stepper,
   Textarea,
   TimePicker,
@@ -643,7 +644,11 @@ function Preview({
             </div>
             <div className={styles.previewDetail}>
               <span className={styles.eyebrow}>{copy.previewScore(values.fullScore.trim())}</span>
-              {values.body.trim() && <p className={styles.postBody}>{values.body}</p>}
+              {values.body.trim() && (
+                <p className={styles.postBody}>
+                  <LinkifiedText text={values.body} />
+                </p>
+              )}
               <span className={styles.chips}>
                 <Chip tone="plain" icon={<CalendarClock />}>
                   {closeAt ? list.closeAt(thaiDate(closeAt), thaiTime(closeAt)) : list.noClose}
@@ -664,7 +669,9 @@ function Preview({
               </span>
             </div>
             {values.title.trim() && <b className={styles.postTitle}>{values.title}</b>}
-            <p className={styles.postBody}>{values.body.trim() || copy.previewBody}</p>
+            <p className={styles.postBody}>
+              <LinkifiedText text={values.body.trim() || copy.previewBody} />
+            </p>
           </article>
         )}
         {!editing && values.kind === 'announcement' && (

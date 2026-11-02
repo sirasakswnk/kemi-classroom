@@ -5,7 +5,7 @@ import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import type { AppError } from '../../lib/supabase'
 import { thaiDate, thaiTime } from '../../lib/thaiTime'
-import { MenuButton } from '../../ui'
+import { LinkifiedText, MenuButton } from '../../ui'
 import { postComment, retractComment, threadKey, threadQuery, type Comment } from './api'
 import { remaining } from './commentText'
 import styles from './comments.module.css'
@@ -124,7 +124,9 @@ export function CommentThread(props: Props) {
                 <span className={styles.gone}>{copy.retracted}</span>
               ) : (
                 <>
-                  <span className={styles.body}>{c.body}</span>
+                  <span className={styles.body}>
+                    <LinkifiedText text={c.body ?? ''} />
+                  </span>
                   <span className={styles.meta}>
                     <small>
                       {who(c)} · {thaiDate(c.created_at)} {thaiTime(c.created_at)} น.

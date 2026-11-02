@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router'
 import { th } from '../../copy/th'
 import { appErrorOf } from '../../lib/request'
 import { thaiDate } from '../../lib/thaiTime'
-import { Button, Steps } from '../../ui'
+import { Button, LinkifiedText, Steps } from '../../ui'
 import { CommentThread } from '../comments/CommentThread'
 import { gradeQuery } from '../grading/api'
 import { postQuery } from '../posts/api'
@@ -155,7 +155,9 @@ export default function WorkPage() {
               <h2 id="workProblem">{copy.problem}</h2>
             </div>
             {p.body ? (
-              <p className={styles.prose}>{p.body}</p>
+              <p className={styles.prose}>
+                <LinkifiedText text={p.body} />
+              </p>
             ) : (
               p.files.length > 0 && <p className={styles.muted}>{copy.noBody}</p>
             )}
