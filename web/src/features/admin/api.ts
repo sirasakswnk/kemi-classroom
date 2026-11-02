@@ -47,6 +47,38 @@ export function removeTeacher(allowlistId: string) {
   )
 }
 
+// D01 แผงสำรองข้อมูล (P7-03): อ่าน backup_runs ตรง (RLS ให้เฉพาะผู้ดูแล — 0012) เลือกเฉพาะคอลัมน์ที่แผงใช้
+const BACKUP_COLUMNS = 'kind, status, started_at, finished_at, dump_name, file_count, detail'
+const BackupRunSchema = z.object({
+  kind: z.string(),
+  status: z.string(),
+  started_at: z.string(),
+  finished_at: z.string().nullable(),
+  dump_name: z.string().nullable(),
+  file_count: z.number().int().nullable(),
+  detail: z.string().nullable(),
+})
+const latestRun = (kind: 'backup' | 'restore_test', status?: 'succeeded' | 'failed') => {
+  let q = supabase.from('backup_runs').select(BACKUP_COLUMNS).eq('kind', kind)
+  q = status ? q.eq('status', status) : q.neq('status', 'running')
+  return run(q.order('started_at', { ascending: false }).limit(1), z.array(BackupRunSchema)).then(
+    (rows) => rows[0] ?? null,
+  )
+}
+
+export const adminBackupRunsQuery = queryOptions({
+  queryKey: ['admin-backup-runs'],
+  queryFn: async () => {
+    const [lastSuccess, lastFailure, lastRestoreTest] = await Promise.all([
+      latestRun('backup', 'succeeded'),
+      latestRun('backup', 'failed'),
+      latestRun('restore_test'),
+    ])
+    return { lastSuccess, lastFailure, lastRestoreTest }
+  },
+  staleTime: 60_000,
+})
+
 // D01 งานเบื้องหลังที่ล้มเหลว + ลองใหม่ (0051_admin_jobs) — ไม่มี payload, error เป็นรหัสย่อ
 const FailedJobSchema = z.object({
   id: z.number().int(),

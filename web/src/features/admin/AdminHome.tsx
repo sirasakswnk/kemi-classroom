@@ -1,14 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  CloudUpload,
-  LogIn,
-  LogOut,
-  Plus,
-  ShieldCheck,
-  TriangleAlert,
-  UserMinus,
-  UserRound,
-} from 'lucide-react'
+import { LogIn, LogOut, Plus, ShieldCheck, TriangleAlert, UserMinus, UserRound } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../../app/auth/useAuth'
@@ -18,6 +9,7 @@ import { appErrorOf } from '../../lib/request'
 import { Button, Chip, Field, Input, Modal, Select, useToast } from '../../ui'
 import { AdminStorageAlerts, StoragePanel } from '../storage/Storage'
 import { enterAdminMode } from '../teacher/adminMode'
+import { BackupPanel } from './BackupPanel'
 import { FailedJobsPanel } from './FailedJobsPanel'
 import { addTeacher, adminTeachersQuery, removeTeacher, type AllowlistRow } from './api'
 import styles from './AdminHome.module.css'
@@ -25,7 +17,7 @@ import styles from './AdminHome.module.css'
 const NEW = '__new__'
 
 // D01 ดูแลระบบ (UX 12 L6, แบบ v2 renderAdmin): บัญชีครู (เพิ่ม/เอาออก ต้องเหลืออย่างน้อย 1) และเข้าหน้าครูในโหมดผู้ดูแล
-// พื้นที่เก็บไฟล์ + ตัวนับ B2 วันนี้ (P3-10) · สถานะสำรองข้อมูลมากับ P3-11/ระยะ 7
+// พื้นที่เก็บไฟล์ + ตัวนับ B2 วันนี้ (P3-10) · สถานะสำรองข้อมูล (P7-03)
 export default function AdminHome() {
   const { signOut } = useAuth()
   const navigate = useNavigate()
@@ -58,13 +50,7 @@ export default function AdminHome() {
           )}
         </div>
 
-        <section className={styles.later} aria-labelledby="adminLater">
-          <CloudUpload aria-hidden="true" />
-          <span>
-            <b id="adminLater">{copy.laterTitle}</b>
-            <span>{copy.laterBody}</span>
-          </span>
-        </section>
+        <BackupPanel />
 
         <StoragePanel />
         <FailedJobsPanel />
