@@ -11,8 +11,8 @@
 - **ระบบจริงพร้อมใช้งานแล้ว:** เว็บ production ชี้ `kemi-prod` · ล็อกอิน Google เผยแพร่เป็น In production (นักเรียนทุกคนล็อกอินได้) · ผู้ดูแลแรก + ครูตั้งแล้ว · สำรองตามตารางสำรอง prod · จุดสาธิต 3 กับครูผ่าน = **go**
 - **งานถัดไป: P8-01 นำร่อง 1 ห้อง** (แนะนำ 5/4 — 28 คน คำเตือนชื่อ 1 รายการ) — ครูทำบนเว็บจริง: ล็อกอิน → สร้างชั้นเรียน → นำเข้า Excel (เลือกใช้ค่าเสนอ/คงค่าเดิมทีละช่อง) → แจกรหัสห้อง → โพสต์การบ้าน 1 ชิ้น · **เมื่อเริ่มมีการส่งงาน ผู้ใช้บอก Claude** เพื่อตรวจ: รอบสำรองแรกที่มีไฟล์ (พิสูจน์ `kemi-backup-ro` อ่าน `kemi-files`), งานเบื้องหลัง failed, พื้นที่/งบ B2, ขนาดรูปเฉลี่ย/ความเร็วอัปโหลด
 - **P8-02a ลิงก์กดได้ ขึ้น production แล้ว (2 พ.ย.):** ตรวจแล้วว่าเว็บชี้ `kemi-prod` ไม่มีแถบระบบทดสอบ และ bundle มีโค้ดลิงก์ · ยังไม่ได้กดลิงก์จริงบน production เพราะยังไม่มีชั้นเรียน (ไม่โพสต์ทดสอบลงข้อมูลจริง) — ดูจากโพสต์แรกของครูตอนนำร่อง
-- **งานกลุ่มภายในเดือนแรก (ลำดับ P7-02 → P7-01 → P7-03):** P7-02b + P7-02c (dev ผ่าน) เสร็จ · เหลือ P7-02d (prod): ผู้ใช้ apply lifecycle (backup-setup ข้อ 8.4) → ขออนุญาต merge เข้า `main` → ขออนุญาตรัน prod หลังห้องนำร่องส่งงาน · งานถัดไปที่ทำได้เลย: P7-01 job `guard` · merge เข้า `main` = deploy production ต้องขออนุญาตทุกครั้ง
-- **Branch:** ทำงานต่อบน `phase-7-month1` (แยกจาก `main` `8d31ec7` + commit เอกสารจาก `phase-7`) · `main` ล่าสุด `8d31ec7` (merge P8-02a + เอกสาร) ก่อนหน้า `59fe239` (`/privacy` + คู่มือ prod) · CI main `8d31ec7` และ Cloudflare Pages ผ่าน (job `db` ข้ามเพราะไม่มี migration) · `phase-7` มี commit PROGRESS หลัง merge
+- **งานกลุ่มภายในเดือนแรก (ลำดับ P7-02 → P7-01 → P7-03):** P7-02b/c merge แล้ว (`a4e7207`) เหลือ P7-02d (prod — ถามแยกหลังห้องนำร่องส่งงาน) · **P7-01a เสร็จบน `phase-7-backup` รอผู้ใช้อนุญาต merge** → P7-01b ตรวจรอบ prod ตามตารางรอบถัดไปหลัง merge · จากนั้น P7-03 · merge เข้า `main` = deploy production ต้องขออนุญาตทุกครั้ง
+- **Branch:** ทำงานต่อบน `phase-7-backup` (แยกจาก `main` `a4e7207`) · `main` ล่าสุด `a4e7207` (merge `phase-7-month1`: restore-test + เอกสาร) ก่อนหน้า `8d31ec7` (P8-02a) · CI main `a4e7207` และ Cloudflare Pages ผ่าน · `phase-7` และ `phase-7-month1` ไม่ใช้ต่อแล้ว
 
 ### ระบบจริง (prod)
 
@@ -106,6 +106,11 @@
 ระหว่างนี้ใช้อีเมล Healthchecks.io และดูประวัติใน GitHub Actions
 
 - [ ] P7-01 **[effort สูง]** `backup.yml` ฉบับเต็ม + job `guard`
+    - [x] P7-01a (2 พ.ย., `phase-7-backup`) job `guard` + `token_totals` ใน meta.json + restore-test เทียบตรงตัว: `ops/guard.sh` (prod เท่านั้น, `BEGIN READ ONLY`, job แยกล้มได้โดยงานสำรองทำต่อ, รอบเป้าหมาย dev ข้าม — ไม่อ่าน prod) · `ops/sql/table-rows.sql` + `token-totals.sql` ใช้ร่วม backup/restore-test (`wallets` จำนวน + ยอดรวม + md5 ของยอดรายกระเป๋า) · `prod_db_allowed` ย้ายไป lib ของ `backup.sh` ใช้ร่วม restore-record/guard · จุดกู้คืนเก่าไม่มี `token_totals` ยังผ่านแต่บอกว่าไม่มีค่าเทียบ
+      - ทดสอบ: `run.sh` unit 36 + restore-unit 41 + record-unit 16 + e2e 73 + restore-e2e 181, shellcheck, actionlint · ตัวควบคุมจับได้: digest/ยอดรวมไม่ตรง, guard ล้มเมื่อ on + annotation, guard ไม่ยอม pooler dev/ในเครื่องไม่เปิดธง · แก้เทสต์เดิมที่ล้มเป็นบางรอบ (ชื่อใน Drive เทียบบางส่วน → ทั้งชื่อ) · ชุดเต็ม: pgTAP, เว็บ 444, Edge 79, ops 9, typecheck/lint/format/build ผ่าน
+      - dev รันมือจาก branch: backup run 41477004095 สำเร็จ (36 ตาราง, ยอดโทเคน 2 กระเป๋า รวม 6, ไฟล์ใหม่ 5, ครบ 31) + guard ข้าม · restore-test run 41477583854 ผ่าน (จุด `20261102T155951Z`, แถวตรง 709, **ยอดโทเคนตรงตัว**, อ่านกลับ 31, ลบเหลือ 0) · log ทั้งสองไม่มี key/นามสกุลไฟล์/อีเมล/URL ping
+      - ยังไม่ได้รัน `guard` กับ prod จริง (รอบ dev ไม่อ่าน prod) — รันครั้งแรกในรอบ prod ตามตารางหลัง merge
+    - [ ] P7-01b หลังผู้ใช้อนุญาต merge: ตรวจ CI main + Pages แล้วตรวจรอบสำรอง prod ตามตารางรอบถัดไป (job backup สำเร็จ + `token_totals` ใน log + job guard ผ่าน)
 - [ ] P7-02 **[effort สูง]** `restore-test.yml` (Supabase ชั่วคราวใน runner) + check `kemi-restore-test`
     - [x] P7-02b (2 พ.ย.) สคริปต์ + workflow + ชุดทดสอบ ยังไม่รันกับบริการจริง: `ops/restore-test.sh`, `.github/workflows/restore-test.yml`, `ops/backup-test/restore-{unit,e2e}.sh`, คู่มือ `ops/backup-setup.md` ข้อ 8, กฎ lifecycle `restore-test/` ใน `ops/b2/lifecycle.json` (ยังไม่ apply)
       - ทาง A (ผู้ใช้ตัดสิน 2 พ.ย.): `ops/restore-record.sh` ขั้นแยกเฉพาะรอบ prod — ได้ `PROD_BACKUP_DB_PASSWORD` ขั้นเดียว ต่อได้แค่ pooler + `postgres.<ref prod>` เรียก `private.backup_record_restore_test` แถวเดียว (ผ่าน/ไม่ผ่าน) จากไฟล์ผลที่ `restore-test.sh` เขียน (จำนวน/ชื่อขั้นเท่านั้น)

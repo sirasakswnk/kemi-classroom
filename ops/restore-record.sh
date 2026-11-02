@@ -13,19 +13,11 @@ set -Eeuo pipefail
 umask 077
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-# target_value stamp_ok log die
+# prod_db_allowed stamp_ok log die
 export BACKUP_LIB_ONLY=1
 # shellcheck source=ops/backup.sh
 . "$here/backup.sh"
 unset BACKUP_LIB_ONLY
-
-readonly RECORD_HOST=aws-0-ap-southeast-1.pooler.supabase.com
-
-# pooler + ผู้ใช้ postgres.<ref ของ prod> เท่านั้น — dev หรือโปรเจกต์อื่นไม่ผ่าน
-record_db_allowed() { # $1 PGHOST $2 PGUSER $3 allow_local
-  [ "$1" = "$RECORD_HOST" ] && [ "$2" = "postgres.$(target_value prod ref)" ] && return 0
-  [ "${3:-}" = 1 ] && [[ "$1" =~ ^(localhost|127\.0\.0\.1|host\.docker\.internal)$ ]] && [ "$2" = postgres ]
-}
 
 result_value() { sed -n "s/^$2=//p" "$1" | head -n 1; } # $1 ไฟล์ผล $2 ชื่อ
 
@@ -44,7 +36,7 @@ fi
 
 STEP=guard
 : "${PGHOST:?}" "${PGUSER:?}" "${PGPASSWORD:?}" "${RESTORE_RESULT_FILE:?}"
-record_db_allowed "$PGHOST" "$PGUSER" "${RESTORE_RECORD_ALLOW_LOCAL:-}" ||
+prod_db_allowed "$PGHOST" "$PGUSER" "${RESTORE_RECORD_ALLOW_LOCAL:-}" ||
   die 'db_not_allowed: บันทึกผลได้เฉพาะ kemi-prod ผ่าน Session pooler'
 [ -s "$RESTORE_RESULT_FILE" ] || die 'ไม่มีไฟล์ผลของ ops/restore-test.sh'
 succeeded=$(result_value "$RESTORE_RESULT_FILE" succeeded)

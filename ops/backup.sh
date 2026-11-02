@@ -92,6 +92,17 @@ crypt_remote_ok() { # $1 ค่า remote ของ gcrypt $2 target
 
 key_ok() { [[ "$1" =~ $KEY_RE ]] && [[ "$1" != *..* ]]; }
 
+# Session pooler + ผู้ใช้ postgres.<ref ของ prod> เท่านั้น (ops/restore-record.sh, ops/guard.sh) — dev/โปรเจกต์อื่นไม่ผ่าน
+readonly PROD_POOLER_HOST=aws-0-ap-southeast-1.pooler.supabase.com
+prod_db_allowed() { # $1 PGHOST $2 PGUSER $3 allow_local (ฐานข้อมูลในเครื่อง ผู้ใช้ postgres — ops/backup-test เท่านั้น)
+  [ "$1" = "$PROD_POOLER_HOST" ] && [ "$2" = "postgres.$PROD_REF" ] && return 0
+  [ "${3:-}" = 1 ] && [[ "$1" =~ ^(localhost|127\.0\.0\.1|host\.docker\.internal)$ ]] && [ "$2" = postgres ]
+}
+
+# SQL ที่ใช้ร่วมกับ ops/restore-test.sh (ops/sql/) เป็นบรรทัดเดียวสำหรับ session A
+sql_file_line() { tr '\n' ' ' <"$SQL_DIR/$1"; }
+SQL_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/sql
+
 # ETag ของ PUT/CopyObject ชิ้นเดียวคือ MD5 (BUILD_PLAN 13 ข้อ 9) — ค่าแบบอื่นตรวจแค่ขนาด
 md5_comparable() { [[ "$1" =~ ^[0-9a-fA-F]{32}$ ]]; }
 
@@ -307,12 +318,15 @@ MANIFEST_JSON=$(sa_query "select private.backup_record_manifest('$RUN_ID');") ||
 FILE_COUNT=$(jq -r '.file_count' <<<"$MANIFEST_JSON")
 TOTAL_BYTES=$(jq -r '.total_bytes' <<<"$MANIFEST_JSON")
 log "snapshot $SNAPSHOT · manifest $FILE_COUNT ไฟล์ $TOTAL_BYTES ไบต์"
-# จำนวนแถวทุกตารางที่อยู่ใน data.dump ณ snapshot เดียวกัน (P7-02a → P7-08) — ใช้เทียบตอนกู้คืนแบบตรงตัว
-# ไม่นับตารางที่ไม่สำรองข้อมูล (backup_manifests, backup_run_files) · ผลเป็น JSON บรรทัดเดียว ไม่มีข้อมูลนักเรียน
-TABLE_ROWS=$(sa_query "select coalesce(jsonb_object_agg(t.name, t.n order by t.name), '{}') from (select n.nspname || '.' || c.relname as name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', n.nspname, c.relname), false, true, '')))[1]::text::bigint as n from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid = c.relnamespace where n.nspname in ('public', 'private') and c.relkind in ('r', 'p') and n.nspname || '.' || c.relname not in ('private.backup_manifests', 'private.backup_run_files')) t;") ||
+# จำนวนแถวทุกตาราง (P7-08) และยอดโทเคน (P7-01) ณ snapshot เดียวกับ dump — ใช้เทียบตอนกู้คืนแบบตรงตัว
+# SQL อยู่ใน ops/sql/ ใช้ร่วมกับ ops/restore-test.sh · ผลเป็น JSON บรรทัดเดียว ไม่มีข้อมูลนักเรียน
+TABLE_ROWS=$(sa_query "$(sql_file_line table-rows.sql)") ||
   die 'นับแถวตารางไม่ได้'
 jq -e 'type == "object" and length > 0' <<<"$TABLE_ROWS" >/dev/null || die 'จำนวนแถวตารางไม่ถูกต้อง'
 log "นับแถว $(jq 'length' <<<"$TABLE_ROWS") ตาราง"
+TOKEN_TOTALS=$(sa_query "$(sql_file_line token-totals.sql)") || die 'นับยอดโทเคนไม่ได้'
+jq -e 'type == "object" and has("balance_digest")' <<<"$TOKEN_TOTALS" >/dev/null || die 'ยอดโทเคนไม่ถูกต้อง'
+log "ยอดโทเคน: $(jq -r '"\(.wallets) กระเป๋า รวม \(.balance_sum)"' <<<"$TOKEN_TOTALS")"
 
 STEP=pg_dump
 dump_args=(--snapshot="$SNAPSHOT" --schema=public --schema=private --format=custom --no-password)
@@ -388,11 +402,11 @@ log "ความครบ: ไฟล์ใน manifest $FILE_COUNT ไฟล์
 STEP=upload_run
 jq -n --arg run "$RUN_ID" --arg stamp "$STAMP" --arg snapshot "$SNAPSHOT" --argjson files "$FILE_COUNT" \
   --argjson bytes "$TOTAL_BYTES" --argjson new "$NEW_COUNT" --argjson server "$server_major" \
-  --arg target "$TARGET" --argjson rows "$TABLE_ROWS" \
+  --arg target "$TARGET" --argjson rows "$TABLE_ROWS" --argjson tokens "$TOKEN_TOTALS" \
   '{run_id: $run, stamp: $stamp, target: $target, snapshot: $snapshot, file_count: $files, total_bytes: $bytes,
     new_file_count: $new, server_major: $server, schemas: ["public", "private"],
     excluded_table_data: ["private.backup_manifests", "private.backup_run_files"],
-    table_rows: $rows}' >"$WORK/run/meta.json"
+    table_rows: $rows, token_totals: $tokens}' >"$WORK/run/meta.json"
 RUN_UPLOADED=1
 "${RCLONE[@]}" copy "$WORK/run" "gcrypt:runs/$STAMP"
 "${RCLONE[@]}" cryptcheck "$WORK/run" "gcrypt:runs/$STAMP" --one-way
