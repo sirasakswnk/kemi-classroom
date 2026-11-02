@@ -1,4 +1,5 @@
 [
   { "fileNamePrefix": "files/", "daysFromUploadingToHiding": null, "daysFromHidingToDeleting": 1 },
-  { "fileNamePrefix": "staging/", "daysFromUploadingToHiding": 1, "daysFromHidingToDeleting": 1 }
+  { "fileNamePrefix": "staging/", "daysFromUploadingToHiding": 1, "daysFromHidingToDeleting": 1 },
+  { "fileNamePrefix": "restore-test/", "daysFromUploadingToHiding": 1, "daysFromHidingToDeleting": 1 }
 ]

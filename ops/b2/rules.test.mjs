@@ -35,6 +35,11 @@ const readBackLifecycle = [
     daysFromUploadingToHiding: 1,
     fileNamePrefix: 'staging/',
   },
+  {
+    daysFromHidingToDeleting: 1,
+    daysFromUploadingToHiding: 1,
+    fileNamePrefix: 'restore-test/',
+  },
 ]
 
 test('ค่าที่ B2 อ่านกลับ (เรียงใหม่, etag ตัวเล็ก, คีย์เพิ่ม) นับว่าตรงกับไฟล์', () => {
@@ -52,6 +57,7 @@ test('ค่าที่ต่างจริงนับว่าไม่ต�
   const keepHidden = [
     readBackLifecycle[0],
     { ...readBackLifecycle[1], daysFromHidingToDeleting: 30 },
+    readBackLifecycle[2],
   ]
   assert.equal(sameRules(lifecycle, keepHidden, 'fileNamePrefix'), false)
   assert.equal(sameRules(cors, undefined, 'corsRuleName'), false)

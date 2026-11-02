@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
-# aws ปลอมสำหรับ e2e.sh: รับเฉพาะ `aws s3api get-object ... --key K --version-id V <ไฟล์ปลายทาง>`
-# อ่านจาก $FAKE_B2_DIR/<bucket>/<K>@<V> และบันทึกทุกครั้งที่เรียกลง $FAKE_B2_LOG (นับคำขอ Class B)
+# aws ปลอมสำหรับ e2e: `aws s3api get-object|put-object|delete-object|list-object-versions` บนโฟลเดอร์ในเครื่อง
+# วัตถุหนึ่งเวอร์ชันอยู่ที่ $FAKE_B2_DIR/<bucket>/<K>@<V> และบันทึกทุกครั้งที่เรียกลง $FAKE_B2_LOG
+# กุญแจ FAKE_RESTORE_KEY จำลองกุญแจจำกัดของ restore-test: ได้เฉพาะ kemi-dev-files + prefix restore-test/
 set -euo pipefail
-[ "${1:-} ${2:-}" = 's3api get-object' ] || {
+op="${1:-} ${2:-}"
+case "$op" in
+'s3api get-object' | 's3api put-object' | 's3api delete-object' | 's3api list-object-versions') ;;
+*)
   echo "fake-aws: ไม่รองรับ $*" >&2
   exit 2
-}
+  ;;
+esac
 shift 2
-bucket='' key='' version='' out=''
+bucket='' key='' version='' out='' body='' prefix=''
 while [ $# -gt 0 ]; do
   case $1 in
   --bucket) bucket=$2 && shift 2 ;;
   --key) key=$2 && shift 2 ;;
   --version-id) version=$2 && shift 2 ;;
-  --endpoint-url) shift 2 ;;
+  --body) body=$2 && shift 2 ;;
+  --prefix) prefix=$2 && shift 2 ;;
+  --endpoint-url | --output) shift 2 ;;
   *) out=$1 && shift ;;
   esac
 done
@@ -21,11 +28,55 @@ done
   echo 'fake-aws: ไม่มีกุญแจ' >&2
   exit 255
 }
-echo "GET $bucket/$key?versionId=$version" >>"$FAKE_B2_LOG"
-src="$FAKE_B2_DIR/$bucket/$key@$version"
-[ -f "$src" ] || {
-  echo 'fake-aws: An error occurred (NoSuchKey)' >&2
-  exit 254
-}
-cp "$src" "$out"
-echo '{"ETag": "\"fake\""}'
+if [ "$AWS_ACCESS_KEY_ID" = FAKE_RESTORE_KEY ]; then
+  name=${key:-$prefix}
+  if [ "$bucket" != kemi-dev-files ] || [[ "$name" != restore-test/* ]]; then
+    echo "DENY $op $bucket/$name" >>"$FAKE_B2_LOG"
+    echo 'fake-aws: An error occurred (AccessDenied)' >&2
+    exit 254
+  fi
+fi
+root="$FAKE_B2_DIR/$bucket"
+case "$op" in
+'s3api get-object')
+  echo "GET $bucket/$key?versionId=$version" >>"$FAKE_B2_LOG"
+  src="$root/$key@$version"
+  [ -f "$src" ] || {
+    echo 'fake-aws: An error occurred (NoSuchKey)' >&2
+    exit 254
+  }
+  cp "$src" "$out"
+  # ตัวควบคุมของ restore-e2e: เนื้อที่อ่านกลับไม่ตรงกับที่อัปโหลด
+  if [ -n "${FAKE_B2_CORRUPT_GET:-}" ]; then printf 'x' >>"$out"; fi
+  echo '{"ETag": "\"fake\""}'
+  ;;
+'s3api put-object')
+  # rv- ต่างจากเวอร์ชันสมมติ v-<ชื่อ> ที่ e2e ใส่ไว้ในฐานข้อมูล
+  version="rv-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')"
+  echo "PUT $bucket/$key?versionId=$version" >>"$FAKE_B2_LOG"
+  mkdir -p "$(dirname "$root/$key")"
+  cp "$body" "$root/$key@$version"
+  printf '{"ETag": "\\"%s\\"", "VersionId": "%s"}\n' "$(md5sum "$body" | cut -d' ' -f1)" "$version"
+  ;;
+'s3api delete-object')
+  [ -n "$version" ] || {
+    echo 'fake-aws: delete ต้องระบุ version-id' >&2
+    exit 2
+  }
+  echo "DELETE $bucket/$key?versionId=$version" >>"$FAKE_B2_LOG"
+  # ตัวควบคุมของ restore-e2e: B2 ขัดข้องตอนลบ
+  if [ -n "${FAKE_B2_FAIL_DELETE:-}" ]; then
+    echo 'fake-aws: An error occurred (ServiceUnavailable)' >&2
+    exit 254
+  fi
+  rm -f "$root/$key@$version"
+  echo '{}'
+  ;;
+'s3api list-object-versions')
+  echo "LIST $bucket/$prefix" >>"$FAKE_B2_LOG"
+  # ไม่มีวัตถุ = ผลว่างแบบ aws cli (ไม่มีช่อง Versions)
+  mkdir -p "$root"
+  (cd "$root" && find . -type f -path "./$prefix*" | sed 's#^\./##') |
+    jq -Rsc 'split("\n") | map(select(. != "") | capture("^(?<Key>.*)@(?<VersionId>[^@]*)$")) | if length == 0 then {} else {Versions: .} end'
+  ;;
+esac
