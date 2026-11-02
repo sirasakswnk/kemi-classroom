@@ -234,6 +234,51 @@
   margin-top: 2px;
 }
 
+/* แผงสำรองข้อมูล (P7-03) */
+.backupRows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+
+.backupRows > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 12px;
+  padding: 12px 14px;
+}
+
+.backupRows > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.backupRows > li > svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--purple);
+}
+
+.backupText {
+  display: grid;
+  flex: 1 1 200px;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+.backupText > span {
+  overflow-wrap: anywhere;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+
 /* งานเบื้องหลังที่ล้มเหลว (P6-04c) */
 .jobs {
   display: grid;
