@@ -11,7 +11,7 @@ bash "$here/record-unit.sh"
 MSYS_NO_PATHCONV=1 docker run --rm -w /mnt -v "$root:/mnt:ro" koalaman/shellcheck:stable -x \
   /mnt/ops/backup.sh /mnt/ops/backup-test/unit.sh /mnt/ops/backup-test/e2e.sh /mnt/ops/backup-test/fake-aws /mnt/ops/backup-test/run.sh \
   /mnt/ops/restore-test.sh /mnt/ops/backup-test/restore-unit.sh /mnt/ops/backup-test/restore-e2e.sh \
-  /mnt/ops/restore-record.sh /mnt/ops/backup-test/record-unit.sh
+  /mnt/ops/restore-record.sh /mnt/ops/backup-test/record-unit.sh /mnt/ops/guard.sh
 echo 'shellcheck: ผ่าน'
 MSYS_NO_PATHCONV=1 docker run --rm -v "$root:/repo:ro" --add-host=host.docker.internal:host-gateway \
   postgres:17 bash /repo/ops/backup-test/e2e.sh

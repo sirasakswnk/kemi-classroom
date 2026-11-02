@@ -79,6 +79,10 @@ echo '== เตรียมข้อมูลสมมติ'
 # ล้าง assets ทั้งตารางของฐานข้อมูลในเครื่อง: ของค้างจาก e2e.sh ไม่มีเนื้อไฟล์ใน B2 ปลอมของ container นี้ (ปิด trigger เฉพาะ transaction นี้)
 q "set local session_replication_role = replica;
    delete from public.attachments; delete from public.assets;
+   delete from public.wallets;
+   insert into public.wallets (student_id, term_id, balance)
+   values ('e2e00000-0000-4000-8000-0000000000b1', (select id from public.terms limit 1), 7),
+          ('e2e00000-0000-4000-8000-0000000000b2', (select id from public.terms limit 1), 3);
    delete from private.backup_run_files; delete from private.backup_manifests; delete from public.backup_runs;
    delete from private.maintenance_locks where name = 'backup';
    delete from public.accounts where id = 'e2e00000-0000-4000-8000-000000000001';
@@ -130,6 +134,7 @@ assert_clean() { # หลังจบทุกรอบ ไม่ว่าผ่
 RESTORE_FILES=sample run_restore pass-sample
 ok 'สำเร็จ' eq "$RC" 0
 ok 'มีผลในสรุป' grep -q 'ผ่าน' "$GITHUB_STEP_SUMMARY"
+ok 'ยอดโทเคนตรงตัว 2 กระเป๋า รวม 10' grep -q 'ยอดโทเคนตรงตัว: 2 กระเป๋า รวม 10' "$LOG"
 ok 'ping สำเร็จ' eq "$(cat "$HC_STATE_FILE")" success
 ok 'ping ไม่มีชื่อไฟล์' not_in_log 'a1.pdf' "$HC_LOG"
 ok 'ตัดการเชื่อม auth_user_id' eq "$(q 'select count(*) from public.accounts where auth_user_id is not null')" 0
@@ -205,6 +210,28 @@ tamper_meta 'del(.table_rows)'
 run_restore no-table-rows
 ok 'ไม่มี table_rows = ล้ม' not eq "$RC" 0
 ok 'บอก meta_no_table_rows' failed_with meta_no_table_rows
+restore_meta
+
+# P7-01: ยอดรายกระเป๋าเปลี่ยน (ยอดรวมเท่าเดิม) ต้องจับได้ด้วย digest
+tamper_meta '.token_totals.balance_digest = "00000000000000000000000000000000"'
+run_restore tampered-tokens
+ok 'ยอดโทเคนไม่ตรง = ล้ม' not eq "$RC" 0
+ok 'บอก token_totals_mismatch' failed_with token_totals_mismatch
+ok 'บอกเฉพาะค่าที่ต่าง' failed_with 'balance_digest meta='
+assert_private_log "$LOG"
+assert_clean
+restore_meta
+
+tamper_meta '.token_totals.balance_sum += 1'
+run_restore tampered-token-sum
+ok 'ยอดรวมไม่ตรง = ล้ม' failed_with token_totals_mismatch
+restore_meta
+
+# จุดกู้คืนก่อน P7-01 ไม่มี token_totals: ยังผ่าน แต่บอกว่าไม่มีค่าเทียบ
+tamper_meta 'del(.token_totals)'
+run_restore no-token-totals
+ok 'ไม่มี token_totals ยังผ่าน' eq "$RC" 0
+ok 'บอกว่าไม่มีค่าเทียบ' failed_with 'ไม่มี token_totals'
 restore_meta
 
 tamper_meta '.target = "prod"'

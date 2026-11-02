@@ -272,8 +272,8 @@ log "ตัดการเชื่อมบัญชี Auth $detached บั�
 # 4. ตรวจตรงตัว: จำนวนแถวทุกตารางกับ meta.json · assets ที่ ready กับ manifest.csv
 # ---------------------------------------------------------------------------
 STEP=table_rows
-# คำนวณแบบเดียวกับ ops/backup.sh (ไม่นับตารางที่ไม่สำรองข้อมูล) — แก้ที่หนึ่งต้องแก้อีกที่
-ROWS=$(sql "select coalesce(jsonb_object_agg(t.name, t.n order by t.name), '{}') from (select n.nspname || '.' || c.relname as name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', n.nspname, c.relname), false, true, '')))[1]::text::bigint as n from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid = c.relnamespace where n.nspname in ('public', 'private') and c.relkind in ('r', 'p') and n.nspname || '.' || c.relname not in ('private.backup_manifests', 'private.backup_run_files')) t;")
+# ไฟล์ SQL เดียวกับที่ ops/backup.sh ใช้เขียน meta.json
+ROWS=$(sql "$(<"$here/sql/table-rows.sql")")
 META_ROWS=$(jq -c '.table_rows' "$META")
 # ชื่อตารางและจำนวนไม่ใช่ข้อมูลส่วนบุคคล
 ROW_DIFF=$(jq -rn --argjson a "$META_ROWS" --argjson b "$ROWS" '($a + $b) | keys[] | . as $k | select($a[$k] != $b[$k]) | "\($k) meta=\($a[$k]) db=\($b[$k])"')
@@ -284,7 +284,22 @@ fi
 TABLE_COUNT=$(jq 'length' <<<"$ROWS")
 TOTAL_ROWS=$(jq '[.[]] | add' <<<"$ROWS")
 log "จำนวนแถวตรงตัว $TABLE_COUNT ตาราง รวม $TOTAL_ROWS แถว"
-log "โทเคนคงเหลือรวม $(sql 'select coalesce(sum(balance), 0) from public.wallets') · เครื่องรางที่มี $(jq -r '."public.owned_charms" // 0' <<<"$ROWS") ชิ้น"
+log "เครื่องรางที่มี $(jq -r '."public.owned_charms" // 0' <<<"$ROWS") ชิ้น"
+
+STEP=token_totals
+TOKENS=$(sql "$(<"$here/sql/token-totals.sql")")
+if jq -e '.token_totals | type == "object"' "$META" >/dev/null; then
+  META_TOKENS=$(jq -c '.token_totals' "$META")
+  # จำนวน ยอดรวม และ hash เท่านั้น
+  TOKEN_DIFF=$(jq -rn --argjson a "$META_TOKENS" --argjson b "$TOKENS" '($a + $b) | keys[] | . as $k | select($a[$k] != $b[$k]) | "\($k) meta=\($a[$k]) db=\($b[$k])"')
+  if [ -n "$TOKEN_DIFF" ]; then
+    printf '%s\n' "$TOKEN_DIFF"
+    die 'token_totals_mismatch: ยอดโทเคนไม่ตรง meta.json'
+  fi
+  log "ยอดโทเคนตรงตัว: $(jq -r '"\(.wallets) กระเป๋า รวม \(.balance_sum) + ยอดรายกระเป๋า (digest)"' <<<"$TOKENS")"
+else
+  log "จุดกู้คืนนี้ไม่มี token_totals (ก่อน P7-01) ยอดโทเคนรวม $(jq -r '.balance_sum' <<<"$TOKENS") ไม่มีค่าเทียบ"
+fi
 
 STEP=manifest
 sql "\\copy (select final_key, version_id, size_bytes, checksum from public.assets where status = 'ready') to '$WORK/assets.csv' with (format csv)"

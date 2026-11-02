@@ -56,6 +56,7 @@ ok() {
     echo "  FAIL: $name"
   fi
 }
+not() { ! "$@"; }
 eq() { [ "$1" = "$2" ] || {
   echo "    ได้ '$1' ต้องการ '$2'"
   return 1
@@ -108,7 +109,8 @@ ok 'งบ B2 แหล่ง backup = 3 คำขอ 72049 ไบต์' eq "$(
 ok 'ping start ไม่ได้ส่งจากสคริปต์ (workflow ส่ง) + success 1 ครั้ง' eq "$(grep -c '^POST /hc ' "$HC_LOG")" 1
 ok 'ping() ผ่าน Data API ด้วย key' grep -q '^POST /rest/v1/rpc/ping' "$HC_LOG"
 ok 'HC_STATE_FILE = success' eq "$(cat "$HC_STATE_FILE")" success
-ok 'ชื่อไฟล์ใน Drive ถูกเข้ารหัส' eq "$(find "$DRIVE" | grep -c -E 'a1|e2e|files|runs|manifest|dump')" 0
+# เทียบทั้งชื่อ: ชื่อที่เข้ารหัสแล้วเป็น base32 จึงอาจมีตัวอักษรอย่าง a1 ปนโดยบังเอิญ (เดิมเทียบบางส่วนแล้วล้มเป็นบางรอบ)
+ok 'ชื่อไฟล์ใน Drive ถูกเข้ารหัส' eq "$(find "$DRIVE" -mindepth 1 -printf '%f\n' | grep -c -x -E 'a[0-9]+\.pdf|e2e|files|runs|manifest\.csv|meta\.json|(schema|data)\.dump|[0-9]{8}T[0-9]{6}Z')" 0
 ok 'ถอดรหัสแล้วเนื้อตรงต้นฉบับ' eq "$(rc cat gcrypt:files/e2e/a2.pdf | md5sum | cut -d' ' -f1)" "$(md5sum "$FAKE_B2_DIR/kemi-dev-files/files/e2e/a2.pdf@v-a2.pdf" | cut -d' ' -f1)"
 stamp1=$(rc lsf --dirs-only gcrypt:runs | tr -d '/')
 ok 'จุดกู้คืน 1 จุด' eq "$(printf '%s\n' "$stamp1" | wc -l)" 1
@@ -121,6 +123,8 @@ ok 'meta.json เป้าหมาย dev' eq "$(jq -r '.target' /tmp/restore/m
 ok 'meta.json นับ assets ตรงฐานข้อมูล' eq "$(jq -r '.table_rows["public.assets"]' /tmp/restore/meta.json)" "$(q 'select count(*) from public.assets')"
 ok 'meta.json ไม่นับตาราง manifest' eq "$(jq -r '.table_rows | has("private.backup_manifests") or has("private.backup_run_files")' /tmp/restore/meta.json)" false
 ok 'meta.json มีตาราง private' eq "$(jq -r '.table_rows | has("private.jobs")' /tmp/restore/meta.json)" true
+# P7-01: ยอดโทเคนจาก ops/sql/token-totals.sql ณ snapshot เดียวกัน
+ok 'meta.json มี token_totals ตรงฐานข้อมูล' eq "$(jq -c '.token_totals' /tmp/restore/meta.json)" "$(q "$(cat /repo/ops/sql/token-totals.sql)" | jq -c .)"
 ok 'data dump มีข้อมูล assets' bash -c "pg_restore -l /tmp/restore/data.dump | grep -q 'TABLE DATA public assets'"
 ok 'data dump ไม่มีข้อมูลตาราง manifest 2 ตาราง' bash -c "! pg_restore -l /tmp/restore/data.dump | grep -E 'TABLE DATA private (backup_manifests|backup_run_files)'"
 ok 'schema dump มีตาราง private.backup_manifests' bash -c "pg_restore -l /tmp/restore/schema.dump | grep -q 'TABLE private backup_manifests'"
@@ -202,6 +206,30 @@ ok 'ไม่มี GET ของ a5' bash -c "! tail -n +$((reads_before + 1)) 
 ok 'GET เฉพาะ a3 ที่ดึงซ่อม' eq "$(tail -n +$((reads_before + 1)) "$FAKE_B2_LOG" | tr '
 ' ' ')" 'GET kemi-dev-files/files/e2e/a3.pdf?versionId=v-a3.pdf '
 ok 'detail บอกมีใน Drive แล้ว 1' bash -c "[[ '$(last_run)' == *'มีใน Drive แล้ว 1'* ]]"
+
+# P7-01 job guard: ops/guard.sh กับฐานข้อมูลในเครื่อง (GUARD_ALLOW_LOCAL) — ล้มเมื่อ allow_test_logins = on
+echo '== guard'
+guard() { # → ตั้ง RC (log ที่ /tmp/guard.log)
+  GUARD_ALLOW_LOCAL=1 bash /repo/ops/guard.sh >/tmp/guard.log 2>&1
+  RC=$?
+}
+q "delete from private.settings where key = 'allow_test_logins'"
+guard
+ok 'guard ผ่านเมื่อไม่มีค่า' eq "$RC" 0
+q "insert into private.settings (key, value) values ('allow_test_logins', 'off')"
+guard
+ok 'guard ผ่านเมื่อเป็น off' eq "$RC" 0
+q "update private.settings set value = 'on' where key = 'allow_test_logins'"
+guard
+ok 'guard ล้มเมื่อเป็น on' test "$RC" != 0
+ok 'guard บอก allow_test_logins_on' grep -q 'allow_test_logins_on' /tmp/guard.log
+ok 'guard ขึ้น annotation error' grep -q '^::error title=guard' /tmp/guard.log
+ok 'guard ไม่แก้ค่า (อ่านอย่างเดียว)' eq "$(q "select value from private.settings where key = 'allow_test_logins'")" on
+q "delete from private.settings where key = 'allow_test_logins'"
+PGHOST=aws-0-ap-southeast-1.pooler.supabase.com PGUSER=postgres.igchlnmxbghsigyziomk guard
+ok 'guard ไม่ยอม pooler ของ dev' grep -q db_not_allowed /tmp/guard.log
+PGUSER=postgres GUARD_ALLOW_LOCAL='' bash /repo/ops/guard.sh >/tmp/guard.log 2>&1
+ok 'guard ไม่ยอมในเครื่องเมื่อไม่เปิดธง' grep -q db_not_allowed /tmp/guard.log
 
 echo "e2e: ผ่าน $pass ไม่ผ่าน $fail"
 [ "$fail" = 0 ]

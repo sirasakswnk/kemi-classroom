@@ -1,5 +1,5 @@
 # สำรองข้อมูลวันละ 2 รอบ — TECHNICAL_BUILD_PLAN ส่วน 8 (ขั้นตอน backup.yml), TECHNICAL_DESIGN ส่วน 12
-# P3-11: แบบพื้นฐาน · P7-08: เลือกเป้าหมาย dev/prod — ยังไม่มี job guard และ restore-test.yml (P7-01/P7-02 ภายในเดือนแรก)
+# P3-11: แบบพื้นฐาน · P7-08: เลือกเป้าหมาย dev/prod · P7-01: job guard + token_totals ใน meta.json (ทดสอบกู้คืน: restore-test.yml)
 # ตารางเวลาทำงานเฉพาะบน branch หลัก (main)
 #
 # เป้าหมาย: repository variable BACKUP_TARGET (Settings → Secrets and variables → Actions → Variables) = dev | prod
@@ -148,3 +148,27 @@ jobs:
           if [ -n "$url" ] && [ ! -s "$HC_STATE_FILE" ]; then
             curl -fsS -m 10 --retry 3 -o /dev/null --data-raw "kemi-backup ($BACKUP_TARGET) ล้มนอกสคริปต์ (run ${{ github.run_id }})" "$url/fail" || true
           fi
+
+  # BUILD_PLAN 8 “งาน guard”: prod ต้องไม่มี allow_test_logins = on — job แยก ล้มแล้ว GitHub ส่งอีเมลแต่งานสำรองทำต่อ
+  # ตรวจเฉพาะรอบเป้าหมาย prod (รอบ dev ไม่อ่าน prod) · อ่านอย่างเดียวใน transaction READ ONLY
+  guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: ข้ามเมื่อไม่ใช่เป้าหมาย prod
+        if: ${{ env.BACKUP_TARGET != 'prod' }}
+        run: echo "เป้าหมาย $BACKUP_TARGET — guard ตรวจเฉพาะ prod"
+
+      - uses: actions/checkout@v7
+        if: ${{ env.BACKUP_TARGET == 'prod' }}
+
+      - name: ตรวจ allow_test_logins ของ prod (ops/guard.sh)
+        if: ${{ env.BACKUP_TARGET == 'prod' }}
+        env:
+          PGUSER: postgres.fcwbomasayvlubijsssh
+          PGPASSWORD: ${{ secrets.PROD_BACKUP_DB_PASSWORD }}
+        run: |
+          if [ -z "$PGPASSWORD" ]; then echo '::error::ยังไม่ได้ใส่ GitHub Secrets: PROD_BACKUP_DB_PASSWORD'; exit 1; fi
+          command -v psql >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null; }
+          psql --version
+          bash ops/guard.sh
