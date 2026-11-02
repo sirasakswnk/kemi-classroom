@@ -6,8 +6,13 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && (pwd -W 2>/dev/null || pwd))
 bash "$here/unit.sh"
+bash "$here/restore-unit.sh"
 MSYS_NO_PATHCONV=1 docker run --rm -w /mnt -v "$root:/mnt:ro" koalaman/shellcheck:stable -x \
-  /mnt/ops/backup.sh /mnt/ops/backup-test/unit.sh /mnt/ops/backup-test/e2e.sh /mnt/ops/backup-test/fake-aws /mnt/ops/backup-test/run.sh
+  /mnt/ops/backup.sh /mnt/ops/backup-test/unit.sh /mnt/ops/backup-test/e2e.sh /mnt/ops/backup-test/fake-aws /mnt/ops/backup-test/run.sh \
+  /mnt/ops/restore-test.sh /mnt/ops/backup-test/restore-unit.sh /mnt/ops/backup-test/restore-e2e.sh
 echo 'shellcheck: ผ่าน'
 MSYS_NO_PATHCONV=1 docker run --rm -v "$root:/repo:ro" --add-host=host.docker.internal:host-gateway \
   postgres:17 bash /repo/ops/backup-test/e2e.sh
+# ล้าง public/private ของ Supabase ในเครื่อง — จบแล้วรัน npm run db:reset
+MSYS_NO_PATHCONV=1 docker run --rm -v "$root:/repo:ro" --add-host=host.docker.internal:host-gateway \
+  postgres:17 bash /repo/ops/backup-test/restore-e2e.sh

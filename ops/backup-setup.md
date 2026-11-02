@@ -87,3 +87,24 @@ repo → **Settings → Secrets and variables → Actions → New repository sec
 Claude จะรัน workflow `backup` ด้วยมือกับ kemi-dev: รอบปกติ 2 รอบ (รอบสองต้องไม่คัดลอกไฟล์เดิมซ้ำ) และรอบล้มโดยตั้งใจ 1 รอบ (`simulate_failure`) — **ผู้ใช้ตรวจกล่องอีเมลว่าได้อีเมลจาก Healthchecks.io** ว่า `kemi-backup` เป็น DOWN (พิสูจน์ BUILD_PLAN 13 ข้อ 5) แล้วรอบปกติถัดไปจะส่งอีเมลว่ากลับมา UP
 
 ตารางเวลา (02:30 / 14:30 น.) เริ่มทำงานเองหลัง merge `phase-3` เข้า `main` เท่านั้น — ก่อนหน้านั้น Healthchecks จะเตือนว่าไม่มีสัญญาณทุก ~15 ชม. หลังรอบที่รันด้วยมือ ถ้าไม่อยากได้อีเมลช่วงนี้ให้กด **Pause** ที่ check หลังทดสอบเสร็จ (รอบถัดไปที่ ping จะเปิดเอง)
+
+## 8. ทดสอบกู้คืน (`restore-test.yml`, P7-02)
+
+ใช้ของเดิม `RCLONE_CONFIG` (dev) และ `PROD_RCLONE_CONFIG` (prod) — เพิ่มอีก 3 ตัว ไม่ต้องใช้รหัสผ่านฐานข้อมูลจริง เพราะ workflow นี้ไม่ต่อฐานข้อมูลของ `kemi-dev`/`kemi-prod`
+
+1. **กุญแจ B2 ใหม่:** เว็บ Backblaze → **Application Keys → Add a New Application Key**
+   - Name `kemi-restore-test` · Allow access to Bucket(s): **`kemi-dev-files`** เท่านั้น · Type of Access: **Read and Write** · File name prefix: `restore-test/` · ไม่ติ๊ก List All Bucket Names · Duration: เว้นว่าง
+   - keyID กับ applicationKey แสดงครั้งเดียว ใส่เป็น secret ในข้อ 3 ได้เลย ไม่ต้องจดลงไฟล์
+2. **Healthchecks.io:** Add Check → Name `kemi-restore-test` → Period **35 days** · Grace **1 day** → คัดลอก Ping URL (ping เฉพาะรอบเป้าหมาย prod รอบ dev ไม่นับเป็นการทดสอบรายเดือน)
+3. **GitHub Secrets** (repo → Settings → Secrets and variables → Actions):
+
+| ชื่อ | ค่า | จำเป็นเมื่อ |
+| --- | --- | --- |
+| `RESTORE_TEST_B2_KEY_ID` | keyID จากข้อ 1 | ทุกรอบ |
+| `RESTORE_TEST_B2_APP_KEY` | applicationKey จากข้อ 1 | ทุกรอบ |
+| `RESTORE_TEST_HC_PING_URL` | Ping URL จากข้อ 2 | เป้าหมาย prod |
+
+4. **ตัวกันไฟล์ค้าง (lifecycle):** รัน `node ops/b2/apply-settings.mjs` อีกครั้ง (ตั้งเฉพาะ `kemi-dev-files`, ถาม Master key แบบซ่อนตัวอักษร) เพื่อเพิ่มกฎลบ `restore-test/` อัตโนมัติ — สคริปต์ลบไฟล์เองทุกรอบอยู่แล้ว กฎนี้กันกรณี B2 ขัดข้องตอนลบ
+5. แจ้ง Claude ว่าตั้งครบแล้ว — **ห้ามวางค่าในแชต** บอกแค่ว่าใส่แล้ว
+
+**การรันเป้าหมาย prod เป็นการอ่านข้อมูลจริง:** Claude ต้องขออนุญาตก่อนทุกครั้ง (CLAUDE.md ส่วน 4)

@@ -1,0 +1,152 @@
+# ทดสอบกู้คืน (กดรันเอง) — TECHNICAL_BUILD_PLAN ส่วน 8 และ 13 ข้อ 16, TECHNICAL_DESIGN ส่วน 12
+# กู้ลง Supabase ชั่วคราวใน runner เท่านั้น · ไฟล์วางใต้ restore-test/ ใน kemi-dev-files แล้วลบในรอบเดียวกัน
+# ไม่ต่อฐานข้อมูลของ kemi-dev/kemi-prod และไม่แตะ kemi-files (workflow นี้ไม่มีรหัสผ่านฐานข้อมูลจริง)
+# การรันเป้าหมาย prod = อ่านข้อมูลจริง: ต้องได้รับอนุญาตจากผู้ใช้ทุกครั้ง (CLAUDE.md ส่วน 4)
+#
+# GitHub Secrets (ผู้ใช้ใส่เองทางหน้าเว็บ — ops/backup-setup.md ส่วนทดสอบกู้คืน):
+#   RESTORE_TEST_B2_KEY_ID  RESTORE_TEST_B2_APP_KEY  กุญแจ B2 จำกัด bucket kemi-dev-files + prefix restore-test/
+#   RESTORE_TEST_HC_PING_URL                         Healthchecks kemi-restore-test รอบ 35 วัน (ping เฉพาะเป้าหมาย prod)
+#   ใช้ของเดิม: RCLONE_CONFIG (dev), PROD_RCLONE_CONFIG (prod)
+name: restore-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'จุดกู้คืนของระบบไหน (prod = อ่านข้อมูลจริง ต้องได้รับอนุญาตก่อน)'
+        type: choice
+        options: [dev, prod]
+        default: dev
+      restore_point:
+        description: 'จุดกู้คืน: latest หรือชื่อรอบ เช่น 20261025T053012Z'
+        type: string
+        default: latest
+      files:
+        description: 'ไฟล์: sample = สุ่มไม่เกิน 50 ไฟล์ 100 MB · all = ทุกไฟล์ (เกิน 500 ไฟล์หรือ 300 MB จะไม่เริ่ม)'
+        type: choice
+        options: [sample, all]
+        default: sample
+
+permissions:
+  contents: read
+
+# รันทีละรอบ: ขั้นลบกวาดทั้ง prefix ทดสอบ · แยกกลุ่มจาก backup เพื่อไม่ให้รอบตามตารางถูกแทนที่ในคิว
+concurrency:
+  group: restore-test
+  cancel-in-progress: false
+
+env:
+  RESTORE_TARGET: ${{ inputs.target }}
+  RESTORE_POINT: ${{ inputs.restore_point }}
+  RESTORE_FILES: ${{ inputs.files }}
+  RESTORE_RUN_TAG: ${{ github.run_id }}
+  # Supabase ชั่วคราวใน runner (ค่าเริ่มต้นของ CLI ไม่ใช่ความลับ) — ops/restore-test.sh ไม่ยอม host/ผู้ใช้อื่น
+  PGHOST: 127.0.0.1
+  PGPORT: '54322'
+  PGUSER: supabase_admin
+  PGPASSWORD: postgres
+  PGDATABASE: postgres
+  B2_S3_ENDPOINT: https://s3.eu-central-003.backblazeb2.com
+  B2_REGION: eu-central-003
+  PG_MAJOR: '17'
+  # ห้ามตั้งชื่อขึ้นต้น RCLONE_ ที่ตรงกับแฟล็ก (rclone อ่าน RCLONE_VERSION เป็น --version)
+  RCLONE_PKG_VERSION: v1.75.1
+  RCLONE_PKG_SHA256: 09c9f7606ed9e31eecc1eec26a89992cf2931a8d2d1a5f0ae2bb1c11630ffb15
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: ตรวจว่ามี secret ของเป้าหมายครบ
+        env:
+          DEV_RCLONE: ${{ secrets.RCLONE_CONFIG }}
+          PROD_RCLONE: ${{ secrets.PROD_RCLONE_CONFIG }}
+          KEY_ID: ${{ secrets.RESTORE_TEST_B2_KEY_ID }}
+          APP_KEY: ${{ secrets.RESTORE_TEST_B2_APP_KEY }}
+          HC: ${{ secrets.RESTORE_TEST_HC_PING_URL }}
+        run: |
+          set -- RESTORE_TEST_B2_KEY_ID "$KEY_ID" RESTORE_TEST_B2_APP_KEY "$APP_KEY"
+          case "$RESTORE_TARGET" in
+            prod) set -- "$@" PROD_RCLONE_CONFIG "$PROD_RCLONE" RESTORE_TEST_HC_PING_URL "$HC" ;;
+            dev) set -- "$@" RCLONE_CONFIG "$DEV_RCLONE" ;;
+            *) echo '::error::target ต้องเป็น dev หรือ prod'; exit 1 ;;
+          esac
+          missing=''
+          while [ $# -gt 0 ]; do [ -n "$2" ] || missing="$missing $1"; shift 2; done
+          if [ -n "$missing" ]; then echo "::error::ยังไม่ได้ใส่ GitHub Secrets ($RESTORE_TARGET):$missing"; exit 1; fi
+
+      # เฉพาะ prod: รอบ dev ไม่นับเป็นการทดสอบรายเดือนของระบบจริง
+      - name: ping start
+        if: ${{ inputs.target == 'prod' }}
+        env:
+          HC: ${{ secrets.RESTORE_TEST_HC_PING_URL }}
+        run: curl -fsS -m 10 --retry 3 -o /dev/null "$HC/start" 2>/dev/null || echo '::warning::ส่ง ping /start ไม่สำเร็จ'
+
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci # Supabase CLI รุ่นเดียวกับในเครื่อง
+
+      - name: ติดตั้ง postgresql-client และ rclone
+        run: |
+          pgdg=/usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          if [ ! -x "$pgdg" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-common >/dev/null; fi
+          sudo "$pgdg" -y >/dev/null
+          sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" >/dev/null
+          curl -fsSLo "$RUNNER_TEMP/rclone.deb" "https://downloads.rclone.org/$RCLONE_PKG_VERSION/rclone-$RCLONE_PKG_VERSION-linux-amd64.deb"
+          echo "$RCLONE_PKG_SHA256  $RUNNER_TEMP/rclone.deb" | sha256sum -c -
+          sudo dpkg -i "$RUNNER_TEMP/rclone.deb" >/dev/null
+          echo "/usr/lib/postgresql/$PG_MAJOR/bin" >>"$GITHUB_PATH"
+
+      # เปิดแค่ Postgres ฐานข้อมูลนี้อยู่แค่ในงานนี้และถูกทิ้งเมื่อจบ
+      - name: เปิด Supabase ชั่วคราว
+        run: npx supabase db start
+
+      # secret ของเป้าหมายเดียวเข้าสคริปต์ (ชุดอื่นถูก unset ก่อนเรียก)
+      - name: ทดสอบกู้คืน (ops/restore-test.sh)
+        env:
+          DEV_RCLONE: ${{ secrets.RCLONE_CONFIG }}
+          PROD_RCLONE: ${{ secrets.PROD_RCLONE_CONFIG }}
+          HC: ${{ secrets.RESTORE_TEST_HC_PING_URL }}
+          RESTORE_B2_KEY_ID: ${{ secrets.RESTORE_TEST_B2_KEY_ID }}
+          RESTORE_B2_APP_KEY: ${{ secrets.RESTORE_TEST_B2_APP_KEY }}
+          HC_STATE_FILE: ${{ runner.temp }}/hc-state
+        run: |
+          if [ "$RESTORE_TARGET" = prod ]; then
+            export RCLONE_CONFIG_CONTENT=$PROD_RCLONE HC_PING_URL=$HC
+          else
+            export RCLONE_CONFIG_CONTENT=$DEV_RCLONE
+          fi
+          unset DEV_RCLONE PROD_RCLONE HC
+          bash ops/restore-test.sh
+
+      # ขั้นสำรอง: รอบถูกยกเลิก/หมดเวลาก่อนสคริปต์ลบเสร็จ — ไฟล์ของ prod ห้ามค้างใน bucket ทดสอบ
+      - name: ลบไฟล์ทดสอบที่ค้าง
+        if: ${{ always() }}
+        env:
+          RESTORE_B2_KEY_ID: ${{ secrets.RESTORE_TEST_B2_KEY_ID }}
+          RESTORE_B2_APP_KEY: ${{ secrets.RESTORE_TEST_B2_APP_KEY }}
+          RESTORE_SWEEP_ONLY: '1'
+        run: |
+          if [ -z "$RESTORE_B2_KEY_ID" ]; then echo 'ยังไม่มีกุญแจ ไม่มีอะไรให้ลบ'; exit 0; fi
+          if [ ! -f ops/restore-test.sh ]; then echo 'ล้มก่อน checkout ยังไม่มีการอัปโหลด'; exit 0; fi
+          bash ops/restore-test.sh
+
+      - name: ทิ้ง Supabase ชั่วคราว
+        if: ${{ always() }}
+        run: npx supabase stop --no-backup >/dev/null 2>&1 || true
+
+      # ล้มนอกสคริปต์ (ติดตั้งไม่ผ่าน) หรือถูกยกเลิก: ส่ง /fail ถ้าสคริปต์ยังไม่ได้ส่งผล
+      - name: ping fail (สำรอง)
+        if: ${{ inputs.target == 'prod' && (failure() || cancelled()) }}
+        env:
+          HC: ${{ secrets.RESTORE_TEST_HC_PING_URL }}
+          HC_STATE_FILE: ${{ runner.temp }}/hc-state
+        run: |
+          if [ -n "$HC" ] && [ ! -s "$HC_STATE_FILE" ]; then
+            curl -fsS -m 10 --retry 3 -o /dev/null --data-raw 'kemi-restore-test ล้มนอกสคริปต์ (run ${{ github.run_id }})' "$HC/fail" 2>/dev/null || true
+          fi
